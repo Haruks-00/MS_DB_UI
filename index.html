@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ゲームデータ管理</title>
+  <style>
+    /* 簡単な見た目の調整 */
+    body { font-family: sans-serif; padding: 20px; }
+    h1, h2 { border-bottom: 2px solid #eee; }
+    input, button { padding: 8px; margin-right: 10px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .container { max-width: 800px; margin: auto; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>ゲームデータ管理</h1>
+
+  <h2>新規データ追加</h2>
+  <div>
+    <input type="text" id="game-title-input" placeholder="ゲームタイトル">
+    <input type="number" id="play-time-input" placeholder="プレイ時間">
+    <input type="text" id="status-input" placeholder="ステータス (例: プレイ中, クリア)">
+    <button id="save-button">保存</button>
+  </div>
+
+  <h2>データ一覧</h2>
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th>ゲームタイトル</th>
+        <th>プレイ時間</th>
+        <th>ステータス</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="data-list">
+      <!-- データはここにJavaScriptで追加されます -->
+    </tbody>
+  </table>
+</div>
+
+<!-- Firebase SDK の読み込み -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js "></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js "></script>
+
+<script>
+  // ▼▼▼ あなたのFirebase設定をここに貼り付け ▼▼▼
+  const firebaseConfig = {
+    apiKey: "AIzaSy...xxxxxxxxxxxx", // あなたの値に書き換える
+    authDomain: "my-game-data-manager.firebaseapp.com", // あなたの値に書き換える
+    projectId: "my-game-data-manager", // あなたの値に書き換える
+    storageBucket: "my-game-data-manager.appspot.com", // あなたの値に書き換える
+    messagingSenderId: "1234567890", // あなたの値に書き換える
+    appId: "1:1234567890:web:xxxxxxxxxxxx" // あなたの値に書き換える
+  };
+  // ▲▲▲ ここまで ▲▲▲
+
+  // Firebaseの初期化
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // HTML要素の取得
+  const saveButton = document.getElementById('save-button');
+  const gameTitleInput = document.getElementById('game-title-input');
+  const playTimeInput = document.getElementById('play-time-input');
+  const statusInput = document.getElementById('status-input');
+  const dataList = document.getElementById('data-list');
+
+  // --- 機能の実装 ---
+
+  // 【機能1】Firestoreにデータを保存する
+  saveButton.addEventListener('click', async () => {
+    const title = gameTitleInput.value;
+    const time = Number(playTimeInput.value); // 数値に変換
+    const status = statusInput.value;
+
+    // 入力が空でないかチェック
+    if (title && status) {
+      try {
+        await db.collection('games').add({
+          title: title,
+          playTime: time,
+          status: status,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp() // 保存日時を記録
+        });
+        // 入力欄をクリア
+        gameTitleInput.value = '';
+        playTimeInput.value = '';
+        statusInput.value = '';
+        console.log('データを保存しました！');
+        // 保存後にリストを再読み込み
+        loadData();
+      } catch (e) {
+        console.error('エラー: ', e);
+      }
+    } else {
+      alert('タイトルとステータスを入力してください。');
+    }
+  });
+
+
+  // 【機能2】Firestoreからデータを読み込んで表示する
+  async function loadData() {
+    // 表示を一旦空にする
+    dataList.innerHTML = '';
+    
+    const querySnapshot = await db.collection('games').orderBy('createdAt', 'desc').get();
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      // テーブルの行(tr)を作成
+      const row = document.createElement('tr');
+      // テーブルの各セル(td)を作成して内容をセット
+      row.innerHTML = `
+        <td>${data.title}</td>
+        <td>${data.playTime}</td>
+        <td>${data.status}</td>
+        <td><button onclick="deleteData('${doc.id}')">削除</button></td>
+      `;
+      // テーブルのtbodyに作成した行を追加
+      dataList.appendChild(row);
+    });
+  }
+  
+  // 【機能3】データを削除する
+  async function deleteData(id) {
+    if (confirm('本当にこのデータを削除しますか？')) {
+      try {
+        await db.collection('games').doc(id).delete();
+        console.log('データを削除しました！');
+        // 削除後にリストを再読み込み
+        loadData();
+      } catch (e) {
+        console.error('エラー: ', e);
+      }
+    }
+  }
+
+
+  // 最初にページが読み込まれた時にデータを表示
+  loadData();
+
+</script>
+
+</body>
+</html>
