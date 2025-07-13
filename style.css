@@ -94,3 +94,58 @@ td.element-闇 { background-color: #f3e5f5; }
 #items-to-move-container .movable-item-checkbox { margin-right: 8px; }
 #items-to-move-container label { margin-top: 0; cursor: pointer; }
 [v-cloak] { display: none; }
+.team-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 13px;
+  table-layout: fixed;
+}
+.team-detail-table th, 
+.team-detail-table td {
+  border: 1px solid #ddd;
+  padding-left: 4px; /* 左右の余白は共通 */
+  padding-right: 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ▼▼▼ ヘッダー行のスタイル ▼▼▼ */
+.team-detail-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+/* ▼▼▼ データ行のスタイル ▼▼▼ */
+.team-detail-table td {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  height: 1em;
+}
+/* キャラクター名の行 */
+.team-detail-table tbody tr:nth-child(1) td {
+  height: 1em;
+  font-weight: bold;
+}
+/* アカウント名の行 */
+.team-detail-table tbody tr:nth-child(2) td {
+  font-size: 12px;
+  color: #555;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+/* 削除ボタンの位置をヘッダー内に固定 */
+.team-list-item-header {
+  position: relative;
+  padding-right: 50px;
+}
+.delete-btn-small {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}

@@ -22,6 +22,7 @@ const appTemplate = `
       <button class="tab-btn" :class="{ active: activeTab === 'view-all' }" @click="activeTab = 'view-all'">所持状況一覧</button>
       <button class="tab-btn" :class="{ active: activeTab === 'add-owned' }" @click="activeTab = 'add-owned'">所持キャラ追加</button>
       <button class="tab-btn" :class="{ active: activeTab === 'manage-items' }" @click="activeTab = 'manage-items'">アイテム管理</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'manage-teams' }" @click="activeTab = 'manage-teams'">編成管理</button>
       <button class="tab-btn" :class="{ active: activeTab === 'add-master' }" @click="activeTab = 'add-master'">マスター追加</button>
       <button class="tab-btn" :class="{ active: activeTab === 'edit-master' }" @click="activeTab = 'edit-master'">マスター編集</button>
     </div>
@@ -241,6 +242,104 @@ const appTemplate = `
       </div>
     </div>
 
+     <!-- ▼▼▼ 新機能: 編成管理タブ ▼▼▼ -->
+    <div id="tab-manage-teams" class="tab-content" v-if="activeTab === 'manage-teams'">
+      <h2>編成管理</h2>
+      <div class="team-management-container">
+        <!-- 左側: 編成リスト -->
+        <div class="team-list-panel">
+          <h3>編成一覧</h3>
+          <div class="form-section" style="padding: 0;">
+            <label>タイプで絞り込み:</label>
+            <select v-model="teamFilters.type" style="width: 100%;">
+              <option value="">すべて</option>
+              <option v-for="type in teamTypes" :key="type" :value="type">{{ type }}</option>
+            </select>
+          </div>
+          <ul class="team-list">
+            <li v-if="!dataLoaded">
+              データを読み込んでいます...
+            </li>
+            <li v-else-if="filteredTeams.length === 0">
+              該当する編成がありません。
+            </li>
+             <!-- ▼▼▼ ここが新しい表示形式です ▼▼▼ -->
+            <li v-for="team in filteredTeams" :key="team.id" @click="selectTeam(team)" :class="{ active: teamForm.id === team.id }">
+              <div class="team-list-item-header">
+                <strong>{{ team.name }}</strong>
+                <span>({{ team.type }})</span>
+                <button class="delete-btn-small" @click.stop="deleteTeam(team.id)">削除</button>
+              </div>
+              <table class="team-detail-table">
+                <thead>
+                  <tr>
+                    <th>1</th><th>2</th><th>3</th><th>4</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- キャラクター名 -->
+                  <tr>
+                    <td v-for="(_, index) in Array(4)" :key="index" :title="getTeamSlotDetails(team, index).characterName">{{ getTeamSlotDetails(team, index).characterName }}</td>
+                  </tr>
+                  <!-- アカウント名 -->
+                  <tr>
+                    <td v-for="(_, index) in Array(4)" :key="index">{{ getTeamSlotDetails(team, index).accountName }}</td>
+                  </tr>
+                  <!-- アイテム (最大3つ) -->
+                  <tr v-for="itemIndex in 3" :key="itemIndex">
+                    <td v-for="(_, slotIndex) in Array(4)" :key="slotIndex" :title="getTeamSlotDetails(team, slotIndex).items[itemIndex - 1]">
+                      {{ getTeamSlotDetails(team, slotIndex).items[itemIndex - 1] || '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 右側: 編成フォーム -->
+        <div class="team-form-panel">
+          <h3>{{ teamForm.id ? '編成編集' : '新規編成作成' }}</h3>
+          <button @click="resetTeamForm" style="margin-bottom: 15px;">新規作成フォームを開く</button>
+          
+          <div class="form-section">
+            <label>編成名:</label>
+            <input type="text" v-model.trim="teamForm.name" placeholder="例: 天魔の孤城 第1の間">
+            <label>タイプ:</label>
+            <select v-model="teamForm.type">
+              <option disabled value="">タイプを選択</option>
+              <option v-for="type in teamTypes" :key="type" :value="type">{{ type }}</option>
+            </select>
+          </div>
+          
+          <h4>キャラクター編成 (4体)</h4>
+          <div class="team-slots-container">
+            <div v-for="(slot, index) in teamForm.slots" :key="index" class="team-slot">
+              <h5>スロット {{ index + 1 }}</h5>
+              <label>アカウント:</label>
+              <select v-model="slot.selectedAccountId">
+                <option value="" disabled>アカウント選択</option>
+                <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{ acc.name }}</option>
+              </select>
+              <label>キャラクター:</label>
+              <input type="text" v-model="slot.characterSearch" placeholder="キャラ名で検索">
+              <select v-model="slot.selectedOwnedId" size="5" style="width: 100%;">
+                <option v-if="!slot.selectedAccountId" value="">先にアカウントを選択</option>
+                <option v-for="char in getCharactersForSlot(slot)" :key="char.id" :value="char.id" :disabled="isCharSelectedInOtherSlot(char.id, index)">
+                  {{ formatOwnedCharDisplayName(char, true) }} {{ isCharSelectedInOtherSlot(char.id, index) ? '(選択済)' : '' }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <br>
+          <button @click="handleSaveTeam" :disabled="!isTeamFormValid || teamForm.isSaving" class="save-button">
+            {{ teamForm.isSaving ? '保存中...' : (teamForm.id ? '編成を更新' : '編成を保存') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ▲▲▲ ここまで ▲▲▲ -->
+
     <!-- タブ4: マスター追加 -->
     <div id="tab-add-master" class="tab-content" v-if="activeTab === 'add-master'">
       <!-- 中身は変更なし -->
@@ -347,6 +446,23 @@ new Vue({
       
       // --- State for New Tab 5 (変更なし) ---
       editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
+      teams: [], // Firestoreから読み込んだ編成データ
+      teamTypes: ['禁忌', '天魔', '庭園', '轟絶', '黎絶'],
+      teamFilters: {
+        type: '',
+      },
+      teamForm: {
+        id: null,
+        name: '',
+        type: '',
+        slots: [
+          { selectedAccountId: '', selectedOwnedId: '', characterSearch: '' },
+          { selectedAccountId: '', selectedOwnedId: '', characterSearch: '' },
+          { selectedAccountId: '', selectedOwnedId: '', characterSearch: '' },
+          { selectedAccountId: '', selectedOwnedId: '', characterSearch: '' },
+        ],
+        isSaving: false,
+      },
     },
     // 変更点5: createdフックで認証状態を監視
     created() {
@@ -356,6 +472,7 @@ new Vue({
 
         if (user) {
           // ログイン済みなら、初期データを読み込む
+          console.log("現在ログイン中のユーザーUID:", user.uid);
           this.loadInitialData();
         } else {
           // ログアウトしたら、ロード済みデータをリセット
@@ -430,7 +547,19 @@ new Vue({
       itemMoveFromCharacters() { const lowerSearch = this.itemMove.from.search.toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || (char.monsterName && char.monsterName.toLowerCase().includes(lowerSearch))) && char.id !== this.itemMove.to.selectedId ); },
       itemMoveToCharacters() { const lowerSearch = this.itemMove.to.search.toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || (char.monsterName && char.monsterName.toLowerCase().includes(lowerSearch))) && char.id !== this.itemMove.from.selectedId ); },
       movableItems() { if (!this.itemMove.from.selectedId) return []; const fromChar = this.currentOwnedCharacters.find(c => c.id === this.itemMove.from.selectedId); if (!fromChar || !fromChar.items || fromChar.items.length === 0) return []; return fromChar.items.map(itemId => { return { id: Number(itemId), name: this.itemMastersMap.get(Number(itemId)) || `不明なアイテム(ID:${itemId})` }; }); },
-      editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search.toLowerCase(); return this.characterMasters.filter(master => { return !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch); }); }
+      editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search.toLowerCase(); return this.characterMasters.filter(master => { return !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch); }); },
+      
+      filteredTeams() {
+        if (!this.teamFilters.type) {
+          return this.teams;
+        }
+        return this.teams.filter(team => team.type === this.teamFilters.type);
+      },
+      isTeamFormValid() {
+        if (!this.teamForm.name || !this.teamForm.type) return false;
+        // 4スロットすべてが埋まっているかチェック
+        return this.teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId);
+      },
     },
     watch: {
       // watchプロパティは変更なし
@@ -473,12 +602,14 @@ new Vue({
         
         console.log("初期データの読み込みを開始します...");
         try {
-          const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap] = await Promise.all([
+          const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await Promise.all([
             db.collection('accounts').get(),
             db.collection('character_masters').get(),
             db.collection('itemMasters').get(),
             db.collectionGroup('owned_characters').get(),
-            db.collection('gachaMasters').get()
+            db.collection('gachaMasters').get(),
+            // ログインユーザーのUIDに紐づく編成のみ取得
+            db.collection('teams').where('userId', '==', this.user.uid).orderBy('createdAt', 'desc').get()
           ]);
           
           this.accounts = accountsSnap.docs.map(doc => {
@@ -504,6 +635,8 @@ new Vue({
             if (!this.ownedCharactersData.has(accountId)) this.ownedCharactersData.set(accountId, []);
             this.ownedCharactersData.get(accountId).push({ ...data, id: doc.id });
           });
+
+          this.teams = teamsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
           
           if(this.accounts.length > 0) {
             this.selectedAccountId = this.accounts[0].id;
@@ -511,7 +644,7 @@ new Vue({
           this.dataLoaded = true;
           console.log("初期データの読み込み完了");
         } catch (e) {
-          console.error("データ読み込みエラー:", e);
+          console.error("データ読み込みで詳細なエラーが発生:", e); 
           alert("データの読み込みに失敗しました。");
         }
       },
@@ -537,8 +670,35 @@ new Vue({
       },
       getOwnedStatusClass(masterId, accountId, requiredCount) { return this.getOwnedCount(masterId, accountId) >= requiredCount ? 'status-owned' : 'status-unowned'; },
       resetFilters() { this.filters = { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' }; },
-      formatOwnedCharDisplayName(char, includeItems = false) { const ownedList = this.currentOwnedCharacters.filter(c => c.characterMasterId === char.characterMasterId); const charIndex = ownedList.findIndex(c => c.id === char.id); let text = `${char.monsterName} (${charIndex + 1}体目)`; if (includeItems) { const itemNames = (char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', '); text += ` [${itemNames || 'アイテムなし'}]`; } return text; },
-      async addOwnedCharacter() { if (!this.addChar.selectedMasterId || !this.selectedAccountId) return; this.addChar.isAdding = true; try { const masterData = this.characterMasters.find(m => m.id === this.addChar.selectedMasterId); const newOwnedCharacter = { characterMasterId: masterData.id, monsterName: masterData.monsterName, element: masterData.element || '', type: masterData.type || '', items: [], ejectionGacha: masterData.ejectionGacha || '', createdAt: firebase.firestore.FieldValue.serverTimestamp() }; const docRef = await db.collection('accounts').doc(this.selectedAccountId).collection('owned_characters').add(newOwnedCharacter); const countKey = `${masterData.id}-${this.selectedAccountId}`; this.ownedCountMap.set(countKey, (this.ownedCountMap.get(countKey) || 0) + 1); if (!this.ownedCharactersData.has(this.selectedAccountId)) { this.ownedCharactersData.set(this.selectedAccountId, []); } this.ownedCharactersData.get(this.selectedAccountId).push({ ...newOwnedCharacter, id: docRef.id }); this.$forceUpdate(); this.addChar.selectedMasterId = null; alert(`${masterData.monsterName} を所持リストに追加しました。`); } catch (e) { alert('エラーが発生しました: ' + e.message); } finally { this.addChar.isAdding = false; } },
+      formatOwnedCharDisplayName(char, includeItems = false) {
+        // キャラクターのマスターデータを取得して名前を確定
+        const master = this.characterMasters.find(m => m.id === char.characterMasterId);
+        const charName = master ? master.monsterName : char.monsterName;
+
+        // charオブジェクトにaccountIdが含まれているかチェックし、それに基づいてリストを取得する
+        // (編成管理タブからはchar.accountIdが渡され、アイテム管理タブからは渡されないので、その場合は従来通りcurrentOwnedCharactersを使う)
+        const targetAccountId = char.accountId || this.selectedAccountId;
+        if (!targetAccountId) {
+            return `${charName} (アカウント不明)`; // 念の為のエラーハンドリング
+        }
+        
+        // 正しいアカウントの全所持キャラクターリストを取得
+        const allOwnedCharsInAccount = this.ownedCharactersData.get(targetAccountId) || [];
+        
+        // その中から、同じマスターIDを持つキャラクターだけを絞り込む
+        const sameMasterChars = allOwnedCharsInAccount.filter(c => c.characterMasterId === char.characterMasterId);
+
+        // 絞り込んだリスト内でのインデックスを調べる (何体目か)
+        const charIndex = sameMasterChars.findIndex(c => c.id === char.id);
+        
+        // 表示テキストを組み立てる
+        let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
+        if (includeItems) {
+            const itemNames = (char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ');
+            text += ` [${itemNames || 'アイテムなし'}]`;
+        }
+        return text;
+      },
       async updateItems() { if (!this.itemManage.selectedOwnedId) return; this.itemManage.isUpdating = true; try { const newItems = this.itemManage.items.filter(Boolean).map(Number); await db.collection('accounts').doc(this.selectedAccountId).collection('owned_characters').doc(this.itemManage.selectedOwnedId).update({ items: newItems }); const ownedList = this.ownedCharactersData.get(this.selectedAccountId); const charToUpdate = ownedList.find(c => c.id === this.itemManage.selectedOwnedId); if (charToUpdate) charToUpdate.items = newItems; this.$forceUpdate(); alert('アイテムを更新しました。'); } catch(e) { alert('エラーが発生しました: ' + e.message); } finally { this.itemManage.isUpdating = false; } },
       async moveItems() {
         this.itemMove.isMoving = true;
@@ -593,7 +753,159 @@ new Vue({
         }
       },
       async saveMaster() { if (!this.master.name) return alert('キャラクター名は必須です。'); this.master.isSaving = true; try { const newData = { indexNumber: this.master.no ? Number(this.master.no) : 0, monsterName: this.master.name, element: this.master.element || '', type: this.master.type || '恒常', ejectionGacha: this.master.gacha || '' }; await db.collection('character_masters').add(newData); alert('マスターを追加しました。ページをリロードして反映してください。'); location.reload(); } catch(e) { alert('エラー: ' + e.message); } finally { this.master.isSaving = false; } },
-      async updateMaster() { if (!this.editMaster.selectedMasterId || !this.editMaster.name) { alert('キャラクターを選択し、名前を入力してください。'); return; } this.editMaster.isUpdating = true; try { const masterId = this.editMaster.selectedMasterId; const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha, }; await db.collection('character_masters').doc(masterId).update(updatedData); const masterIndex = this.characterMasters.findIndex(m => m.id === masterId); if (masterIndex > -1) { this.$set(this.characterMasters, masterIndex, { ...this.characterMasters[masterIndex], ...updatedData }); } this.ownedCharactersData.forEach(ownedList => { ownedList.forEach(ownedChar => { if (ownedChar.characterMasterId === masterId) { ownedChar.monsterName = updatedData.monsterName; } }); }); this.$forceUpdate(); alert(`${updatedData.monsterName} の情報を更新しました。`); } catch (e) { alert('マスター情報の更新に失敗しました: ' + e.message); console.error(e); } finally { this.editMaster.isUpdating = false; } }
+      async updateMaster() { if (!this.editMaster.selectedMasterId || !this.editMaster.name) { alert('キャラクターを選択し、名前を入力してください。'); return; } this.editMaster.isUpdating = true; try { const masterId = this.editMaster.selectedMasterId; const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha, }; await db.collection('character_masters').doc(masterId).update(updatedData); const masterIndex = this.characterMasters.findIndex(m => m.id === masterId); if (masterIndex > -1) { this.$set(this.characterMasters, masterIndex, { ...this.characterMasters[masterIndex], ...updatedData }); } this.ownedCharactersData.forEach(ownedList => { ownedList.forEach(ownedChar => { if (ownedChar.characterMasterId === masterId) { ownedChar.monsterName = updatedData.monsterName; } }); }); this.$forceUpdate(); alert(`${updatedData.monsterName} の情報を更新しました。`); } catch (e) { alert('マスター情報の更新に失敗しました: ' + e.message); console.error(e); } finally { this.editMaster.isUpdating = false; } },
+
+      getCharactersForSlot(slot) {
+        if (!slot.selectedAccountId) return [];
+        const allCharsForAccount = (this.ownedCharactersData.get(slot.selectedAccountId) || [])
+          .map(char => {
+            const master = this.characterMasters.find(m => m.id === char.characterMasterId);
+            return {
+              ...char,
+              accountId: slot.selectedAccountId, // accountIdをcharオブジェクトに含める
+              indexNumber: master?.indexNumber || 999999,
+              monsterName: master?.monsterName || char.monsterName
+            };
+          }).sort((a, b) => a.indexNumber - b.indexNumber);
+
+        const lowerSearch = slot.characterSearch.toLowerCase();
+        if (!lowerSearch) {
+          return allCharsForAccount;
+        }
+        return allCharsForAccount.filter(char => char.monsterName && char.monsterName.toLowerCase().includes(lowerSearch));
+      },
+      isCharSelectedInOtherSlot(ownedId, currentIndex) {
+        if (!ownedId) return false;
+        return this.teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId);
+      },
+      getCharactersForSlot(slot) {
+        if (!slot.selectedAccountId) return [];
+        const allCharsForAccount = (this.ownedCharactersData.get(slot.selectedAccountId) || [])
+          .map(char => {
+            const master = this.characterMasters.find(m => m.id === char.characterMasterId);
+            return {
+              ...char,
+              accountId: slot.selectedAccountId,
+              indexNumber: master?.indexNumber || 999999,
+              monsterName: master?.monsterName || char.monsterName
+            };
+          }).sort((a, b) => a.indexNumber - b.indexNumber);
+
+        const lowerSearch = slot.characterSearch.toLowerCase();
+        if (!lowerSearch) return allCharsForAccount;
+        return allCharsForAccount.filter(char => char.monsterName && char.monsterName.toLowerCase().includes(lowerSearch));
+      },
+      isCharSelectedInOtherSlot(ownedId, currentIndex) {
+        if (!ownedId) return false;
+        return this.teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId);
+      },
+      
+      //【新規追加】テーブル表示用の詳細情報を取得するメソッド
+      getTeamSlotDetails(team, slotIndex) {
+        const emptySlot = { characterName: '—', accountName: '—', items: [] };
+        if (!team.characters || !this.dataLoaded || slotIndex >= team.characters.length) {
+          return emptySlot;
+        }
+
+        const charSlot = team.characters[slotIndex];
+        const accountId = charSlot.accountId;
+        const ownedCharacterId = charSlot.ownedCharacterId;
+
+        const account = this.accounts.find(acc => acc.id === accountId);
+        const accountName = account ? account.name : '不明';
+
+        const ownedCharsInAccount = this.ownedCharactersData.get(accountId) || [];
+        const ownedChar = ownedCharsInAccount.find(c => c.id === ownedCharacterId);
+
+        if (!ownedChar) {
+          return { characterName: 'キャラ不明', accountName: accountName, items: [] };
+        }
+
+        const master = this.characterMasters.find(m => m.id === ownedChar.characterMasterId);
+        const characterName = master ? master.monsterName : ownedChar.monsterName;
+
+        const items = (ownedChar.items || [])
+          .map(itemId => this.itemMastersMap.get(Number(itemId)) || `不明ID:${itemId}`)
+          .filter(Boolean);
+
+        return {
+          characterName: characterName,
+          accountName: accountName,
+          items: items,
+        };
+      },
+      selectTeam(team) {
+        this.teamForm.id = team.id;
+        this.teamForm.name = team.name;
+        this.teamForm.type = team.type;
+        this.teamForm.slots = team.characters.map(char => ({
+          selectedAccountId: char.accountId,
+          selectedOwnedId: char.ownedCharacterId,
+          characterSearch: ''
+        }));
+      },
+      resetTeamForm() {
+        this.teamForm = {
+          id: null, name: '', type: '', isSaving: false,
+          slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })),
+        };
+      },
+      async handleSaveTeam() {
+        if (!this.isTeamFormValid) {
+          alert('編成名、タイプを入力し、4体のキャラクターをすべて選択してください。');
+          return;
+        }
+        this.teamForm.isSaving = true;
+
+        const teamData = {
+          userId: this.user.uid,
+          name: this.teamForm.name,
+          type: this.teamForm.type,
+          characters: this.teamForm.slots.map(slot => ({
+            accountId: slot.selectedAccountId,
+            ownedCharacterId: slot.selectedOwnedId
+          })),
+        };
+
+        try {
+          if (this.teamForm.id) { // 更新
+            teamData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('teams').doc(this.teamForm.id).update(teamData);
+            const index = this.teams.findIndex(t => t.id === this.teamForm.id);
+            if (index > -1) {
+              const updatedTeam = { ...this.teams[index], ...teamData };
+              this.$set(this.teams, index, updatedTeam);
+            }
+            alert('編成を更新しました。');
+          } else { // 新規作成
+            teamData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            const docRef = await db.collection('teams').add(teamData);
+            const newTeam = { ...teamData, id: docRef.id, createdAt: { toDate: () => new Date() } }; // ローカル表示用にcreatedAtを仮作成
+            this.teams.unshift(newTeam);
+            this.selectTeam(newTeam);
+            alert('編成を保存しました。');
+          }
+        } catch (error) {
+          console.error('編成の保存に失敗しました:', error);
+          alert('エラーが発生しました: ' + error.message);
+        } finally {
+          this.teamForm.isSaving = false;
+        }
+      },
+      async deleteTeam(teamId) {
+        if (!confirm('この編成を本当に削除しますか？')) return;
+        try {
+          await db.collection('teams').doc(teamId).delete();
+          this.teams = this.teams.filter(t => t.id !== teamId);
+          if (this.teamForm.id === teamId) {
+            this.resetTeamForm();
+          }
+          alert('編成を削除しました。');
+        } catch (error) {
+          console.error('編成の削除に失敗しました:', error);
+          alert('エラーが発生しました: ' + error.message);
+        }
+      },
     }
   });
 
