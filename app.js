@@ -406,6 +406,7 @@ const appTemplate = `
 `;
 
 new Vue({
+  
     el: '#app',
     template: appTemplate,
     data: {
@@ -755,6 +756,70 @@ new Vue({
       async saveMaster() { if (!this.master.name) return alert('キャラクター名は必須です。'); this.master.isSaving = true; try { const newData = { indexNumber: this.master.no ? Number(this.master.no) : 0, monsterName: this.master.name, element: this.master.element || '', type: this.master.type || '恒常', ejectionGacha: this.master.gacha || '' }; await db.collection('character_masters').add(newData); alert('マスターを追加しました。ページをリロードして反映してください。'); location.reload(); } catch(e) { alert('エラー: ' + e.message); } finally { this.master.isSaving = false; } },
       async updateMaster() { if (!this.editMaster.selectedMasterId || !this.editMaster.name) { alert('キャラクターを選択し、名前を入力してください。'); return; } this.editMaster.isUpdating = true; try { const masterId = this.editMaster.selectedMasterId; const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha, }; await db.collection('character_masters').doc(masterId).update(updatedData); const masterIndex = this.characterMasters.findIndex(m => m.id === masterId); if (masterIndex > -1) { this.$set(this.characterMasters, masterIndex, { ...this.characterMasters[masterIndex], ...updatedData }); } this.ownedCharactersData.forEach(ownedList => { ownedList.forEach(ownedChar => { if (ownedChar.characterMasterId === masterId) { ownedChar.monsterName = updatedData.monsterName; } }); }); this.$forceUpdate(); alert(`${updatedData.monsterName} の情報を更新しました。`); } catch (e) { alert('マスター情報の更新に失敗しました: ' + e.message); console.error(e); } finally { this.editMaster.isUpdating = false; } },
 
+      // 【修正】所持キャラ追加メソッドを新規追加
+      async addOwnedCharacter() {
+        // 必須項目が選択されているかチェック
+        if (!this.addChar.selectedMasterId || !this.selectedAccountId) {
+          alert('追加するキャラクターとアカウントを選択してください。');
+          return;
+        }
+
+        // 既に上限（2体）まで所持していないかチェック
+        const currentCount = this.getOwnedCount(this.addChar.selectedMasterId, this.selectedAccountId);
+        if (currentCount >= 2) {
+          alert('このキャラクターは既に2体所持しています。');
+          return;
+        }
+        
+        this.addChar.isAdding = true;
+
+        try {
+          // 追加するキャラクターのマスター情報を取得
+          const master = this.characterMasters.find(m => m.id === this.addChar.selectedMasterId);
+          if (!master) throw new Error('キャラクターのマスター情報が見つかりませんでした。');
+
+          // Firestoreに保存するデータを作成
+          const newOwnedCharData = {
+            characterMasterId: this.addChar.selectedMasterId,
+            monsterName: master.monsterName, // 検索や表示を容易にするため名前も保存
+            items: [], // 初期状態ではアイテムなし
+            createdAt: firebase.firestore.FieldValue.serverTimestamp() // 作成日時を記録
+          };
+
+          // Firestoreの `owned_characters` サブコレクションにドキュメントを追加
+          const docRef = await db.collection('accounts').doc(this.selectedAccountId)
+                                 .collection('owned_characters').add(newOwnedCharData);
+
+          // --- ページをリロードせずにUIに反映させるためのローカルデータ更新 ---
+          const newCharForLocal = { ...newOwnedCharData, id: docRef.id };
+
+          // 1. 全所持キャラクターリスト（ownedCharactersData）を更新
+          if (!this.ownedCharactersData.has(this.selectedAccountId)) {
+            this.ownedCharactersData.set(this.selectedAccountId, []);
+          }
+          this.ownedCharactersData.get(this.selectedAccountId).push(newCharForLocal);
+
+          // 2. 所持数マップ（ownedCountMap）を更新
+          const countKey = `${this.addChar.selectedMasterId}-${this.selectedAccountId}`;
+          const newCount = (this.ownedCountMap.get(countKey) || 0) + 1;
+          this.ownedCountMap.set(countKey, newCount);
+
+          // 3. UIを強制的に再描画して変更を即時反映
+          this.$forceUpdate();
+
+          alert(`「${master.monsterName}」を所持リストに追加しました。`);
+          
+          // 選択状態をリセット
+          this.addChar.selectedMasterId = null;
+
+        } catch (error) {
+          console.error('キャラクターの追加に失敗しました:', error);
+          alert('エラーが発生しました: ' + error.message);
+        } finally {
+          this.addChar.isAdding = false;
+        }
+      },
+      
       getCharactersForSlot(slot) {
         if (!slot.selectedAccountId) return [];
         const allCharsForAccount = (this.ownedCharactersData.get(slot.selectedAccountId) || [])
