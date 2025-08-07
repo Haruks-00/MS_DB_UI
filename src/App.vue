@@ -1,3 +1,4 @@
+// src/App.vue
 <!-- #region COMPONENT: App -->
 <template>
   <!-- #region TEMPLATE -->
@@ -69,22 +70,13 @@
         @delete-team="deleteTeam"
       />
 
-      <div id="tab-add-master" class="tab-content" v-if="activeTab === 'add-master'">
-        <h2>キャラクターマスター新規追加</h2>
-        <div class="form-section">
-          <label>図鑑番号:</label><input type="number" v-model.number="master.no " placeholder="例: 1234">
-          <label>キャラクター名:</label><input type="text" v-model.trim="master.name  " required>
-          <label>属性:</label><input type="text" v-model.trim="master.element">
-          <label>分類:</label><input type="text" v-model.trim="master.type">
-          <label>排出ガチャ (限定の場合):</label>
-          <select v-model="master.gacha">
-            <option value="">(限定ではない/その他)</option>
-            <option v-for="gacha in gachaMasters" :key="gacha.id    " :value="gacha.name    ">{{ gacha.name }}</option>
-          </select>
-          <br><br>
-          <button @click="saveMaster" :disabled="!master.name || master.isSaving">{{ master.isSaving ? '追加中...' : 'マスターリストに新規追加' }}</button>
-        </div>
-      </div>
+      <add-master-character-tab
+        v-if="activeTab === 'add-master'"
+        :gacha-masters="gachaMasters"
+        :is-saving="master.isSaving"
+        @save-master="saveMaster"
+      />
+
       <div id="tab-edit-master" class="tab-content" v-if="activeTab === 'edit-master'">
         <h2>キャラクターマスター編集</h2>
         <div class="form-section">
@@ -121,22 +113,24 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
+import AuthStatus from './components/AuthStatus.vue';
+import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue';
 import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
 import ManageTeamsTab from './components/ManageTeamsTab.vue';
-import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue';
-import AuthStatus from './components/AuthStatus.vue';
+import AddMasterCharacterTab from './components/AddMasterCharacterTab.vue';
 // #endregion
 
 export default {
   // #region COMPONENT_CONFIG
   name: 'App',
   components: {
+    AuthStatus,
+    ViewAllCharactersTab,
     AddOwnedCharacterTab,
     ManageItemsTab,
     ManageTeamsTab,
-    ViewAllCharactersTab,
-    AuthStatus,
+    AddMasterCharacterTab,
   },
   // #endregion
   
@@ -160,7 +154,7 @@ export default {
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
       teamManage: { isSaving: false },
-      master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
+      master: { isSaving: false }, // NOTE: フォームデータは子コンポーネントが持つため、保存状態のみを管理
       editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
     }
   },
@@ -329,14 +323,12 @@ export default {
         alert('編成を削除しました。');
       } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
     },
-    // #endregion
 
-    // #region MASTER_DATA_MANAGEMENT_METHODS
-    async saveMaster() {
-      if (!this.master.name  ) return alert('キャラクター名は必須です。');
+    async saveMaster(masterData) {
+      if (!masterData.name) return alert('キャラクター名は必須です。');
       this.master.isSaving = true;
       try {
-        const newData = { indexNumber: this.master.no   ? Number(this.master.no) : 0, monsterName: this.master.name, element: this.master.element || '', type: this.master.type || '恒常', ejectionGacha: this.master.gacha || '' };
+        const newData = { indexNumber: masterData.no ? Number(masterData.no) : 0, monsterName: masterData.name, element: masterData.element || '', type: masterData.type || '恒常', ejectionGacha: masterData.gacha || '' };
         await databaseService.addCharacterMaster(newData);
         // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスターを追加しました。ページをリロードして反映してください。');
@@ -344,7 +336,9 @@ export default {
       } catch(e) { alert('エラー: ' + e.message); } 
       finally { this.master.isSaving = false; }
     },
-    
+    // #endregion
+
+    // #region MASTER_DATA_MANAGEMENT_METHODS_LEGACY
     async updateMaster() {
       if (!this.editMaster.selectedMasterId || !this.editMaster.name  ) return alert('キャラを選択し名前を入力してください。');
       this.editMaster.isUpdating = true;
