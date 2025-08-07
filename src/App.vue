@@ -76,31 +76,15 @@
         :is-saving="master.isSaving"
         @save-master="saveMaster"
       />
+      
+      <edit-master-character-tab
+        v-if="activeTab === 'edit-master'"
+        :character-masters="characterMasters"
+        :gacha-masters="gachaMasters"
+        :is-updating="editMaster.isUpdating"
+        @update-master="updateMaster"
+      />
 
-      <div id="tab-edit-master" class="tab-content" v-if="activeTab === 'edit-master'">
-        <h2>キャラクターマスター編集</h2>
-        <div class="form-section">
-            <label>キャラクター検索:</label><input type="text" v-model="editMaster.search " placeholder="編集したいキャラクター名で検索">
-            <label>編集するキャラクターを選択:</label>
-            <select v-model="editMaster.selectedMasterId" size="10" style="width:100%">
-              <option v-for="master in editableMasters" :key="master.id  " :value="master.id">[{{ master.indexNumber || '?' }}] {{ master.monsterName }}</option>
-            </select>
-        </div>
-        <div class="form-section" v-if="editMaster.selectedMasterId">
-          <h3>編集フォーム</h3>
-          <label>図鑑番号:</label><input type="number" v-model.number="editMaster.no " placeholder="例: 1234">
-          <label>キャラクター名:</label><input type="text" v-model.trim="editMaster.name " required>
-          <label>属性:</label><input type="text" v-model.trim="editMaster.element">
-          <label>分類:</label><input type="text" v-model.trim="editMaster.type">
-          <label>排出ガチャ (限定の場合):</label>
-          <select v-model="editMaster.gacha">
-            <option value="">(限定ではない/その他)</option>
-            <option v-for="gacha in gachaMasters" :key="gacha.id" :value="gacha.name">{{ gacha.name }}</option>
-          </select>
-          <br><br>
-          <button @click="updateMaster" :disabled="!editMaster.selectedMasterId || editMaster.isUpdating">{{ editMaster.isUpdating ? '更新中...' : 'マスター情報を更新' }}</button>
-        </div>
-      </div>
     </div>
   </div>
   <!-- #endregion -->
@@ -119,6 +103,7 @@ import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
 import ManageTeamsTab from './components/ManageTeamsTab.vue';
 import AddMasterCharacterTab from './components/AddMasterCharacterTab.vue';
+import EditMasterCharacterTab from './components/EditMasterCharacterTab.vue';
 // #endregion
 
 export default {
@@ -131,6 +116,7 @@ export default {
     ManageItemsTab,
     ManageTeamsTab,
     AddMasterCharacterTab,
+    EditMasterCharacterTab,
   },
   // #endregion
   
@@ -154,8 +140,8 @@ export default {
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
       teamManage: { isSaving: false },
-      master: { isSaving: false }, // NOTE: フォームデータは子コンポーネントが持つため、保存状態のみを管理
-      editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
+      master: { isSaving: false },
+      editMaster: { isUpdating: false }, // NOTE: フォームデータは子コンポーネントが持つため、更新状態のみを管理
     }
   },
   // #endregion
@@ -173,20 +159,9 @@ export default {
   // #region COMPUTED_PROPERTIES
   computed: {
     isAccountControlVisible() { return this.activeTab === 'add-owned' || this.activeTab === 'manage-items'; },
-    editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search .toLowerCase(); return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)); },
   },
   // #endregion
 
-  // #region WATCHERS
-  watch: {
-    'editMaster.selectedMasterId'(newId) {
-      if (!newId) { Object.assign(this.editMaster, { name: '', no: '', element: '', type: '', gacha: '' }); return; }
-      const master = this.characterMastersMap.get(newId);
-      if (master) { Object.assign(this.editMaster, { name: master.monsterName, no: master.indexNumber, element: master.element, type: master.type, gacha: master.ejectionGacha }); }
-    },
-  },
-  // #endregion
-  
   // #region METHODS
   methods: {
     // #region AUTHENTICATION_METHODS
@@ -206,7 +181,7 @@ export default {
         // NOTE: 各種マスターデータを取得・整形・キャッシュ
         this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id  }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
         this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
-        this.characterMastersMap = new Map(this.characterMasters.map (m => [m.id , m]));
+        this.characterMastersMap = new Map(this.characterMasters.map(m => [m.id, m]));
         this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
         this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id , item.name ]));
         this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
@@ -325,10 +300,10 @@ export default {
     },
 
     async saveMaster(masterData) {
-      if (!masterData.name) return alert('キャラクター名は必須です。');
+      if (!masterData.name  ) return alert('キャラクター名は必須です。');
       this.master.isSaving = true;
       try {
-        const newData = { indexNumber: masterData.no ? Number(masterData.no) : 0, monsterName: masterData.name, element: masterData.element || '', type: masterData.type || '恒常', ejectionGacha: masterData.gacha || '' };
+        const newData = { indexNumber: masterData.no   ? Number(masterData.no) : 0, monsterName: masterData.name, element: masterData.element || '', type: masterData.type || '恒常', ejectionGacha: masterData.gacha || '' };
         await databaseService.addCharacterMaster(newData);
         // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスターを追加しました。ページをリロードして反映してください。');
@@ -336,15 +311,19 @@ export default {
       } catch(e) { alert('エラー: ' + e.message); } 
       finally { this.master.isSaving = false; }
     },
-    // #endregion
-
-    // #region MASTER_DATA_MANAGEMENT_METHODS_LEGACY
-    async updateMaster() {
-      if (!this.editMaster.selectedMasterId || !this.editMaster.name  ) return alert('キャラを選択し名前を入力してください。');
+    
+    async updateMaster(editMasterData) {
+      if (!editMasterData.selectedMasterId || !editMasterData.name  ) return alert('キャラを選択し名前を入力してください。');
       this.editMaster.isUpdating = true;
       try {
-        const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no   ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha };
-        await databaseService.updateCharacterMaster(this.editMaster.selectedMasterId, updatedData);
+        const updatedData = {
+          monsterName: editMasterData.name,
+          indexNumber: editMasterData.no   ? Number(editMasterData.no) : 0,
+          element: editMasterData.element,
+          type: editMasterData.type,
+          ejectionGacha: editMasterData.gacha
+        };
+        await databaseService.updateCharacterMaster(editMasterData.selectedMasterId, updatedData);
         // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスター情報を更新しました。ページをリロードしてください。');
         location.reload();
