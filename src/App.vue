@@ -1,7 +1,4 @@
-// src/App.vue
-<!-- #region COMPONENT: App -->
 <template>
-  <!-- #region TEMPLATE -->
   <div id="app-root" class="container" v-cloak>
     <div class="main-header">
       <h1>キャラクター管理</h1>
@@ -16,12 +13,12 @@
         <button class="tab-btn" :class="{ active: activeTab === 'add-master' }" @click="activeTab = 'add-master'">マスター追加</button>
         <button class="tab-btn" :class="{ active: activeTab === 'edit-master' }" @click="activeTab = 'edit-master'">マスター編集</button>
       </div>
-      <div id="account-controls" v-show="isAccountControlVisible">
-        <label for="account-selector">管理対象アカウント:</label>
-        <select id="account-selector" v-model="selectedAccountId">
-          <option v-for="account in accounts" :key="account.id    " :value="account.id">{{ account.name  }}</option>
-        </select>
-      </div>
+      
+      <account-selector
+        :accounts="accounts"
+        v-model="selectedAccountId"
+        :visible="isAccountControlVisible"
+      />
       
       <view-all-characters-tab
         v-if="activeTab === 'view-all'"
@@ -87,30 +84,27 @@
 
     </div>
   </div>
-  <!-- #endregion -->
 </template>
 
 <script>
-// #region SCRIPT
-// #region IMPORTS
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
 import AuthStatus from './components/AuthStatus.vue';
+import AccountSelector from './components/AccountSelector.vue';
 import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue';
 import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
 import ManageTeamsTab from './components/ManageTeamsTab.vue';
 import AddMasterCharacterTab from './components/AddMasterCharacterTab.vue';
 import EditMasterCharacterTab from './components/EditMasterCharacterTab.vue';
-// #endregion
 
 export default {
-  // #region COMPONENT_CONFIG
   name: 'App',
   components: {
     AuthStatus,
+    AccountSelector,
     ViewAllCharactersTab,
     AddOwnedCharacterTab,
     ManageItemsTab,
@@ -118,9 +112,7 @@ export default {
     AddMasterCharacterTab,
     EditMasterCharacterTab,
   },
-  // #endregion
   
-  // #region STATE_MANAGEMENT
   data() {
     return {
       // INFO: 全体的なアプリケーション状態
@@ -141,12 +133,10 @@ export default {
       itemMove: { isMoving: false },
       teamManage: { isSaving: false },
       master: { isSaving: false },
-      editMaster: { isUpdating: false }, // NOTE: フォームデータは子コンポーネントが持つため、更新状態のみを管理
+      editMaster: { isUpdating: false },
     }
   },
-  // #endregion
 
-  // #region LIFECYCLE_HOOKS
   created() {
     authService.onAuthStateChanged(user => {
       this.user = user;
@@ -154,22 +144,15 @@ export default {
       if (user) { this.loadInitialData(); } else { this.resetLoadedData(); }
     });
   },
-  // #endregion
 
-  // #region COMPUTED_PROPERTIES
   computed: {
     isAccountControlVisible() { return this.activeTab === 'add-owned' || this.activeTab === 'manage-items'; },
   },
-  // #endregion
 
-  // #region METHODS
   methods: {
-    // #region AUTHENTICATION_METHODS
     handleLogin() { authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。")); },
     handleLogout() { authService.logout(); },
-    // #endregion
 
-    // #region DATA_HANDLING_METHODS
     resetLoadedData() { Object.assign(this, { dataLoaded: false, accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [], itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(), selectedAccountId: null }); },
     async loadInitialData() {
       if (this.dataLoaded) return;
@@ -179,9 +162,9 @@ export default {
         const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await databaseService.loadInitialDataRaw(this.user.uid);
         
         // NOTE: 各種マスターデータを取得・整形・キャッシュ
-        this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id  }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
+        this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id    }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
         this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
-        this.characterMastersMap = new Map(this.characterMasters.map(m => [m.id, m]));
+        this.characterMastersMap = new Map(this.characterMasters.map (m => [m.id , m]));
         this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
         this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id , item.name ]));
         this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
@@ -207,9 +190,7 @@ export default {
         console.log("初期データの読み込み完了");
       } catch (e) { console.error("データ読み込みエラー:", e); alert(`データ読み込みエラー: ${e.message}`); }
     },
-    // #endregion
 
-    // #region CHILD_COMPONENT_HANDLERS
     getOwnedCount(masterId, accountId) { return this.ownedCountMap.get(`${masterId}-${accountId}`) || 0; },
     
     async addOwnedCharacter(masterId) {
@@ -305,7 +286,6 @@ export default {
       try {
         const newData = { indexNumber: masterData.no   ? Number(masterData.no) : 0, monsterName: masterData.name, element: masterData.element || '', type: masterData.type || '恒常', ejectionGacha: masterData.gacha || '' };
         await databaseService.addCharacterMaster(newData);
-        // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスターを追加しました。ページをリロードして反映してください。');
         location.reload();
       } catch(e) { alert('エラー: ' + e.message); } 
@@ -324,28 +304,21 @@ export default {
           ejectionGacha: editMasterData.gacha
         };
         await databaseService.updateCharacterMaster(editMasterData.selectedMasterId, updatedData);
-        // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスター情報を更新しました。ページをリロードしてください。');
         location.reload();
       } catch (e) { alert('更新に失敗: ' + e.message); } 
       finally { this.editMaster.isUpdating = false; }
     },
-    // #endregion
   },
-  // #endregion
 }
-// #endregion
 </script>
 
 <style>
-/* #region STYLES */
 body { font-family: 'Segoe UI', Meiryo, sans-serif; padding: 20px; background-color: #f4f7f9; color: #333; }
 .container { max-width: 95%; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 h1, h2, h3 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; color: #1a237e; }
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
 .main-header h1 { margin: 0; border-bottom: none; padding-bottom: 0; }
-/* INFO: #auth-containerのスタイルはAuthStatus.vueに移動したため、App.vueからは削除 */
-#account-controls { margin-bottom: 20px; padding: 15px; background-color: #e8eaf6; border-radius: 5px; margin-top: -20px; border-top-left-radius: 0; border-top-right-radius: 0; border: 1px solid #ccc; border-top: none; }
 .tab-nav { margin-bottom: 20px; }
 .tab-nav button { padding: 10px 15px; margin-right: 5px; border: 1px solid #ccc; background-color: #f8f8f8; cursor: pointer; font-size: 16px; border-radius: 5px 5px 0 0; }
 .tab-nav button.active { background-color: #1a237e; color: white; border-bottom: 1px solid #1a237e; }
@@ -399,6 +372,4 @@ td.element-闇 { background-color: #f3e5f5; }
 .delete-btn-small { position: absolute; top: 50%; right: 0; transform: translateY(-50%); padding: 4px 8px; font-size: 12px; background-color: #f44336; }
 .delete-btn-small:hover { background-color: #d32f2f; }
 .save-button { width: 100%; padding: 15px; font-size: 18px; }
-/* #endregion */
 </style>
-<!-- #endregion -->
