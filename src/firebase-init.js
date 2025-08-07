@@ -1,3 +1,4 @@
+// src/firebase-init.js
 const firebaseConfig = {
   apiKey: "AIzaSyArnrHZPft_F6a-5sNUxQNViFddzshIlEo",
   authDomain: "msdatabase-e2d25.firebaseapp.com",
@@ -10,3 +11,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+
+// @temp: ADDED - 他のモジュールからdbとauthをインポートできるようにする
+export { db, auth };
