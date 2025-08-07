@@ -1,0 +1,27 @@
+{
+  "name": "ms_db_ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Haruks-00/MS_DB_UI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Haruks-00/MS_DB_UI/issues"
+  },
+  "homepage": "https://github.com/Haruks-00/MS_DB_UI#readme",
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.3.3",
+    "firebase": "^9.6.1",
+    "vite": "^5.4.19",
+    "vue": "^2.7.16"
+  }
+}
