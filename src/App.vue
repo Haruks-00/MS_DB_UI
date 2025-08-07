@@ -28,7 +28,7 @@
       <div id="account-controls" v-show="isAccountControlVisible">
         <label for="account-selector">管理対象アカウント:</label>
         <select id="account-selector" v-model="selectedAccountId">
-          <option v-for="account in accounts" :key="account.id            " :value="account.id">{{ account.name     }}</option>
+          <option v-for="account in accounts" :key="account.id      " :value="account.id">{{ account.name   }}</option>
         </select>
       </div>
       <div id="tab-view-all" class="tab-content" v-if="activeTab === 'view-all'">
@@ -49,7 +49,7 @@
             <label>アイテム名:</label>
             <select v-model="filters.itemSearch">
               <option value="">すべて</option>
-              <option v-for="item in itemMasters" :key="item.id                                  " :value="item.id">{{ item.name             }}</option>
+              <option v-for="item in itemMasters" :key="item.id" :value="item.id">{{ item.name }}</option>
             </select>
           </div>
           <div>
@@ -64,7 +64,7 @@
             <label>排出ガチャ:</label>
             <select v-model="filters.gachaSearch">
               <option value="">すべて</option>
-              <option v-for="gacha in gachaMasters" :key="gacha.id          " :value="gacha.name            ">{{ gacha.name }}</option>
+              <option v-for="gacha in gachaMasters" :key="gacha.id     " :value="gacha.name      ">{{ gacha.name }}</option>
             </select>
           </div>
           <div>
@@ -110,7 +110,7 @@
                 <th rowspan="2" v-show="showExtraColumns">属性</th>
                 <th rowspan="2" v-show="showExtraColumns">分類</th>
                 <th rowspan="2" v-show="showExtraColumns">排出ガチャ</th>
-                <th v-for="acc in accounts" :key="acc.id                                          " colspan="2">{{ acc.name     }}</th>
+                <th v-for="acc in accounts" :key="acc.id              " colspan="2">{{ acc.name   }}</th>
               </tr>
               <tr>
                 <template v-for="acc in accounts"><th :key="acc.id + '-1'">1</th><th :key="acc.id + '-2'">2</th></template>
@@ -123,7 +123,7 @@
               <tr v-else-if="filteredMasters.length === 0">
                 <td :colspan="2 + (showExtraColumns ? 3 : 0) + accounts.length * 2">該当するキャラクターがいません</td>
               </tr>
-              <tr v-for="master in filteredMasters" :key="master.id                ">
+              <tr v-for="master in filteredMasters" :key="master.id            ">
                 <td>{{ master.indexNumber || '—' }}</td>
                 <td>{{ master.monsterName || '—' }}</td>
                 <td v-show="showExtraColumns" :class="'element-' + (master.element || '').toLowerCase()">{{ master.element || '—' }}</td>
@@ -139,7 +139,6 @@
         </div>
       </div>
       
-      <!-- INFO: ここで新しいコンポーネントを使用 -->
       <add-owned-character-tab 
         v-if="activeTab === 'add-owned'"
         :character-masters="characterMasters"
@@ -149,79 +148,19 @@
         @add-character="addOwnedCharacter"
       />
 
-      <div id="tab-manage-items" class="tab-content" v-if="activeTab === 'manage-items'">
-        <h2>アイテム管理</h2>
-        <div class="form-section">
-          <h3>所持キャラクターのアイテムを変更</h3>
-          <label>キャラクター検索:</label>
-          <input type="text" v-model="itemManage.search  " placeholder="キャラクター名で検索">
-          <label for="item-char-selector">キャラクター選択:</label>
-          <select id="item-char-selector" v-model="itemManage.selectedOwnedId" size="10" style="width:100%">
-            <option v-for="char in itemManageableCharacters" :key="char.id                          " :value="char.id">
-              {{ formatOwnedCharDisplayName(char, true) }}
-            </option>
-          </select>
-          <label>アイテム (最大3つまで):</label>
-          <div class="item-select-container">
-            <select v-model="itemManage.items[0]">
-              <option value="">(アイテムなし)</option>
-              <option v-for="item in itemMasters" :key="item.id" :value="item.id">[{{ item.id }}] {{ item.name }}</option>
-            </select>
-            <select v-model="itemManage.items[1]">
-              <option value="">(アイテムなし)</option>
-              <option v-for="item in itemMasters" :key="item.id" :value="item.id">[{{ item.id }}] {{ item.name }}</option>
-            </select>
-            <select v-model="itemManage.items[2]">
-              <option value="">(アイテムなし)</option>
-              <option v-for="item in itemMasters" :key="item.id" :value="item.id">[{{ item.id }}] {{ item.name }}</option>
-            </select>
-          </div>
-          <br>
-          <button @click="updateItems" :disabled="!itemManage.selectedOwnedId || itemManage.isUpdating">
-            {{ itemManage.isUpdating ? '更新中...' : 'アイテムを更新' }}
-          </button>
-        </div>
-        <div class="form-section">
-          <h3>キャラクター間でアイテムを移動</h3>
-          <div style="display: flex; gap: 20px;">
-            <div style="flex: 1;">
-              <label>移動元キャラクター検索:</label>
-              <input type="text" v-model="itemMove.from.search  " placeholder="移動元の名前で検索">
-              <label>移動元キャラクター選択:</label>
-              <select v-model="itemMove.from.selectedId" size="8" style="width:100%;">
-                <option v-for="char in itemMoveFromCharacters" :key="char.id" :value="char.id">
-                  {{ formatOwnedCharDisplayName(char, true) }}
-                </option>
-              </select>
-            </div>
-            <div style="flex: 1;">
-              <label>移動するアイテムを選択:</label>
-              <div id="items-to-move-container" style="height: 180px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #fff; margin-top: 5px;">
-                <div v-if="!itemMove.from.selectedId"><small>移動元キャラクターを選択してください。</small></div>
-                <div v-else-if="!movableItems.length"><small>移動できるアイテムがありません。</small></div>
-                <div v-for="item in movableItems" :key="item.id">
-                  <input type="checkbox" :id="'item-move-' + item.id" :value="item.id" v-model="itemMove.selectedItemIds">
-                  <label :for="'item-move-' + item.id">{{ item.name }}</label>
-                </div>
-              </div>
-            </div>
-            <div style="flex: 1;">
-              <label>移動先キャラクター検索:</label>
-              <input type="text" v-model="itemMove.to     .search " placeholder="移動先の名前で検索">
-              <label>移動先キャラクター選択:</label>
-              <select v-model="itemMove.to.selectedId" size="8" style="width:100%;">
-                <option v-for="char in itemMoveToCharacters" :key="char.id" :value="char.id">
-                  {{ formatOwnedCharDisplayName(char, true) }}
-                </option>
-              </select>
-            </div>
-          </div>
-          <br>
-          <button @click="moveItems" :disabled="!itemMove.from.selectedId || !itemMove.to.selectedId || itemMove.selectedItemIds.length === 0 || itemMove.isMoving">
-            {{ itemMove.isMoving ? '移動中...' : '選択したアイテムを移動' }}
-          </button>
-        </div>
-      </div>
+      <manage-items-tab
+        v-if="activeTab === 'manage-items'"
+        :selected-account-id="selectedAccountId"
+        :owned-characters-data="ownedCharactersData"
+        :character-masters-map="characterMastersMap"
+        :item-masters="itemMasters"
+        :item-masters-map="itemMastersMap"
+        :is-updating="itemManage.isUpdating"
+        :is-moving="itemMove.isMoving"
+        @update-items="updateItems"
+        @move-items="moveItems"
+      />
+      
       <div id="tab-manage-teams" class="tab-content" v-if="activeTab === 'manage-teams'">
         <h2>編成管理</h2>
         <div class="team-management-container">
@@ -237,9 +176,9 @@
             <ul class="team-list">
               <li v-if="!dataLoaded">データを読み込んでいます...</li>
               <li v-else-if="filteredTeams.length === 0">該当する編成がありません。</li>
-              <li v-for="team in filteredTeams" :key="team.id        " @click="selectTeam(team)" :class="{ active: teamForm.id       === team.id }">
+              <li v-for="team in filteredTeams" :key="team.id    " @click="selectTeam(team)" :class="{ active: teamForm.id    === team.id }">
                 <div class="team-list-item-header">
-                  <strong>{{ team.name     }}</strong>
+                  <strong>{{ team.name   }}</strong>
                   <span>({{ team.type }})</span>
                   <button class="delete-btn-small" @click.stop="deleteTeam(team.id)">削除</button>
                 </div>
@@ -259,7 +198,7 @@
             <button @click="resetTeamForm" style="margin-bottom: 15px;">新規作成フォームを開く</button>
             <div class="form-section">
               <label>編成名:</label>
-              <input type="text" v-model.trim="teamForm.name  " placeholder="例: 天魔の孤城 第1の間">
+              <input type="text" v-model.trim="teamForm.name " placeholder="例: 天魔の孤城 第1の間">
               <label>タイプ:</label>
               <select v-model="teamForm.type">
                 <option disabled value="">タイプを選択</option>
@@ -293,8 +232,8 @@
       <div id="tab-add-master" class="tab-content" v-if="activeTab === 'add-master'">
         <h2>キャラクターマスター新規追加</h2>
         <div class="form-section">
-          <label>図鑑番号:</label><input type="number" v-model.number="master.no  " placeholder="例: 1234">
-          <label>キャラクター名:</label><input type="text" v-model.trim="master.name    " required>
+          <label>図鑑番号:</label><input type="number" v-model.number="master.no " placeholder="例: 1234">
+          <label>キャラクター名:</label><input type="text" v-model.trim="master.name  " required>
           <label>属性:</label><input type="text" v-model.trim="master.element">
           <label>分類:</label><input type="text" v-model.trim="master.type">
           <label>排出ガチャ (限定の場合):</label>
@@ -309,7 +248,7 @@
       <div id="tab-edit-master" class="tab-content" v-if="activeTab === 'edit-master'">
         <h2>キャラクターマスター編集</h2>
         <div class="form-section">
-            <label>キャラクター検索:</label><input type="text" v-model="editMaster.search  " placeholder="編集したいキャラクター名で検索">
+            <label>キャラクター検索:</label><input type="text" v-model="editMaster.search " placeholder="編集したいキャラクター名で検索">
             <label>編集するキャラクターを選択:</label>
             <select v-model="editMaster.selectedMasterId" size="10" style="width:100%">
               <option v-for="master in editableMasters" :key="master.id" :value="master.id">[{{ master.indexNumber || '?' }}] {{ master.monsterName }}</option>
@@ -317,8 +256,8 @@
         </div>
         <div class="form-section" v-if="editMaster.selectedMasterId">
           <h3>編集フォーム</h3>
-          <label>図鑑番号:</label><input type="number" v-model.number="editMaster.no  " placeholder="例: 1234">
-          <label>キャラクター名:</label><input type="text" v-model.trim="editMaster.name  " required>
+          <label>図鑑番号:</label><input type="number" v-model.number="editMaster.no " placeholder="例: 1234">
+          <label>キャラクター名:</label><input type="text" v-model.trim="editMaster.name " required>
           <label>属性:</label><input type="text" v-model.trim="editMaster.element">
           <label>分類:</label><input type="text" v-model.trim="editMaster.type">
           <label>排出ガチャ (限定の場合):</label>
@@ -339,17 +278,19 @@
 // #region SCRIPT
 // #region IMPORTS
 import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';        
+import 'firebase/compat/firestore';
 import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
-import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue'; // NOTE: 新規コンポーネントをインポート
+import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
+import ManageItemsTab from './components/ManageItemsTab.vue';
 // #endregion
 
 export default {
   // #region COMPONENT_CONFIG
   name: 'App',
   components: {
-    AddOwnedCharacterTab, // NOTE: コンポーネントを登録
+    AddOwnedCharacterTab,
+    ManageItemsTab,
   },
   // #endregion
   
@@ -361,12 +302,12 @@ export default {
       itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(),
       activeTab: 'view-all', showExtraColumns: false, selectedAccountId: null,
       filters: { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' },
-      
-      // NOTE: addCharは非同期処理の状態管理のみに責務を縮小
       addChar: { isAdding: false },
+      
+      // NOTE: itemManageとitemMoveは非同期状態の管理のみ
+      itemManage: { isUpdating: false },
+      itemMove: { isMoving: false },
 
-      itemManage: { search: '', selectedOwnedId: null, items: ["", "", ""], isUpdating: false },
-      itemMove: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [], isMoving: false },
       master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
       editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
       teamTypes: ['禁忌', '天魔', '庭園', '轟絶', '黎絶'], teamFilters: { type: '' },
@@ -425,21 +366,6 @@ export default {
         return true;
       });
     },
-    
-    // NOTE: `addableCharacters` は子コンポーネントに移動しました
-
-    currentOwnedCharacters() {
-      if (!this.selectedAccountId || !this.dataLoaded) return [];
-      const ownedList = this.ownedCharactersData.get(this.selectedAccountId) || [];
-      return ownedList.map  (char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
-      }).sort((a, b) => a.indexNumber - b.indexNumber);
-    },
-    itemManageableCharacters() { const lowerSearch = this.itemManage.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => !lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)); },
-    itemMoveFromCharacters() { const lowerSearch = this.itemMove.from.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.itemMove.to  .selectedId); },
-    itemMoveToCharacters() { const lowerSearch = this.itemMove.to.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.itemMove.from.selectedId); },
-    movableItems() { if (!this.itemMove.from.selectedId) return []; const fromChar = this.currentOwnedCharacters.find(c => c.id === this.itemMove.from.selectedId); if (!fromChar || !fromChar.items) return []; return fromChar.items.map (itemId => ({ id: Number(itemId), name: this.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` })); },
     editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search .toLowerCase(); return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)); },
     filteredTeams() { return !this.teamFilters.type ? this.teams : this.teams.filter(team => team.type === this.teamFilters.type); },
     isTeamFormValid() { return this.teamForm.name   && this.teamForm.type && this.teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId); },
@@ -448,22 +374,6 @@ export default {
 
   // #region WATCHERS
   watch: {
-    'itemManage.selectedOwnedId'(newId) {
-      if (!newId) { this.itemManage.items = ["", "", ""]; return; }
-      const character = this.currentOwnedCharacters.find(c => c.id === newId);
-      if (character && character.items) {
-        const itemIds = character.items.map (String);
-        this.itemManage.items = [ itemIds[0] || "", itemIds[1] || "", itemIds[2] || "" ];
-      } else { this.itemManage.items = ["", "", ""]; }
-    },
-    'itemMove.from.selectedId'() { this.itemMove.selectedItemIds = []; },
-    selectedAccountId() {
-      // NOTE: 子コンポーネントが自身の状態をリセットするため、App.vue側のリセット処理は不要
-      // this.addChar.selectedMasterId = null;
-      this.itemManage.selectedOwnedId = null;
-      this.itemMove.from.selectedId = null;
-      this.itemMove.to.selectedId = null;
-    },
     'editMaster.selectedMasterId'(newId) {
       if (!newId) { Object.assign(this.editMaster, { name: '', no: '', element: '', type: '', gacha: '' }); return; }
       const master = this.characterMastersMap.get(newId);
@@ -528,12 +438,6 @@ export default {
       if (includeItems) { text += ` [${(char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ') || 'アイテムなし'}]`; }
       return text;
     },
-    
-    /**
-     * [概要] 所持キャラクターを追加する。
-     * @param {string} masterId - 追加するキャラクターのマスターID。子コンポーネントから受け取る。
-     * @note データベースへの書き込みとローカル状態の更新を行う。
-     */
     async addOwnedCharacter(masterId) {
       if (!masterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
       if (this.getOwnedCount(masterId, this.selectedAccountId) >= 2) return alert('このキャラは既に2体所持しています。');
@@ -541,25 +445,16 @@ export default {
       try {
         const master = this.characterMastersMap.get(masterId);
         if (!master) throw new Error('キャラのマスター情報が見つかりません。');
-        
-        // HACK: firebase.firestore.FieldValue.serverTimestamp()はローカルでの即時反映が難しいため、
-        //       クライアント側では new Date() で代用し、UIに素早く反映させる。
         const newOwnedCharData = { characterMasterId: masterId, monsterName: master.monsterName, items: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() };
         const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
-        
-        // INFO: ローカルの状態を即時更新してUIに反映
         const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() }};
         if (!this.ownedCharactersData.has(this.selectedAccountId)) {
           this.$set(this.ownedCharactersData, this.selectedAccountId, []);
         }
         this.ownedCharactersData.get(this.selectedAccountId).push(newLocalChar);
-        
         const countKey = `${masterId}-${this.selectedAccountId}`;
         this.$set(this.ownedCountMap, countKey, (this.ownedCountMap.get(countKey) || 0) + 1);
-
         alert(`「${master.monsterName}」を所持リストに追加しました。`);
-        
-        // INFO: 子コンポーネントの選択をリセットするため、ここでは何もしない（子は自身のwatchでリセットされる）
       } catch (error) { 
         console.error('キャラ追加失敗:', error); 
         alert('エラー: ' + error.message); 
@@ -567,37 +462,53 @@ export default {
         this.addChar.isAdding = false; 
       }
     },
-    async updateItems() {
-      if (!this.itemManage.selectedOwnedId) return;
+    async updateItems({ ownedCharacterId, items }) {
+      if (!ownedCharacterId) return;
       this.itemManage.isUpdating = true;
       try {
-        const newItems = this.itemManage.items.filter(Boolean).map(Number);
-        await databaseService.updateCharacterItems(this.selectedAccountId, this.itemManage.selectedOwnedId, newItems);
-        const charToUpdate = this.currentOwnedCharacters.find(c => c.id === this.itemManage.selectedOwnedId);
-        if (charToUpdate) charToUpdate.items = newItems;
+        await databaseService.updateCharacterItems(this.selectedAccountId, ownedCharacterId, items);
+        // INFO: ローカルデータの更新
+        const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
+        const charToUpdate = accountChars.find(c => c.id === ownedCharacterId);
+        if (charToUpdate) {
+          this.$set(charToUpdate, 'items', items);
+        }
         alert('アイテムを更新しました。');
-      } catch(e) { alert('エラー: ' + e.message); } 
-      finally { this.itemManage.isUpdating = false; }
+      } catch(e) { 
+        alert('エラー: ' + e.message); 
+      } finally { 
+        this.itemManage.isUpdating = false; 
+      }
     },
-    async moveItems() {
+    async moveItems({ from, to, selectedItemIds }) {
       this.itemMove.isMoving = true;
-      const { from, to, selectedItemIds } = this.itemMove;
       try {
-        if (from.selectedId === to.selectedId || !from.selectedId || !to.selectedId) throw new Error('有効な移動元と移動先を選択してください。');
+        if (from.id     === to.id     || !from.id || !to.id) throw new Error('有効な移動元と移動先を選択してください。');
         if (selectedItemIds.length === 0) throw new Error('移動するアイテムを選択してください。');
-        const fromChar = this.currentOwnedCharacters.find(c => c.id === from.selectedId);
-        const toChar = this.currentOwnedCharacters.find(c => c.id === to.selectedId);
+        
+        const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
+        const fromChar = accountChars.find(c => c.id === from.id);
+        const toChar = accountChars.find(c => c.id === to.id);
+        if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
+
         const numericIds = selectedItemIds.map (Number);
         if ((toChar.items?.length || 0) + numericIds.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
+        
         const newFromItems = (fromChar.items || []).map(Number).filter(id => !numericIds.includes(id));
         const newToItems = [...(toChar.items || []).map(Number), ...numericIds];
-        await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.selectedId, items: newFromItems }, { id: to.selectedId, items: newToItems });
-        fromChar.items = newFromItems;
-        toChar.items = newToItems;
-        this.itemMove.selectedItemIds = [];
+        
+        await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.id, items: newFromItems }, { id: to.id, items: newToItems });
+        
+        // INFO: ローカルデータの更新
+        this.$set(fromChar, 'items', newFromItems);
+        this.$set(toChar, 'items', newToItems);
+
         alert('アイテムを移動しました。');
-      } catch (e) { alert(`エラー: ${e.message}`); } 
-      finally { this.itemMove.isMoving = false; }
+      } catch (e) { 
+        alert(`エラー: ${e.message}`); 
+      } finally { 
+        this.itemMove.isMoving = false; 
+      }
     },
     async saveMaster() {
       if (!this.master.name  ) return alert('キャラクター名は必須です。');
