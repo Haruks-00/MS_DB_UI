@@ -49,7 +49,7 @@
             <label>アイテム名:</label>
             <select v-model="filters.itemSearch">
               <option value="">すべて</option>
-              <option v-for="item in itemMasters" :key="item.id" :value="item.id">{{ item.name }}</option>
+              <option v-for="item in itemMasters" :key="item.id   " :value="item.id">{{ item.name   }}</option>
             </select>
           </div>
           <div>
@@ -110,7 +110,7 @@
                 <th rowspan="2" v-show="showExtraColumns">属性</th>
                 <th rowspan="2" v-show="showExtraColumns">分類</th>
                 <th rowspan="2" v-show="showExtraColumns">排出ガチャ</th>
-                <th v-for="acc in accounts" :key="acc.id              " colspan="2">{{ acc.name   }}</th>
+                <th v-for="acc in accounts" :key="acc.id" colspan="2">{{ acc.name }}</th>
               </tr>
               <tr>
                 <template v-for="acc in accounts"><th :key="acc.id + '-1'">1</th><th :key="acc.id + '-2'">2</th></template>
@@ -161,74 +161,19 @@
         @move-items="moveItems"
       />
       
-      <div id="tab-manage-teams" class="tab-content" v-if="activeTab === 'manage-teams'">
-        <h2>編成管理</h2>
-        <div class="team-management-container">
-          <div class="team-list-panel">
-            <h3>編成一覧</h3>
-            <div class="form-section" style="padding: 0;">
-              <label>タイプで絞り込み:</label>
-              <select v-model="teamFilters.type" style="width: 100%;">
-                <option value="">すべて</option>
-                <option v-for="type in teamTypes" :key="type" :value="type">{{ type }}</option>
-              </select>
-            </div>
-            <ul class="team-list">
-              <li v-if="!dataLoaded">データを読み込んでいます...</li>
-              <li v-else-if="filteredTeams.length === 0">該当する編成がありません。</li>
-              <li v-for="team in filteredTeams" :key="team.id    " @click="selectTeam(team)" :class="{ active: teamForm.id    === team.id }">
-                <div class="team-list-item-header">
-                  <strong>{{ team.name   }}</strong>
-                  <span>({{ team.type }})</span>
-                  <button class="delete-btn-small" @click.stop="deleteTeam(team.id)">削除</button>
-                </div>
-                <table class="team-detail-table">
-                  <thead><tr><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
-                  <tbody>
-                    <tr><td v-for="(_, index) in Array(4)" :key="index" :title="getTeamSlotDetails(team, index).characterName">{{ getTeamSlotDetails(team, index).characterName }}</td></tr>
-                    <tr><td v-for="(_, index) in Array(4)" :key="index">{{ getTeamSlotDetails(team, index).accountName }}</td></tr>
-                    <tr v-for="itemIndex in 3" :key="itemIndex"><td v-for="(_, slotIndex) in Array(4)" :key="slotIndex" :title="getTeamSlotDetails(team, slotIndex).items[itemIndex - 1]">{{ getTeamSlotDetails(team, slotIndex).items[itemIndex - 1] || '—' }}</td></tr>
-                  </tbody>
-                </table>
-              </li>
-            </ul>
-          </div>
-          <div class="team-form-panel">
-            <h3>{{ teamForm.id ? '編成編集' : '新規編成作成' }}</h3>
-            <button @click="resetTeamForm" style="margin-bottom: 15px;">新規作成フォームを開く</button>
-            <div class="form-section">
-              <label>編成名:</label>
-              <input type="text" v-model.trim="teamForm.name " placeholder="例: 天魔の孤城 第1の間">
-              <label>タイプ:</label>
-              <select v-model="teamForm.type">
-                <option disabled value="">タイプを選択</option>
-                <option v-for="type in teamTypes" :key="type" :value="type">{{ type }}</option>
-              </select>
-            </div>
-            <h4>キャラクター編成 (4体)</h4>
-            <div class="team-slots-container">
-              <div v-for="(slot, index) in teamForm.slots" :key="index" class="team-slot">
-                <h5>スロット {{ index + 1 }}</h5>
-                <label>アカウント:</label>
-                <select v-model="slot.selectedAccountId">
-                  <option value="" disabled>アカウント選択</option>
-                  <option v-for="acc in accounts" :key="acc.id" :value="acc.id">{{ acc.name }}</option>
-                </select>
-                <label>キャラクター:</label>
-                <input type="text" v-model="slot.characterSearch" placeholder="キャラ名で検索">
-                <select v-model="slot.selectedOwnedId" size="5" style="width: 100%;">
-                  <option v-if="!slot.selectedAccountId" value="">先にアカウントを選択</option>
-                  <option v-for="char in getCharactersForSlot(slot)" :key="char.id" :value="char.id" :disabled="isCharSelectedInOtherSlot(char.id, index)">
-                    {{ formatOwnedCharDisplayName(char, true) }} {{ isCharSelectedInOtherSlot(char.id, index) ? '(選択済)' : '' }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <br>
-            <button @click="handleSaveTeam" :disabled="!isTeamFormValid || teamForm.isSaving" class="save-button">{{ teamForm.isSaving ? '保存中...' : (teamForm.id ? '編成を更新' : '編成を保存') }}</button>
-          </div>
-        </div>
-      </div>
+      <manage-teams-tab
+        v-if="activeTab === 'manage-teams'"
+        :data-loaded="dataLoaded"
+        :teams="teams"
+        :accounts="accounts"
+        :owned-characters-data="ownedCharactersData"
+        :character-masters-map="characterMastersMap"
+        :item-masters-map="itemMastersMap"
+        :is-saving="teamManage.isSaving"
+        @save-team="handleSaveTeam"
+        @delete-team="deleteTeam"
+      />
+
       <div id="tab-add-master" class="tab-content" v-if="activeTab === 'add-master'">
         <h2>キャラクターマスター新規追加</h2>
         <div class="form-section">
@@ -283,6 +228,7 @@ import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
 import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
+import ManageTeamsTab from './components/ManageTeamsTab.vue';
 // #endregion
 
 export default {
@@ -291,6 +237,7 @@ export default {
   components: {
     AddOwnedCharacterTab,
     ManageItemsTab,
+    ManageTeamsTab,
   },
   // #endregion
   
@@ -303,15 +250,11 @@ export default {
       activeTab: 'view-all', showExtraColumns: false, selectedAccountId: null,
       filters: { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' },
       addChar: { isAdding: false },
-      
-      // NOTE: itemManageとitemMoveは非同期状態の管理のみ
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
-
+      teamManage: { isSaving: false }, // NOTE: isSavingの状態のみ管理
       master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
       editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
-      teamTypes: ['禁忌', '天魔', '庭園', '轟絶', '黎絶'], teamFilters: { type: '' },
-      teamForm: { id: null, name: '', type: '', isSaving: false, slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })) },
     }
   },
   // #endregion
@@ -367,8 +310,6 @@ export default {
       });
     },
     editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search .toLowerCase(); return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)); },
-    filteredTeams() { return !this.teamFilters.type ? this.teams : this.teams.filter(team => team.type === this.teamFilters.type); },
-    isTeamFormValid() { return this.teamForm.name   && this.teamForm.type && this.teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId); },
   },
   // #endregion
 
@@ -427,17 +368,6 @@ export default {
     },
     getOwnedStatusClass(masterId, accountId, requiredCount) { return this.getOwnedCount(masterId, accountId) >= requiredCount ? 'status-owned' : 'status-unowned'; },
     resetFilters() { this.filters = { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' }; },
-    formatOwnedCharDisplayName(char, includeItems = false) {
-      const master = this.characterMastersMap.get(char.characterMasterId);
-      const charName = master ? master.monsterName : '不明';
-      let targetAccountId = char.accountId || this.selectedAccountId;
-      if (!targetAccountId) return `${charName} (アカウント不明)`;
-      const sameMasterChars = (this.ownedCharactersData.get(targetAccountId) || []).filter(c => c.characterMasterId === char.characterMasterId);
-      const charIndex = sameMasterChars.findIndex(c => c.id === char.id);
-      let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
-      if (includeItems) { text += ` [${(char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ') || 'アイテムなし'}]`; }
-      return text;
-    },
     async addOwnedCharacter(masterId) {
       if (!masterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
       if (this.getOwnedCount(masterId, this.selectedAccountId) >= 2) return alert('このキャラは既に2体所持しています。');
@@ -467,7 +397,6 @@ export default {
       this.itemManage.isUpdating = true;
       try {
         await databaseService.updateCharacterItems(this.selectedAccountId, ownedCharacterId, items);
-        // INFO: ローカルデータの更新
         const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
         const charToUpdate = accountChars.find(c => c.id === ownedCharacterId);
         if (charToUpdate) {
@@ -485,29 +414,61 @@ export default {
       try {
         if (from.id     === to.id     || !from.id || !to.id) throw new Error('有効な移動元と移動先を選択してください。');
         if (selectedItemIds.length === 0) throw new Error('移動するアイテムを選択してください。');
-        
         const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
         const fromChar = accountChars.find(c => c.id === from.id);
         const toChar = accountChars.find(c => c.id === to.id);
         if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
-
         const numericIds = selectedItemIds.map (Number);
         if ((toChar.items?.length || 0) + numericIds.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
-        
         const newFromItems = (fromChar.items || []).map(Number).filter(id => !numericIds.includes(id));
         const newToItems = [...(toChar.items || []).map(Number), ...numericIds];
-        
         await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.id, items: newFromItems }, { id: to.id, items: newToItems });
-        
-        // INFO: ローカルデータの更新
         this.$set(fromChar, 'items', newFromItems);
         this.$set(toChar, 'items', newToItems);
-
         alert('アイテムを移動しました。');
       } catch (e) { 
         alert(`エラー: ${e.message}`); 
       } finally { 
         this.itemMove.isMoving = false; 
+      }
+    },
+    async handleSaveTeam(teamFormData) {
+      this.teamManage.isSaving = true;
+      const teamData = {
+        userId: this.user.uid,
+        name: teamFormData.name ,
+        type: teamFormData.type,
+        characters: teamFormData.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId }))
+      };
+      try {
+        const id = teamFormData.id ;
+        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        const result = await databaseService.saveTeam(id, teamData);
+        if (id) {
+          const index = this.teams.findIndex(t => t.id === id);
+          if (index > -1) this.$set(this.teams, index, { ...this.teams[index], ...teamData });
+          alert('編成を更新しました。');
+        } else {
+          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
+          this.teams.unshift(newTeam);
+          // INFO: 新規作成後、子コンポーネント側でフォームがリセットされるため、親から何かする必要はない
+          alert('編成を保存しました。');
+        }
+      } catch (error) {
+        console.error('編成保存失敗:', error);
+        alert('エラー: ' + error.message);
+      } finally {
+        this.teamManage.isSaving = false;
+      }
+    },
+    async deleteTeam(teamId) {
+      try {
+        await databaseService.deleteTeam(teamId);
+        this.teams = this.teams.filter(t => t.id !== teamId);
+        alert('編成を削除しました。');
+      } catch (error) {
+        console.error('編成削除失敗:', error);
+        alert('エラー: ' + error.message);
       }
     },
     async saveMaster() {
@@ -531,59 +492,6 @@ export default {
         location.reload();
       } catch (e) { alert('更新に失敗: ' + e.message); } 
       finally { this.editMaster.isUpdating = false; }
-    },
-    getCharactersForSlot(slot) {
-      if (!slot.selectedAccountId) return [];
-      const ownedList = this.ownedCharactersData.get(slot.selectedAccountId) || [];
-      const charList = ownedList.map(char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, accountId: slot.selectedAccountId, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明'};
-      }).sort((a,b) => a.indexNumber - b.indexNumber);
-      const lowerSearch = slot.characterSearch.toLowerCase();
-      return !lowerSearch ? charList : charList.filter(char => char.monsterName.toLowerCase().includes(lowerSearch));
-    },
-    isCharSelectedInOtherSlot(ownedId, currentIndex) { return !ownedId ? false : this.teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId); },
-    getTeamSlotDetails(team, slotIndex) {
-      const emptySlot = { characterName: '—', accountName: '—', items: [] };
-      if (!team.characters || !this.dataLoaded || slotIndex >= team.characters.length) return emptySlot;
-      const charSlot = team.characters[slotIndex];
-      const account = this.accounts.find(acc => acc.id === charSlot.accountId);
-      const ownedChar = (this.ownedCharactersData.get(charSlot.accountId) || []).find(c => c.id === charSlot.ownedCharacterId);
-      if (!ownedChar) return { characterName: 'キャラ不明', accountName: account?.name || '不明', items: [] };
-      const master = this.characterMastersMap.get(ownedChar.characterMasterId);
-      return { characterName: master?.monsterName || '不明', accountName: account?.name || '不明', items: (ownedChar.items || []).map(id => this.itemMastersMap.get(Number(id)) || `不明ID:${id}`).filter(Boolean) };
-    },
-    selectTeam(team) { this.teamForm = { ...this.teamForm, id: team.id, name: team.name, type: team.type, slots: team.characters.map (char => ({ selectedAccountId: char.accountId, selectedOwnedId: char.ownedCharacterId, characterSearch: '' })) }; },
-    resetTeamForm() { this.teamForm = { id: null, name: '', type: '', isSaving: false, slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })) }; },
-    async handleSaveTeam() {
-      if (!this.isTeamFormValid) return alert('編成名、タイプ、4体のキャラを全て選択してください。');
-      this.teamForm.isSaving = true;
-      const teamData = { userId: this.user.uid, name: this.teamForm.name, type: this.teamForm.type, characters: this.teamForm.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId })) };
-      try {
-        const id = this.teamForm.id  ;
-        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        const result = await databaseService.saveTeam(id, teamData);
-        if (id) {
-          const index = this.teams.findIndex(t => t.id === id);
-          if (index > -1) this.$set(this.teams, index, { ...this.teams[index], ...teamData });
-          alert('編成を更新しました。');
-        } else {
-          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
-          this.teams.unshift(newTeam);
-          this.selectTeam(newTeam);
-          alert('編成を保存しました。');
-        }
-      } catch (error) { console.error('編成保存失敗:', error); alert('エラー: ' + error.message); } 
-      finally { this.teamForm.isSaving = false; }
-    },
-    async deleteTeam(teamId) {
-      if (!confirm('この編成を本当に削除しますか？')) return;
-      try {
-        await databaseService.deleteTeam(teamId);
-        this.teams = this.teams.filter(t => t.id !== teamId);
-        if (this.teamForm.id === teamId) this.resetTeamForm();
-        alert('編成を削除しました。');
-      } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
     },
   },
   // #endregion
@@ -638,8 +546,8 @@ td.element-闇 { background-color: #f3e5f5; }
 #items-to-move-container label { margin-top: 0; cursor: pointer; }
 [v-cloak] { display: none; }
 .team-management-container { display: flex; gap: 20px; }
-.team-list-panel { flex: 1; }
-.team-form-panel { flex: 1; }
+.team-list-panel { flex: 1; max-width: 50%; }
+.team-form-panel { flex: 1; max-width: 50%; }
 .team-list { list-style: none; padding: 0; max-height: 70vh; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px; }
 .team-list li { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
 .team-list li:hover { background-color: #f5f5f5; }
