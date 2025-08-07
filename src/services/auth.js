@@ -1,10 +1,6 @@
-// src/services/auth.js
-// #region --- Imports ---
+import firebase from 'firebase/compat/app';
 // INFO: Firebaseの認証インスタンスをインポートします
 import { auth } from '../firebase-init.js';
-// #endregion
-
-// #region --- Public Functions ---
 
 /**
  * @description Googleアカウントでのログインを試みます。
@@ -45,4 +41,3 @@ export const authService = {
   logout,
   onAuthStateChanged,
 };
-// #endregion

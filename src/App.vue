@@ -1,20 +1,10 @@
-// src/App.vue
 <!-- #region COMPONENT: App -->
 <template>
   <!-- #region TEMPLATE -->
   <div id="app-root" class="container" v-cloak>
     <div class="main-header">
       <h1>キャラクター管理</h1>
-      <div id="auth-container">
-        <div v-if="user">
-          <p>ようこそ, {{ user.displayName }} さん</p>
-          <button @click="handleLogout">ログアウト</button>
-        </div>
-        <div v-else>
-          <p>データを表示・編集するにはログインしてください。</p>
-          <button @click="handleLogin">Googleでログイン</button>
-        </div>
-      </div>
+      <auth-status :user="user" @login="handleLogin" @logout="handleLogout" />
     </div>
     <div v-if="user">
       <div class="tab-nav">
@@ -28,7 +18,7 @@
       <div id="account-controls" v-show="isAccountControlVisible">
         <label for="account-selector">管理対象アカウント:</label>
         <select id="account-selector" v-model="selectedAccountId">
-          <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
+          <option v-for="account in accounts" :key="account.id    " :value="account.id">{{ account.name  }}</option>
         </select>
       </div>
       
@@ -89,7 +79,7 @@
           <label>排出ガチャ (限定の場合):</label>
           <select v-model="master.gacha">
             <option value="">(限定ではない/その他)</option>
-            <option v-for="gacha in gachaMasters" :key="gacha.id" :value="gacha.name">{{ gacha.name }}</option>
+            <option v-for="gacha in gachaMasters" :key="gacha.id    " :value="gacha.name    ">{{ gacha.name }}</option>
           </select>
           <br><br>
           <button @click="saveMaster" :disabled="!master.name || master.isSaving">{{ master.isSaving ? '追加中...' : 'マスターリストに新規追加' }}</button>
@@ -101,7 +91,7 @@
             <label>キャラクター検索:</label><input type="text" v-model="editMaster.search " placeholder="編集したいキャラクター名で検索">
             <label>編集するキャラクターを選択:</label>
             <select v-model="editMaster.selectedMasterId" size="10" style="width:100%">
-              <option v-for="master in editableMasters" :key="master.id" :value="master.id">[{{ master.indexNumber || '?' }}] {{ master.monsterName }}</option>
+              <option v-for="master in editableMasters" :key="master.id  " :value="master.id">[{{ master.indexNumber || '?' }}] {{ master.monsterName }}</option>
             </select>
         </div>
         <div class="form-section" v-if="editMaster.selectedMasterId">
@@ -134,13 +124,20 @@ import { databaseService } from './services/database.js';
 import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
 import ManageTeamsTab from './components/ManageTeamsTab.vue';
-import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue'; // @temp: ADDED
+import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue';
+import AuthStatus from './components/AuthStatus.vue';
 // #endregion
 
 export default {
   // #region COMPONENT_CONFIG
   name: 'App',
-  components: { AddOwnedCharacterTab, ManageItemsTab, ManageTeamsTab, ViewAllCharactersTab, }, // @temp: MODIFIED
+  components: {
+    AddOwnedCharacterTab,
+    ManageItemsTab,
+    ManageTeamsTab,
+    ViewAllCharactersTab,
+    AuthStatus,
+  },
   // #endregion
   
   // #region STATE_MANAGEMENT
@@ -213,11 +210,11 @@ export default {
         const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await databaseService.loadInitialDataRaw(this.user.uid);
         
         // NOTE: 各種マスターデータを取得・整形・キャッシュ
-        this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id    , name: data.Name  || `アカウント${data.id  }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
+        this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id  }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
         this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
-        this.characterMastersMap = new Map(this.characterMasters.map(m => [m.id, m]));
+        this.characterMastersMap = new Map(this.characterMasters.map (m => [m.id , m]));
         this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
-        this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id, item.name]));
+        this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id , item.name ]));
         this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
         this.teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
 
@@ -374,10 +371,7 @@ body { font-family: 'Segoe UI', Meiryo, sans-serif; padding: 20px; background-co
 h1, h2, h3 { border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; color: #1a237e; }
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
 .main-header h1 { margin: 0; border-bottom: none; padding-bottom: 0; }
-#auth-container { text-align: right; }
-#auth-container div { display: flex; align-items: center; gap: 10px; }
-#auth-container p { margin: 0; }
-#auth-container button { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+/* INFO: #auth-containerのスタイルはAuthStatus.vueに移動したため、App.vueからは削除 */
 #account-controls { margin-bottom: 20px; padding: 15px; background-color: #e8eaf6; border-radius: 5px; margin-top: -20px; border-top-left-radius: 0; border-top-right-radius: 0; border: 1px solid #ccc; border-top: none; }
 .tab-nav { margin-bottom: 20px; }
 .tab-nav button { padding: 10px 15px; margin-right: 5px; border: 1px solid #ccc; background-color: #f8f8f8; cursor: pointer; font-size: 16px; border-radius: 5px 5px 0 0; }

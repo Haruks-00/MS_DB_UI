@@ -4,7 +4,7 @@ import 'firebase/compat/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyArnrHZPft_F6a-5sNUxQNViFddzshIlEo",
-  authDomain: "msdatabase-e2d25.firebaseapp.com ",
+  authDomain: "msdatabase-e2d25.firebaseapp.com",
   projectId: "msdatabase-e2d25",
   storageBucket: "msdatabase-e2d25.firebasestorage.app ",
   messagingSenderId: "525846107898",
