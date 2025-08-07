@@ -49,7 +49,7 @@
             <label>アイテム名:</label>
             <select v-model="filters.itemSearch">
               <option value="">すべて</option>
-              <option v-for="item in itemMasters" :key="item.id   " :value="item.id">{{ item.name   }}</option>
+              <option v-for="item in itemMasters" :key="item.id" :value="item.id">{{ item.name }}</option>
             </select>
           </div>
           <div>
@@ -234,11 +234,7 @@ import ManageTeamsTab from './components/ManageTeamsTab.vue';
 export default {
   // #region COMPONENT_CONFIG
   name: 'App',
-  components: {
-    AddOwnedCharacterTab,
-    ManageItemsTab,
-    ManageTeamsTab,
-  },
+  components: { AddOwnedCharacterTab, ManageItemsTab, ManageTeamsTab, },
   // #endregion
   
   // #region STATE_MANAGEMENT
@@ -252,7 +248,7 @@ export default {
       addChar: { isAdding: false },
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
-      teamManage: { isSaving: false }, // NOTE: isSavingの状態のみ管理
+      teamManage: { isSaving: false },
       master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
       editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
     }
@@ -378,19 +374,13 @@ export default {
         const newOwnedCharData = { characterMasterId: masterId, monsterName: master.monsterName, items: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() };
         const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
         const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() }};
-        if (!this.ownedCharactersData.has(this.selectedAccountId)) {
-          this.$set(this.ownedCharactersData, this.selectedAccountId, []);
-        }
+        if (!this.ownedCharactersData.has(this.selectedAccountId)) { this.$set(this.ownedCharactersData, this.selectedAccountId, []); }
         this.ownedCharactersData.get(this.selectedAccountId).push(newLocalChar);
         const countKey = `${masterId}-${this.selectedAccountId}`;
         this.$set(this.ownedCountMap, countKey, (this.ownedCountMap.get(countKey) || 0) + 1);
         alert(`「${master.monsterName}」を所持リストに追加しました。`);
-      } catch (error) { 
-        console.error('キャラ追加失敗:', error); 
-        alert('エラー: ' + error.message); 
-      } finally { 
-        this.addChar.isAdding = false; 
-      }
+      } catch (error) { console.error('キャラ追加失敗:', error); alert('エラー: ' + error.message); } 
+      finally { this.addChar.isAdding = false; }
     },
     async updateItems({ ownedCharacterId, items }) {
       if (!ownedCharacterId) return;
@@ -399,15 +389,10 @@ export default {
         await databaseService.updateCharacterItems(this.selectedAccountId, ownedCharacterId, items);
         const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
         const charToUpdate = accountChars.find(c => c.id === ownedCharacterId);
-        if (charToUpdate) {
-          this.$set(charToUpdate, 'items', items);
-        }
+        if (charToUpdate) { this.$set(charToUpdate, 'items', items); }
         alert('アイテムを更新しました。');
-      } catch(e) { 
-        alert('エラー: ' + e.message); 
-      } finally { 
-        this.itemManage.isUpdating = false; 
-      }
+      } catch(e) { alert('エラー: ' + e.message); } 
+      finally { this.itemManage.isUpdating = false; }
     },
     async moveItems({ from, to, selectedItemIds }) {
       this.itemMove.isMoving = true;
@@ -426,20 +411,12 @@ export default {
         this.$set(fromChar, 'items', newFromItems);
         this.$set(toChar, 'items', newToItems);
         alert('アイテムを移動しました。');
-      } catch (e) { 
-        alert(`エラー: ${e.message}`); 
-      } finally { 
-        this.itemMove.isMoving = false; 
-      }
+      } catch (e) { alert(`エラー: ${e.message}`); } 
+      finally { this.itemMove.isMoving = false; }
     },
     async handleSaveTeam(teamFormData) {
       this.teamManage.isSaving = true;
-      const teamData = {
-        userId: this.user.uid,
-        name: teamFormData.name ,
-        type: teamFormData.type,
-        characters: teamFormData.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId }))
-      };
+      const teamData = { userId: this.user.uid, name: teamFormData.name , type: teamFormData.type, characters: teamFormData.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId })) };
       try {
         const id = teamFormData.id ;
         Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -451,25 +428,17 @@ export default {
         } else {
           const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
           this.teams.unshift(newTeam);
-          // INFO: 新規作成後、子コンポーネント側でフォームがリセットされるため、親から何かする必要はない
           alert('編成を保存しました。');
         }
-      } catch (error) {
-        console.error('編成保存失敗:', error);
-        alert('エラー: ' + error.message);
-      } finally {
-        this.teamManage.isSaving = false;
-      }
+      } catch (error) { console.error('編成保存失敗:', error); alert('エラー: ' + error.message); } 
+      finally { this.teamManage.isSaving = false; }
     },
     async deleteTeam(teamId) {
       try {
         await databaseService.deleteTeam(teamId);
         this.teams = this.teams.filter(t => t.id !== teamId);
         alert('編成を削除しました。');
-      } catch (error) {
-        console.error('編成削除失敗:', error);
-        alert('エラー: ' + error.message);
-      }
+      } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
     },
     async saveMaster() {
       if (!this.master.name  ) return alert('キャラクター名は必須です。');

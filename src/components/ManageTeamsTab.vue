@@ -14,7 +14,7 @@
         <ul class="team-list">
           <li v-if="!dataLoaded">データを読み込んでいます...</li>
           <li v-else-if="filteredTeams.length === 0">該当する編成がありません。</li>
-          <li v-for="team in filteredTeams" :key="team.id     " @click="selectTeam(team)" :class="{ active: teamForm.id    === team.id }">
+          <li v-for="team in filteredTeams" :key="team.id" @click="selectTeam(team)" :class="{ active: teamForm.id === team.id }">
             <div class="team-list-item-header">
               <strong>{{ team.name   }}</strong>
               <span>({{ team.type }})</span>
@@ -50,14 +50,14 @@
             <label>アカウント:</label>
             <select v-model="slot.selectedAccountId">
               <option value="" disabled>アカウント選択</option>
-              <option v-for="acc in accounts" :key="acc.id                   " :value="acc.id">{{ acc.name   }}</option>
+              <option v-for="acc in accounts" :key="acc.id " :value="acc.id">{{ acc.name }}</option>
             </select>
             <label>キャラクター:</label>
             <input type="text" v-model="slot.characterSearch" placeholder="キャラ名で検索">
             <select v-model="slot.selectedOwnedId" size="5" style="width: 100%;">
               <option v-if="!slot.selectedAccountId" value="">先にアカウントを選択</option>
-              <option v-for="char in getCharactersForSlot(slot)" :key="char.id     " :value="char.id" :disabled="isCharSelectedInOtherSlot(char.id, index)">
-                {{ formatOwnedCharDisplayName(char, true) }} {{ isCharSelectedInOtherSlot(char.id, index) ? '(選択済)' : '' }}
+              <option v-for="char in getCharactersForSlot(slot)" :key="char.id" :value="char.id" :disabled="isCharSelectedInOtherSlot(char.id, index)">
+                {{ formatCharForDisplay(char, true) }} {{ isCharSelectedInOtherSlot(char.id, index) ? '(選択済)' : '' }}
               </option>
             </select>
           </div>
@@ -72,6 +72,7 @@
 </template>
 
 <script>
+import { formatOwnedCharDisplayName } from '../utils/formatters.js';
 /**
  * [概要] 編成の閲覧・作成・編集・削除を行うタブUIコンポーネント。
  */
@@ -182,19 +183,8 @@ export default {
         }
       }
     },
-    // NOTE: この関数は複数のコンポーネントで重複している。将来的には共通ヘルパーとして分離すべき。
-    formatOwnedCharDisplayName(char, includeItems = false) {
-      const master = this.characterMastersMap.get(char.characterMasterId);
-      const charName = master ? master.monsterName : '不明';
-      let targetAccountId = char.accountId;
-      if (!targetAccountId) return `${charName} (アカウント不明)`;
-      const sameMasterChars = (this.ownedCharactersData.get(targetAccountId) || []).filter(c => c.characterMasterId === char.characterMasterId);
-      const charIndex = sameMasterChars.findIndex(c => c.id === char.id);
-      let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
-      if (includeItems) {
-        text += ` [${(char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ') || 'アイテムなし'}]`;
-      }
-      return text;
+    formatCharForDisplay(char, includeItems) {
+      return formatOwnedCharDisplayName(char, includeItems, this.characterMastersMap, this.ownedCharactersData, this.itemMastersMap, null);
     },
   }
 }

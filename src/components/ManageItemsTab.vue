@@ -7,15 +7,15 @@
       <input type="text" v-model="updateForm.search " placeholder="キャラクター名で検索">
       <label for="item-char-selector">キャラクター選択:</label>
       <select id="item-char-selector" v-model="updateForm.selectedOwnedId" size="10" style="width:100%">
-        <option v-for="char in manageableCharactersForUpdate" :key="char.id              " :value="char.id">
-          {{ formatOwnedCharDisplayName(char, true) }}
+        <option v-for="char in manageableCharactersForUpdate" :key="char.id" :value="char.id">
+          {{ formatCharForDisplay(char, true) }}
         </option>
       </select>
       <label>アイテム (最大3つまで):</label>
       <div class="item-select-container">
         <select v-model="updateForm.items[0]">
           <option value="">(アイテムなし)</option>
-          <option v-for="item in itemMasters" :key="item.id                 " :value="item.id">[{{ item.id }}] {{ item.name       }}</option>
+          <option v-for="item in itemMasters" :key="item.id" :value="item.id">[{{ item.id }}] {{ item.name }}</option>
         </select>
         <select v-model="updateForm.items[1]">
           <option value="">(アイテムなし)</option>
@@ -40,7 +40,7 @@
           <label>移動元キャラクター選択:</label>
           <select v-model="moveForm.from.selectedId" size="8" style="width:100%;">
             <option v-for="char in manageableCharactersForMoveFrom" :key="char.id" :value="char.id">
-              {{ formatOwnedCharDisplayName(char, true) }}
+              {{ formatCharForDisplay(char, true) }}
             </option>
           </select>
         </div>
@@ -61,7 +61,7 @@
           <label>移動先キャラクター選択:</label>
           <select v-model="moveForm.to.selectedId" size="8" style="width:100%;">
             <option v-for="char in manageableCharactersForMoveTo" :key="char.id" :value="char.id">
-              {{ formatOwnedCharDisplayName(char, true) }}
+              {{ formatCharForDisplay(char, true) }}
             </option>
           </select>
         </div>
@@ -75,6 +75,7 @@
 </template>
 
 <script>
+import { formatOwnedCharDisplayName } from '../utils/formatters.js';
 /**
  * [概要] アイテムの変更・移動を行うタブUIコンポーネント。
  * @note 親からデータを受け取り、UIの状態管理に責務を持つ。DB更新は親に通知する。
@@ -93,16 +94,8 @@ export default {
 
   data() {
     return {
-      updateForm: {
-        search: '',
-        selectedOwnedId: null,
-        items: ["", "", ""],
-      },
-      moveForm: {
-        from: { search: '', selectedId: null },
-        to: { search: '', selectedId: null },
-        selectedItemIds: [],
-      },
+      updateForm: { search: '', selectedOwnedId: null, items: ["", "", ""] },
+      moveForm: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] },
     }
   },
 
@@ -133,7 +126,7 @@ export default {
     },
     movableItems() {
       if (!this.moveForm.from.selectedId) return [];
-      const fromChar = this.currentOwnedCharacters.find(c => c.id         === this.moveForm.from.selectedId);
+      const fromChar = this.currentOwnedCharacters.find(c => c.id === this.moveForm.from.selectedId);
       if (!fromChar || !fromChar.items) return [];
       return fromChar.items.map (itemId => ({ id: Number(itemId), name: this.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` }));
     },
@@ -185,24 +178,11 @@ export default {
     },
 
     /**
-     * [概要] 所持キャラクターの表示名をフォーマットする
-     * @param {Object} char - 所持キャラクターオブジェクト
-     * @param {boolean} includeItems - アイテム情報を含めるか
-     * @returns {string} フォーマットされた表示名
-     * @note App.vueにも同じメソッドが存在する。本来は共通化すべきだが、リファクタリングの段階的措置としてコピーを許容。
+     * [概要] 共通フォーマッタを呼び出すラッパーメソッド
      */
-    formatOwnedCharDisplayName(char, includeItems = false) {
-      const master = this.characterMastersMap.get(char.characterMasterId);
-      const charName = master ? master.monsterName : '不明';
-      let targetAccountId = char.accountId || this.selectedAccountId;
-      if (!targetAccountId) return `${charName} (アカウント不明)`;
-      const sameMasterChars = (this.ownedCharactersData.get(targetAccountId) || []).filter(c => c.characterMasterId === char.characterMasterId);
-      const charIndex = sameMasterChars.findIndex(c => c.id === char.id);
-      let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
-      if (includeItems) {
-        text += ` [${(char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ') || 'アイテムなし'}]`;
-      }
-      return text;
+    formatCharForDisplay(char, includeItems) {
+      // INFO: テンプレートから直接呼び出すために、thisのコンテキストを渡すラッパーを用意
+      return formatOwnedCharDisplayName(char, includeItems, this.characterMastersMap, this.ownedCharactersData, this.itemMastersMap, this.selectedAccountId);
     },
   }
 }
