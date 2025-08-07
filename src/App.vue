@@ -1,4 +1,4 @@
-<!-- src/App.vue -->
+// src/App.vue
 <!-- #region COMPONENT: App -->
 <template>
   <!-- #region TEMPLATE -->
@@ -28,116 +28,21 @@
       <div id="account-controls" v-show="isAccountControlVisible">
         <label for="account-selector">管理対象アカウント:</label>
         <select id="account-selector" v-model="selectedAccountId">
-          <option v-for="account in accounts" :key="account.id      " :value="account.id">{{ account.name   }}</option>
+          <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
         </select>
       </div>
-      <div id="tab-view-all" class="tab-content" v-if="activeTab === 'view-all'">
-        <h2>所持状況一覧</h2>
-        <div class="search-filters">
-          <div>
-            <label>キャラクター名:</label>
-            <input type="text" v-model.lazy="filters.charSearch" placeholder="名前 or 図鑑番号">
-          </div>
-          <div>
-            <label>属性:</label>
-            <select v-model="filters.element">
-              <option value="">すべて</option>
-              <option v-for="e in ['火', '水', '木', '光', '闇']" :key="e" :value="e">{{ e }}</option>
-            </select>
-          </div>
-          <div>
-            <label>アイテム名:</label>
-            <select v-model="filters.itemSearch">
-              <option value="">すべて</option>
-              <option v-for="item in itemMasters" :key="item.id" :value="item.id">{{ item.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label>分類 (Type):</label>
-            <select v-model="filters.type">
-              <option value="">すべて</option>
-              <option value="恒常_or_限定">恒常 or 限定</option>
-              <option v-for="t in characterTypes" :key="t" :value="t">{{ t }}</option>
-            </select>
-          </div>
-          <div>
-            <label>排出ガチャ:</label>
-            <select v-model="filters.gachaSearch">
-              <option value="">すべて</option>
-              <option v-for="gacha in gachaMasters" :key="gacha.id     " :value="gacha.name      ">{{ gacha.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label>全体の所持状況:</label>
-            <select v-model="filters.totalOwnership">
-              <option value="">すべて</option>
-              <option value="all_unowned">全アカウントで未所持 (合計0体)</option>
-              <option value="four_or_more">全アカウントで合計4体以上</option>
-              <option value="one_in_each">各アカウントで1体以上所持</option>
-            </select>
-          </div>
-          <div style="flex-basis: 100%; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 10px;">
-            <label style="font-weight: normal;">--- 単一アカウントでの絞り込み ---</label>
-          </div>
-          <div>
-            <label>アカウント:</label>
-            <select v-model="filters.account">
-              <option value="">指定しない</option>
-              <option v-for="account in accounts" :key="account.id" :value="account.id">{{ account.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label>所持状況 (指定アカウント内):</label>
-            <select v-model="filters.ownership">
-              <option value="">すべて</option>
-              <option value="owned">所持</option>
-              <option value="unowned">未所持</option>
-              <option value="one">1体所持</option>
-              <option value="two">2体所持</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-buttons">
-          <button @click="resetFilters">リセット</button>
-          <button @click="showExtraColumns = !showExtraColumns">詳細表示/非表示</button>
-        </div>
-        <div id="status-bar">表示件数: {{ filteredMasters.length }} / {{ characterMasters.length }}</div>
-        <div style="overflow-x: auto;">
-          <table id="all-characters-table">
-            <thead>
-              <tr>
-                <th rowspan="2">図鑑No.</th><th rowspan="2">キャラ名</th>
-                <th rowspan="2" v-show="showExtraColumns">属性</th>
-                <th rowspan="2" v-show="showExtraColumns">分類</th>
-                <th rowspan="2" v-show="showExtraColumns">排出ガチャ</th>
-                <th v-for="acc in accounts" :key="acc.id" colspan="2">{{ acc.name }}</th>
-              </tr>
-              <tr>
-                <template v-for="acc in accounts"><th :key="acc.id + '-1'">1</th><th :key="acc.id + '-2'">2</th></template>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="!dataLoaded">
-                <td :colspan="2 + (showExtraColumns ? 3 : 0) + accounts.length * 2">データを読み込んでいます...</td>
-              </tr>
-              <tr v-else-if="filteredMasters.length === 0">
-                <td :colspan="2 + (showExtraColumns ? 3 : 0) + accounts.length * 2">該当するキャラクターがいません</td>
-              </tr>
-              <tr v-for="master in filteredMasters" :key="master.id            ">
-                <td>{{ master.indexNumber || '—' }}</td>
-                <td>{{ master.monsterName || '—' }}</td>
-                <td v-show="showExtraColumns" :class="'element-' + (master.element || '').toLowerCase()">{{ master.element || '—' }}</td>
-                <td v-show="showExtraColumns">{{ master.type || '—' }}</td>
-                <td v-show="showExtraColumns">{{ master.ejectionGacha || '—' }}</td>
-                <template v-for="acc in accounts">
-                  <td :key="acc.id + '-1'" :class="getOwnedStatusClass(master.id, acc.id, 1)" v-html="getDisplayCellContent(master.id, acc.id, 0)"></td>
-                  <td :key="acc.id + '-2'" :class="getOwnedStatusClass(master.id, acc.id, 2)" v-html="getDisplayCellContent(master.id, acc.id, 1)"></td>
-                </template>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      
+      <view-all-characters-tab
+        v-if="activeTab === 'view-all'"
+        :data-loaded="dataLoaded"
+        :accounts="accounts"
+        :character-masters="characterMasters"
+        :item-masters="itemMasters"
+        :gacha-masters="gachaMasters"
+        :owned-count-map="ownedCountMap"
+        :owned-characters-data="ownedCharactersData"
+        :item-masters-map="itemMastersMap"
+      />
       
       <add-owned-character-tab 
         v-if="activeTab === 'add-owned'"
@@ -229,22 +134,31 @@ import { databaseService } from './services/database.js';
 import AddOwnedCharacterTab from './components/AddOwnedCharacterTab.vue';
 import ManageItemsTab from './components/ManageItemsTab.vue';
 import ManageTeamsTab from './components/ManageTeamsTab.vue';
+import ViewAllCharactersTab from './components/ViewAllCharactersTab.vue'; // @temp: ADDED
 // #endregion
 
 export default {
   // #region COMPONENT_CONFIG
   name: 'App',
-  components: { AddOwnedCharacterTab, ManageItemsTab, ManageTeamsTab, },
+  components: { AddOwnedCharacterTab, ManageItemsTab, ManageTeamsTab, ViewAllCharactersTab, }, // @temp: MODIFIED
   // #endregion
   
   // #region STATE_MANAGEMENT
   data() {
     return {
+      // INFO: 全体的なアプリケーション状態
       user: null, isAuthReady: false, dataLoaded: false,
+      
+      // INFO: Firestoreから取得するマスターデータとユーザーデータ
       accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [],
+      
+      // INFO: パフォーマンス向上のためのデータ構造
       itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(),
-      activeTab: 'view-all', showExtraColumns: false, selectedAccountId: null,
-      filters: { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' },
+      
+      // INFO: UIの状態管理
+      activeTab: 'view-all', selectedAccountId: null,
+
+      // INFO: 各コンポーネントが管理する状態（将来的にはコンポーネント内に移動）
       addChar: { isAdding: false },
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
@@ -268,43 +182,6 @@ export default {
   // #region COMPUTED_PROPERTIES
   computed: {
     isAccountControlVisible() { return this.activeTab === 'add-owned' || this.activeTab === 'manage-items'; },
-    characterTypes() { return Array.from(new Set(this.characterMasters.map  (m => m.type).filter(Boolean))).sort(); },
-    filteredMasters() {
-      if (!this.dataLoaded) return [];
-      const { charSearch, element, itemSearch, type, gachaSearch, totalOwnership, account, ownership } = this.filters;
-      const lowerCharSearch = charSearch.toLowerCase();
-      const searchItemId = itemSearch ? Number(itemSearch) : null;
-      return this.characterMasters.filter(master => {
-        if (lowerCharSearch && !master.monsterName.toLowerCase().includes(lowerCharSearch) && !(master.indexNumber+'').includes(lowerCharSearch)) return false;
-        if (element && master.element !== element) return false;
-        if (type) { if (type === '恒常_or_限定') { if (master.type !== '恒常' && master.type !== '限定') return false; } else { if (master.type !== type) return false; } }
-        if (gachaSearch && (master.ejectionGacha || '') !== gachaSearch) return false;
-        if (searchItemId) {
-          let hasItem = false;
-          const targetAccount = account || null;
-          if (targetAccount) {
-            hasItem = (this.ownedCharactersData.get(targetAccount) || []).some(char => char.characterMasterId === master.id && char.items?.some(itemId => Number(itemId) === searchItemId));
-          } else {
-            for (const ownedChars of this.ownedCharactersData.values()) {
-              if (ownedChars.some(char => char.characterMasterId === master.id && char.items?.some(itemId => Number(itemId) === searchItemId))) { hasItem = true; break; }
-            }
-          }
-          if (!hasItem) return false;
-        }
-        const totalOwnedCount = this.accounts.reduce((sum, acc) => sum + this.getOwnedCount(master.id, acc.id), 0);
-        if (totalOwnership === 'all_unowned' && totalOwnedCount > 0) return false;
-        if (totalOwnership === 'four_or_more' && totalOwnedCount < 4) return false;
-        if (totalOwnership === 'one_in_each' && !this.accounts.every(acc => this.getOwnedCount(master.id, acc.id) >= 1)) return false;
-        if (account && ownership) {
-          const countInAccount = this.getOwnedCount(master.id, account);
-          if (ownership === 'owned' && countInAccount === 0) return false;
-          if (ownership === 'unowned' && countInAccount > 0) return false;
-          if (ownership === 'one' && countInAccount !== 1) return false;
-          if (ownership === 'two' && countInAccount !== 2) return false;
-        }
-        return true;
-      });
-    },
     editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search .toLowerCase(); return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)); },
   },
   // #endregion
@@ -321,8 +198,12 @@ export default {
   
   // #region METHODS
   methods: {
+    // #region AUTHENTICATION_METHODS
     handleLogin() { authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。")); },
     handleLogout() { authService.logout(); },
+    // #endregion
+
+    // #region DATA_HANDLING_METHODS
     resetLoadedData() { Object.assign(this, { dataLoaded: false, accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [], itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(), selectedAccountId: null }); },
     async loadInitialData() {
       if (this.dataLoaded) return;
@@ -330,12 +211,17 @@ export default {
       console.log("初期データの読み込みを開始...");
       try {
         const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await databaseService.loadInitialDataRaw(this.user.uid);
+        
+        // NOTE: 各種マスターデータを取得・整形・キャッシュ
         this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id    , name: data.Name  || `アカウント${data.id  }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
         this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
         this.characterMastersMap = new Map(this.characterMasters.map(m => [m.id, m]));
         this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
         this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id, item.name]));
         this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
+        this.teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
+
+        // NOTE: パフォーマンスのために所持キャラデータをMap構造に変換
         const ownedCharsDataMap = new Map();
         const ownedCountMap = new Map();
         ownedCharsSnap.forEach(doc => {
@@ -349,21 +235,17 @@ export default {
         });
         this.ownedCharactersData = ownedCharsDataMap;
         this.ownedCountMap = ownedCountMap;
-        this.teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
+        
         if (this.accounts.length > 0) this.selectedAccountId = this.accounts[0].id;
         this.dataLoaded = true;
         console.log("初期データの読み込み完了");
       } catch (e) { console.error("データ読み込みエラー:", e); alert(`データ読み込みエラー: ${e.message}`); }
     },
+    // #endregion
+
+    // #region CHILD_COMPONENT_HANDLERS
     getOwnedCount(masterId, accountId) { return this.ownedCountMap.get(`${masterId}-${accountId}`) || 0; },
-    getDisplayCellContent(masterId, accountId, index) {
-      const ownedList = (this.ownedCharactersData.get(accountId) || []).filter(c => c.characterMasterId === masterId);
-      if (!ownedList || ownedList.length <= index) return '—';
-      const itemNames = (ownedList[index].items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean);
-      return itemNames.length > 0 ? '✔️<br>' + itemNames.join('<br>') : '✔️';
-    },
-    getOwnedStatusClass(masterId, accountId, requiredCount) { return this.getOwnedCount(masterId, accountId) >= requiredCount ? 'status-owned' : 'status-unowned'; },
-    resetFilters() { this.filters = { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' }; },
+    
     async addOwnedCharacter(masterId) {
       if (!masterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
       if (this.getOwnedCount(masterId, this.selectedAccountId) >= 2) return alert('このキャラは既に2体所持しています。');
@@ -373,6 +255,8 @@ export default {
         if (!master) throw new Error('キャラのマスター情報が見つかりません。');
         const newOwnedCharData = { characterMasterId: masterId, monsterName: master.monsterName, items: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() };
         const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
+        
+        // NOTE: DB追加後、ローカルの状態も更新して即時反映させる
         const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() }};
         if (!this.ownedCharactersData.has(this.selectedAccountId)) { this.$set(this.ownedCharactersData, this.selectedAccountId, []); }
         this.ownedCharactersData.get(this.selectedAccountId).push(newLocalChar);
@@ -382,6 +266,7 @@ export default {
       } catch (error) { console.error('キャラ追加失敗:', error); alert('エラー: ' + error.message); } 
       finally { this.addChar.isAdding = false; }
     },
+    
     async updateItems({ ownedCharacterId, items }) {
       if (!ownedCharacterId) return;
       this.itemManage.isUpdating = true;
@@ -394,6 +279,7 @@ export default {
       } catch(e) { alert('エラー: ' + e.message); } 
       finally { this.itemManage.isUpdating = false; }
     },
+    
     async moveItems({ from, to, selectedItemIds }) {
       this.itemMove.isMoving = true;
       try {
@@ -405,8 +291,12 @@ export default {
         if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
         const numericIds = selectedItemIds.map (Number);
         if ((toChar.items?.length || 0) + numericIds.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
+        
+        // NOTE: 移動元と移動先の新しいアイテムリストを作成
         const newFromItems = (fromChar.items || []).map(Number).filter(id => !numericIds.includes(id));
         const newToItems = [...(toChar.items || []).map(Number), ...numericIds];
+        
+        // NOTE: トランザクションでDBを更新し、成功後にローカルを更新
         await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.id, items: newFromItems }, { id: to.id, items: newToItems });
         this.$set(fromChar, 'items', newFromItems);
         this.$set(toChar, 'items', newToItems);
@@ -414,6 +304,7 @@ export default {
       } catch (e) { alert(`エラー: ${e.message}`); } 
       finally { this.itemMove.isMoving = false; }
     },
+    
     async handleSaveTeam(teamFormData) {
       this.teamManage.isSaving = true;
       const teamData = { userId: this.user.uid, name: teamFormData.name , type: teamFormData.type, characters: teamFormData.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId })) };
@@ -433,6 +324,7 @@ export default {
       } catch (error) { console.error('編成保存失敗:', error); alert('エラー: ' + error.message); } 
       finally { this.teamManage.isSaving = false; }
     },
+    
     async deleteTeam(teamId) {
       try {
         await databaseService.deleteTeam(teamId);
@@ -440,28 +332,35 @@ export default {
         alert('編成を削除しました。');
       } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
     },
+    // #endregion
+
+    // #region MASTER_DATA_MANAGEMENT_METHODS
     async saveMaster() {
       if (!this.master.name  ) return alert('キャラクター名は必須です。');
       this.master.isSaving = true;
       try {
         const newData = { indexNumber: this.master.no   ? Number(this.master.no) : 0, monsterName: this.master.name, element: this.master.element || '', type: this.master.type || '恒常', ejectionGacha: this.master.gacha || '' };
         await databaseService.addCharacterMaster(newData);
+        // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスターを追加しました。ページをリロードして反映してください。');
         location.reload();
       } catch(e) { alert('エラー: ' + e.message); } 
       finally { this.master.isSaving = false; }
     },
+    
     async updateMaster() {
       if (!this.editMaster.selectedMasterId || !this.editMaster.name  ) return alert('キャラを選択し名前を入力してください。');
       this.editMaster.isUpdating = true;
       try {
         const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no   ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha };
         await databaseService.updateCharacterMaster(this.editMaster.selectedMasterId, updatedData);
+        // WARNING: マスターデータの変更は影響範囲が大きいため、安全のためリロードを促す
         alert('マスター情報を更新しました。ページをリロードしてください。');
         location.reload();
       } catch (e) { alert('更新に失敗: ' + e.message); } 
       finally { this.editMaster.isUpdating = false; }
     },
+    // #endregion
   },
   // #endregion
 }
