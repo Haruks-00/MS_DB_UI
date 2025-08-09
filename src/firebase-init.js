@@ -3,13 +3,13 @@ import 'firebase/compat/firestore';
 import 'firebase/compat/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyArnrHZPft_F6a-5sNUxQNViFddzshIlEo",
-  authDomain: "msdatabase-e2d25.firebaseapp.com",
-  projectId: "msdatabase-e2d25",
-  storageBucket: "msdatabase-e2d25.firebasestorage.app ",
-  messagingSenderId: "525846107898",
-  appId: "1:525846107898:web:41a6740fa50a0e84b91b43",
-  measurementId: "G-0VV0VG0LT6"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 if (!firebase.apps.length) {
