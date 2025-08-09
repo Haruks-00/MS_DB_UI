@@ -1,27 +1,67 @@
 <template>
-  <div id="tab-add-owned" class="tab-content">
+  <div>
     <h2>所持キャラクター追加</h2>
-    <div class="form-section">
-      <label>キャラクター検索:</label>
-      <input type="text" v-model="search" placeholder="キャラクター名で検索">
-      <label for="addable-char-selector">追加可能なキャラクター:</label>
-      <select id="addable-char-selector" v-model="selectedMasterId" size="15" style="width:100%">
-        <option v-for="master in addableCharacters" :key="master.id" :value="master.id">
-          [{{ master.indexNumber || '?' }}] {{ master.monsterName }} ({{ getOwnedCountForMaster(master.id) }}/2 所持)
-        </option>
-      </select>
-      <br><br>
-      <button @click="handleAddCharacter" :disabled="!selectedMasterId || isAdding">
+    <v-form @submit.prevent="handleAddCharacter">
+      <v-container class="pa-0">
+        <v-row>
+          <v-col cols="12">
+            <!-- INFO: 検索ボックスをv-text-fieldに置き換え -->
+            <v-text-field
+              v-model="search"
+              label="キャラクター名で検索"
+              variant="outlined"
+              clearable
+              prepend-inner-icon="mdi-magnify"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <!-- 
+              INFO: リストボックスはv-listで表現します。
+              v-cardで囲むことで、境界線と高さを設定しやすくなります。
+            -->
+            <v-card variant="outlined">
+              <v-list v-model:selected="selectedMasterIdProxy" style="height: 400px; overflow-y: auto;">
+                <v-list-item
+                  v-for="master in addableCharacters"
+                  :key="master.id    "
+                  :value="master.id"
+                >
+                  <v-list-item-title>
+                    [{{ master.indexNumber || '?' }}] {{ master.monsterName }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    所持数: {{ getOwnedCountForMaster(master.id) }} / 2
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12">
+            <v-btn
+              :loading="isAdding"
+              :disabled="!selectedMasterId || isAdding"
+              @click="handleAddCharacter"
+              color="primary"
+              size="large"
+              block
+            >
         {{ isAdding ? '追加中...' : 'このキャラクターを所持リストに追加' }}
-      </button>
-    </div>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import firebase from 'firebase/compat/app'; // INFO: serverTimestampのために必要
-import { databaseService } from '../services/database.js';
+import { databaseService } from '../../services/database.js';
 
 /**
  * [概要] コンポーネントが受け取るプロパティを定義します。
@@ -42,6 +82,22 @@ const emit = defineEmits(['character-added']);
 const search = ref('');
 const selectedMasterId = ref(null);
 const isAdding = ref(false);
+// #endregion
+
+// #region [Computed Properties]
+/**
+ * [概要] v-listのv-model(配列)と、既存のロジック(文字列)の差異を吸収するプロキシ。
+ * @note INFO: v-listのv-model:selectedは選択された項目のvalueを配列で返します。
+ *       このプロパティが、その配列と単一のID(文字列)を相互に変換します。
+ */
+const selectedMasterIdProxy = computed({
+  get() {
+    return selectedMasterId.value ? [selectedMasterId.value] : [];
+  },
+  set(value) {
+    selectedMasterId.value = value[0] || null;
+  }
+});
 
 /**
  * [概要] 検索条件と所持状況に基づき、追加可能なキャラクターのリストを返す。

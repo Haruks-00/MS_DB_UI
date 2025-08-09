@@ -1,77 +1,45 @@
 <template>
-  <div id="tab-view-all" class="tab-content">
+  <div>
     <h2>所持状況一覧</h2>
-    <div class="search-filters">
-      <div>
-        <label>キャラクター名:</label>
-        <input type="text" v-model.lazy="filters.charSearch" placeholder="名前 or 図鑑番号">
-      </div>
-      <div>
-        <label>属性:</label>
-        <select v-model="filters.element">
-          <option value="">すべて</option>
-          <option v-for="e in ['火', '水', '木', '光', '闇']" :key="e" :value="e">{{ e }}</option>
-        </select>
-      </div>
-      <div>
-        <label>アイテム名:</label>
-        <select v-model="filters.itemSearch">
-          <option value="">すべて</option>
-          <option v-for="item in itemMasters" :key="item.id    " :value="item.id">{{ item.name   }}</option>
-        </select>
-      </div>
-      <div>
-        <label>分類 (Type):</label>
-        <select v-model="filters.type">
-          <option value="">すべて</option>
-          <option value="恒常_or_限定">恒常 or 限定</option>
-          <option v-for="t in characterTypes" :key="t" :value="t">{{ t }}</option>
-        </select>
-      </div>
-      <div>
-        <label>排出ガチャ:</label>
-        <select v-model="filters.gachaSearch">
-          <option value="">すべて</option>
-          <option v-for="gacha in gachaMasters" :key="gacha.id     " :value="gacha.name      ">{{ gacha.name }}</option>
-        </select>
-      </div>
-      <div>
-        <label>全体の所持状況:</label>
-        <select v-model="filters.totalOwnership">
-          <option value="">すべて</option>
-          <option value="all_unowned">全アカウントで未所持 (合計0体)</option>
-          <option value="four_or_more">全アカウントで合計4体以上</option>
-          <option value="one_in_each">各アカウントで1体以上所持</option>
-        </select>
-      </div>
-      <div style="flex-basis: 100%; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 10px;">
-        <label style="font-weight: normal;">--- 単一アカウントでの絞り込み ---</label>
-      </div>
-      <div>
-        <label>アカウント:</label>
-        <select v-model="filters.account">
-          <option value="">指定しない</option>
-          <option v-for="account in accounts" :key="account.id      " :value="account.id">{{ account.name   }}</option>
-        </select>
-      </div>
-      <div>
-        <label>所持状況 (指定アカウント内):</label>
-        <select v-model="filters.ownership">
-          <option value="">すべて</option>
-          <option value="owned">所持</option>
-          <option value="unowned">未所持</option>
-          <option value="one">1体所持</option>
-          <option value="two">2体所持</option>
-        </select>
-      </div>
+    
+    <!-- INFO: 多数のフィルターをExpansion Panelに格納し、UIを整理します -->
+    <v-expansion-panels class="mb-4">
+      <v-expansion-panel>
+        <v-expansion-panel-title>
+          <v-icon start icon="mdi-filter-variant"></v-icon>
+          フィルターとオプション
+        </v-expansion-panel-title>
+        <v-expansion-panel-text>
+          <v-container>
+            <v-row>
+              <v-col cols="12" md="4"><v-text-field v-model.lazy="filters.charSearch" label="キャラクター名 or 図鑑番号" variant="outlined" density="compact" clearable></v-text-field></v-col>
+              <v-col cols="12" md="4"><v-select v-model="filters.element" :items="['火', '水', '木', '光', '闇']" label="属性" variant="outlined" density="compact" clearable></v-select></v-col>
+              <v-col cols="12" md="4"><v-select v-model="filters.itemSearch" :items="itemMasters" item-title="name" item-value="id" label="アイテム名" variant="outlined" density="compact" clearable></v-select></v-col>
+              <v-col cols="12" md="4"><v-select v-model="filters.type" :items="['恒常_or_限定', ...characterTypes]" label="分類 (Type)" variant="outlined" density="compact" clearable></v-select></v-col>
+              <v-col cols="12" md="4"><v-select v-model="filters.gachaSearch" :items="gachaMasters" item-title="name" item-value="name" label="排出ガチャ" variant="outlined" density="compact" clearable></v-select></v-col>
+              <v-col cols="12" md="4"><v-select v-model="filters.totalOwnership" :items="[{value:'all_unowned', title:'全アカウントで未所持'}, {value:'four_or_more', title:'合計4体以上'}, {value:'one_in_each', title:'各アカウントで1体以上所持'}]" label="全体の所持状況" variant="outlined" density="compact" clearable></v-select></v-col>
+
+              <v-col cols="12"><v-divider class="my-2"></v-divider><v-subheader>単一アカウントでの絞り込み</v-subheader></v-col>
+              
+              <v-col cols="12" md="6"><v-select v-model="filters.account" :items="accounts" item-title="name" item-value="id" label="アカウント" variant="outlined" density="compact" clearable></v-select></v-col>
+              <v-col cols="12" md="6"><v-select v-model="filters.ownership" :items="[{value:'owned', title:'所持'}, {value:'unowned', title:'未所持'}, {value:'one', title:'1体所持'}, {value:'two', title:'2体所持'}]" label="所持状況 (指定アカウント内)" variant="outlined" density="compact" clearable></v-select></v-col>
+            </v-row>
+          </v-container>
+          <v-card-actions>
+            <v-btn @click="showExtraColumns = !showExtraColumns" variant="tonal">{{ showExtraColumns ? '詳細を非表示' : '詳細を表示' }}</v-btn>
+            <v-spacer></v-spacer>
+            <v-btn @click="resetFilters" color="secondary" variant="outlined">リセット</v-btn>
+          </v-card-actions>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+    
+    <div class="d-flex justify-space-between align-center mb-2">
+      <div class="text-subtitle-1">表示件数: {{ filteredMasters.length }} / {{ characterMasters.length }}</div>
     </div>
-    <div class="filter-buttons">
-      <button @click="resetFilters">リセット</button>
-      <button @click="showExtraColumns = !showExtraColumns">詳細表示/非表示</button>
-    </div>
-    <div id="status-bar">表示件数: {{ filteredMasters.length }} / {{ characterMasters.length }}</div>
-    <div style="overflow-x: auto;">
-      <table id="all-characters-table">
+    
+    <!-- INFO: v-tableは複雑なヘッダー構造を維持したままVuetifyのスタイルを適用できるため最適です -->
+    <v-table fixed-header height="70vh" density="compact">
         <thead>
           <tr>
             <th rowspan="2">図鑑No.</th>
@@ -79,23 +47,19 @@
             <th rowspan="2" v-show="showExtraColumns">属性</th>
             <th rowspan="2" v-show="showExtraColumns">分類</th>
             <th rowspan="2" v-show="showExtraColumns">排出ガチャ</th>
-            <th v-for="acc in accounts" :key="acc.id              " colspan="2">{{ acc.name  }}</th>
+          <th v-for="acc in accounts" :key="acc.id         " colspan="2" class="text-center">{{ acc.name  }}</th>
           </tr>
           <tr>
             <template v-for="acc in accounts" :key="acc.id">
-              <th>1</th>
-              <th>2</th>
+            <th class="text-center">1</th>
+            <th class="text-center">2</th>
             </template>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="!dataLoaded">
-            <td :colspan="2 + (showExtraColumns ? 3 : 0) + accounts.length * 2">データを読み込んでいます...</td>
-          </tr>
-          <tr v-else-if="filteredMasters.length === 0">
-            <td :colspan="2 + (showExtraColumns ? 3 : 0) + accounts.length * 2">該当するキャラクターがいません</td>
-          </tr>
-          <tr v-for="master in filteredMasters" :key="master.id">
+        <tr v-if="!dataLoaded"><td :colspan="5 + accounts.length * 2">データを読み込んでいます...</td></tr>
+        <tr v-else-if="filteredMasters.length === 0"><td :colspan="5 + accounts.length * 2">該当するキャラクターがいません</td></tr>
+        <tr v-for="master in filteredMasters" :key="master.id          ">
             <td>{{ master.indexNumber || '—' }}</td>
             <td>{{ master.monsterName || '—' }}</td>
             <td v-show="showExtraColumns" :class="'element-' + (master.element || '').toLowerCase()">{{ master.element || '—' }}</td>
@@ -107,8 +71,7 @@
             </template>
           </tr>
         </tbody>
-      </table>
-    </div>
+    </v-table>
   </div>
 </template>
 
@@ -148,8 +111,7 @@ const characterTypes = computed(() => {
 const filteredMasters = computed(() => {
   if (!props.dataLoaded) return [];
 
-  // INFO: 구조 분해 할당을 사용하여 필터 값에 더 쉽게 접근합니다.
-  const { charSearch, element, itemSearch, type, gachaSearch, totalOwnership, account, ownership } = filters;
+    const { charSearch, element, itemSearch, type, gachaSearch, totalOwnership, account, ownership } = filters;
   const lowerCharSearch = charSearch.toLowerCase();
   const searchItemId = itemSearch ? Number(itemSearch) : null;
 
@@ -217,3 +179,21 @@ const resetFilters = () => {
   Object.assign(filters, createInitialFiltersState());
 };
 </script>
+
+<style>
+/* INFO: v-table内でカスタムスタイルを適用するため、scopedを外しています */
+.v-table .status-owned {
+  text-align: center;
+  font-weight: bold;
+  background-color: #e8f5e9; /* Light green */
+}
+.v-table .status-unowned {
+  text-align: center;
+  color: #bdbdbd; /* Lighter grey */
+}
+.v-table .element-火 { background-color: #ffebee; }
+.v-table .element-水 { background-color: #e3f2fd; }
+.v-table .element-木 { background-color: #e8f5e9; }
+.v-table .element-光 { background-color: #fffde7; }
+.v-table .element-闇 { background-color: #f3e5f5; }
+</style>

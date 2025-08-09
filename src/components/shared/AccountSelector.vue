@@ -1,9 +1,14 @@
 <template>
   <div id="account-controls" v-show="visible">
-    <label for="account-selector">管理対象アカウント:</label>
-    <select id="account-selector" v-model="selectedId">
-      <option v-for="account in accounts" :key="account.id    " :value="account.id">{{ account.name  }}</option>
-    </select>
+    <v-select
+      v-model="selectedId"
+      :items="accounts"
+      item-title="name"
+      item-value="id"
+      label="管理対象アカウント"
+      variant="outlined"
+      density="compact"
+    ></v-select>
   </div>
 </template>
 
@@ -49,17 +54,3 @@ const selectedId = computed({
   }
 });
 </script>
-
-<style scoped>
-#account-controls {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #e8eaf6;
-  border-radius: 5px;
-  margin-top: -20px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  border: 1px solid #ccc;
-  border-top: none;
-}
-</style>
