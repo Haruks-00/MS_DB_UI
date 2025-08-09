@@ -22,14 +22,17 @@
               v-cardで囲むことで、境界線と高さを設定しやすくなります。
             -->
             <v-card variant="outlined">
-              <v-list v-model:selected="selectedMasterIdProxy" style="height: 400px; overflow-y: auto;">
+              <v-list
+                v-model:selected="selectedMasterIdProxy"
+                style="height: 400px; overflow-y: auto"
+              >
                 <v-list-item
                   v-for="master in addableCharacters"
-                  :key="master.id    "
+                  :key="master.id"
                   :value="master.id"
                 >
                   <v-list-item-title>
-                    [{{ master.indexNumber || '?' }}] {{ master.monsterName }}
+                    [{{ master.indexNumber || "?" }}] {{ master.monsterName }}
                   </v-list-item-title>
                   <v-list-item-subtitle>
                     所持数: {{ getOwnedCountForMaster(master.id) }} / 2
@@ -49,7 +52,9 @@
               size="large"
               block
             >
-        {{ isAdding ? '追加中...' : 'このキャラクターを所持リストに追加' }}
+              {{
+                isAdding ? "追加中..." : "このキャラクターを所持リストに追加"
+              }}
             </v-btn>
           </v-col>
         </v-row>
@@ -59,9 +64,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import firebase from 'firebase/compat/app'; // INFO: serverTimestampのために必要
-import { databaseService } from '../../services/database.js';
+import { ref, computed, watch } from "vue";
+import firebase from "firebase/compat/app"; // INFO: serverTimestampのために必要
+import { databaseService } from "../../services/database.js";
 
 /**
  * [概要] コンポーネントが受け取るプロパティを定義します。
@@ -76,15 +81,13 @@ const props = defineProps({
 /**
  * [概要] 親コンポーネントに通知するイベントを定義します。
  */
-const emit = defineEmits(['character-added']);
+const emit = defineEmits(["character-added"]);
 
 // INFO: data() は ref() を使ってリアクティブな状態として定義します
-const search = ref('');
+const search = ref("");
 const selectedMasterId = ref(null);
 const isAdding = ref(false);
-// #endregion
 
-// #region [Computed Properties]
 /**
  * [概要] v-listのv-model(配列)と、既存のロジック(文字列)の差異を吸収するプロキシ。
  * @note INFO: v-listのv-model:selectedは選択された項目のvalueを配列で返します。
@@ -96,7 +99,7 @@ const selectedMasterIdProxy = computed({
   },
   set(value) {
     selectedMasterId.value = value[0] || null;
-  }
+  },
 });
 
 /**
@@ -104,13 +107,13 @@ const selectedMasterIdProxy = computed({
  * @returns {Array<Object>} 追加可能なキャラクターの配列
  */
 const addableCharacters = computed(() => {
-  // INFO: this. は不要になり、propsを直接参照します
   if (!props.selectedAccountId) return [];
 
   const lowerSearch = search.value.toLowerCase();
-  return props.characterMasters.filter(master => {
+  return props.characterMasters.filter((master) => {
     const isNotFull = getOwnedCountForMaster(master.id) < 2;
-    const matchesSearch = !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch);
+    const matchesSearch =
+      !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch);
     return isNotFull && matchesSearch;
   });
 });
@@ -119,9 +122,12 @@ const addableCharacters = computed(() => {
  * [概要] 選択中のアカウントが変更されたら、選択中のキャラをリセットする。
  * @note INFO: watchオプションはwatch関数に置き換わります
  */
-watch(() => props.selectedAccountId, () => {
-  selectedMasterId.value = null;
-});
+watch(
+  () => props.selectedAccountId,
+  () => {
+    selectedMasterId.value = null;
+  }
+);
 
 /**
  * [概要] 特定マスターIDの所持数を返すヘルパー関数。
@@ -137,14 +143,16 @@ const getOwnedCountForMaster = (masterId) => {
  * [概要] キャラクター追加ボタンがクリックされた際の処理。
  */
 const handleAddCharacter = async () => {
-  if (!selectedMasterId.value || !props.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
-  if (getOwnedCountForMaster(selectedMasterId.value) >= 2) return alert('このキャラは既に2体所持しています。');
-  
+  if (!selectedMasterId.value || !props.selectedAccountId)
+    return alert("追加するキャラとアカウントを選択してください。");
+  if (getOwnedCountForMaster(selectedMasterId.value) >= 2)
+    return alert("このキャラは既に2体所持しています。");
+
   isAdding.value = true;
   try {
     const master = props.characterMastersMap.get(selectedMasterId.value);
-    if (!master) throw new Error('キャラのマスター情報が見つかりません。');
-    
+    if (!master) throw new Error("キャラのマスター情報が見つかりません。");
+
     const newOwnedCharData = {
       characterMasterId: selectedMasterId.value,
       monsterName: master.monsterName,
@@ -152,16 +160,26 @@ const handleAddCharacter = async () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await databaseService.addOwnedCharacter(props.selectedAccountId, newOwnedCharData);
-    
-    const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() } };
-    emit('character-added', { accountId: props.selectedAccountId, newCharacter: newLocalChar });
+    const docRef = await databaseService.addOwnedCharacter(
+      props.selectedAccountId,
+      newOwnedCharData
+    );
+
+    const newLocalChar = {
+      ...newOwnedCharData,
+      id: docRef.id,
+      createdAt: { toDate: () => new Date() },
+    };
+    emit("character-added", {
+      accountId: props.selectedAccountId,
+      newCharacter: newLocalChar,
+    });
 
     alert(`「${master.monsterName}」を所持リストに追加しました。`);
     selectedMasterId.value = null;
   } catch (error) {
-    console.error('キャラ追加失敗:', error);
-    alert('エラー: ' + error.message);
+    console.error("キャラ追加失敗:", error);
+    alert("エラー: " + error.message);
   } finally {
     isAdding.value = false;
   }

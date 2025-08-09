@@ -3,7 +3,6 @@
     <h2>キャラクターマスター編集</h2>
     <v-form>
       <v-container class="pa-0">
-        <!-- #region [Selection Area] -->
         <v-row>
           <v-col cols="12">
             <v-text-field
@@ -28,9 +27,7 @@
             </v-card>
           </v-col>
         </v-row>
-        <!-- #endregion -->
         
-        <!-- #region [Edit Form Area] -->
         <v-row v-if="form.selectedMasterId">
           <v-col cols="12">
             <v-card variant="outlined">
@@ -81,7 +78,6 @@
             </v-card>
           </v-col>
         </v-row>
-        <!-- #endregion -->
       </v-container>
     </v-form>
   </div>
@@ -143,9 +139,7 @@ const selectedMasterIdProxy = computed({
     form.selectedMasterId = value[0] || null;
   }
 });
-// #endregion
 
-// #region [Watchers]
 /**
  * [概要] 選択されたマスターIDが変更された際にフォームを更新する。
  * @param {string | null} newId - 新しく選択されたマスターID

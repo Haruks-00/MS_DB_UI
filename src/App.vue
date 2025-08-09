@@ -1,14 +1,12 @@
+<!-- src/App.vue -->
 <template>
   <v-app>
-    <!-- INFO: アプリケーションの上部バー。タイトルやナビゲーションを配置します。 -->
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>キャラクター管理</v-toolbar-title>
       <v-spacer></v-spacer>
       <auth-status :user="user" @login="handleLogin" @logout="handleLogout" />
 
-      <!-- INFO: v-if="user" を使って、ログイン時のみタブを表示します。 -->
       <template v-if="user" v-slot:extension>
-        <!-- INFO: Vuetifyのタブコンポーネント。activeTabとv-modelで連動します。 -->
         <v-tabs v-model="activeTab" align-with-title>
           <v-tab v-for="tab in tabs" :key="tab.id  " :value="tab.id">
             {{ tab.name  }}
@@ -17,10 +15,8 @@
       </template>
     </v-app-bar>
 
-    <!-- INFO: メインのコンテンツ領域。v-app-barの下に配置されます。 -->
     <v-main>
       <v-container fluid>
-        <!-- INFO: v-if="user" でログイン状態のコンテンツ表示を制御します。 -->
         <div v-if="user">
           <account-selector
             :accounts="accounts"
@@ -29,9 +25,9 @@
             class="mb-4"
           />
           
-          <!-- INFO: v-windowはv-tabsと連動し、選択されたタブのコンテンツのみ表示します。 -->
-          <v-window v-model="activeTab">
-            <v-window-item value="view-all">
+          <v-window v-if="dataLoaded" v-model="activeTab">
+            <!-- NOTE: 全てのv-window-itemに一意なkey属性を追加し、Vueがコンポーネントを正しく再描画できるようにします -->
+            <v-window-item value="view-all" key="view-all">
               <view-all-characters-tab
                 :data-loaded="dataLoaded"
                 :accounts="accounts"
@@ -44,7 +40,7 @@
               />
             </v-window-item>
             
-            <v-window-item value="add-owned">
+            <v-window-item value="add-owned" key="add-owned">
               <add-owned-character-tab 
                 :character-masters="characterMasters"
                 :character-masters-map="characterMastersMap"
@@ -54,7 +50,7 @@
               />
             </v-window-item>
 
-            <v-window-item value="manage-items">
+            <v-window-item value="manage-items" key="manage-items">
               <manage-items-tab
                 :selected-account-id="selectedAccountId"
                 :owned-characters-data="ownedCharactersData"
@@ -66,7 +62,7 @@
               />
             </v-window-item>
 
-            <v-window-item value="manage-teams">
+            <v-window-item value="manage-teams" key="manage-teams">
               <manage-teams-tab
                 :user-id="user.uid"
                 :data-loaded="dataLoaded"
@@ -81,14 +77,14 @@
               />
             </v-window-item>
 
-            <v-window-item value="add-master">
+            <v-window-item value="add-master" key="add-master">
               <add-master-character-tab
                 :gacha-masters="gachaMasters"
                 @master-added="handleMasterDataChanged"
               />
             </v-window-item>
             
-            <v-window-item value="edit-master">
+            <v-window-item value="edit-master" key="edit-master">
               <edit-master-character-tab
                 :character-masters="characterMasters"
                 :gacha-masters="gachaMasters"
@@ -96,8 +92,12 @@
               />
             </v-window-item>
           </v-window>
+          <div v-else class="text-center pa-10">
+            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+            <p class="mt-4">データを読み込んでいます...</p>
+          </div>
+
         </div>
-        <!-- INFO: 未ログイン時の表示 -->
         <div v-else class="text-center pa-10">
           <h2>ようこそ</h2>
           <p>Googleアカウントでログインして、機能をご利用ください。</p>
@@ -120,29 +120,24 @@ import ManageTeamsTab from './components/teams/ManageTeamsTab.vue';
 import AddMasterCharacterTab from './components/characters/AddMasterCharacterTab.vue';
 import EditMasterCharacterTab from './components/characters/EditMasterCharacterTab.vue';
 
-// INFO: 全体的なアプリケーション状態
 const user = ref(null);
 const isAuthReady = ref(false);
 const dataLoaded = ref(false);
 
-// INFO: Firestoreから取得するマスターデータとユーザーデータ
 const accounts = ref([]);
 const characterMasters = ref([]);
 const itemMasters = ref([]);
 const gachaMasters = ref([]);
 const teams = ref([]);
 
-// INFO: パフォーマンス向上のためのデータ構造
 const itemMastersMap = ref(new Map());
 const ownedCountMap = ref(new Map());
 const ownedCharactersData = ref(new Map());
 const characterMastersMap = ref(new Map());
 
-// INFO: UIの状態管理
 const activeTab = ref('view-all');
 const selectedAccountId = ref(null);
 
-// NOTE: タブの情報を配列で管理することで、テンプレートが簡潔になります。
 const tabs = ref([
   { id: 'view-all', name: '所持状況一覧' },
   { id: 'add-owned', name: '所持キャラ追加' },
@@ -156,8 +151,6 @@ const isAccountControlVisible = computed(() => {
   return activeTab.value === 'add-owned' || activeTab.value === 'manage-items';
 });
 
-
-// INFO: onAuthStateChanged は createdフックの代わりとして<script setup>のトップレベルで呼び出します
 authService.onAuthStateChanged(newUser => {
   user.value = newUser;
   isAuthReady.value = true;
@@ -190,9 +183,6 @@ const resetLoadedData = () => {
   selectedAccountId.value = null;
 };
 
-/**
- * [概要] データを読み込み、コンポーネントの状態を更新する。
- */
 async function loadInitialData() {
   if (dataLoaded.value) return;
   if (!user.value) return;
@@ -200,7 +190,6 @@ async function loadInitialData() {
   try {
     const processedData = await databaseService.loadAndProcessInitialData(user.value.uid);
     
-    // INFO: サービスから受け取った整形済みのデータをまとめてコンポーネントのdataにセットします
     accounts.value = processedData.accounts;
     characterMasters.value = processedData.characterMasters;
     itemMasters.value = processedData.itemMasters;
@@ -222,10 +211,6 @@ async function loadInitialData() {
   }
 }
 
-/**
- * [概要] AddOwnedCharacterTabからの通知を受け、ローカルの状態を更新する。
- * @param {Object} payload - { accountId, newCharacter } を含むオブジェクト
- */
 const handleCharacterAdded = ({ accountId, newCharacter }) => {
   if (!ownedCharactersData.value.has(accountId)) {
     ownedCharactersData.value.set(accountId, []);
@@ -238,32 +223,20 @@ const handleCharacterAdded = ({ accountId, newCharacter }) => {
   ownedCountMap.value.set(countKey, currentCount + 1);
 };
 
-/**
- * [概要] ManageItemsTabからの通知を受け、キャラクターのアイテム情報をローカルで更新する。
- * @param {Object} payload - { accountId, ownedCharacterId, items }
- */
 const handleItemsUpdated = ({ accountId, ownedCharacterId, items }) => {
   const accountChars = ownedCharactersData.value.get(accountId) || [];
-  const charToUpdate = accountChars.find(c => c.id    === ownedCharacterId);
+  const charToUpdate = accountChars.find(c => c.id            === ownedCharacterId);
   if (charToUpdate) {
     charToUpdate.items = items; 
   }
 };
 
-/**
- * [概要] ManageItemsTabからの通知を受け、アイテム移動をローカルで反映する。
- * @param {Object} payload - { accountId, from: {id, items}, to: {id, items} }
- */
 const handleItemsMoved = ({ accountId, from, to }) => {
   const accountChars = ownedCharactersData.value.get(accountId) || [];
-  const fromChar = accountChars.find(c => c.id === from.id );
-  const toChar = accountChars.find(c => c.id === to.id );
-  if (fromChar) {
-    fromChar.items = from.items; 
-  }
-  if (toChar) {
-    toChar.items = to.items; 
-  }
+  const fromChar = accountChars.find(c => c.id === from.id   );
+  const toChar = accountChars.find(c => c.id === to.id  );
+  if (fromChar) fromChar.items = from.items; 
+  if (toChar) toChar.items = to.items; 
 };
 
 const handleTeamAdded = (newTeam) => {
@@ -271,7 +244,7 @@ const handleTeamAdded = (newTeam) => {
 };
 
 const handleTeamUpdated = (updatedTeam) => {
-  const index = teams.value.findIndex(t => t.id   === updatedTeam.id );
+  const index = teams.value.findIndex(t => t.id     === updatedTeam.id  );
   if (index > -1) {
     teams.value[index] = { ...teams.value[index], ...updatedTeam };
   }
@@ -281,12 +254,7 @@ const handleTeamDeleted = (teamId) => {
   teams.value = teams.value.filter(t => t.id !== teamId);
 };
 
-/**
- * [概要] マスターデータが変更された際のハンドラ。
- */
 const handleMasterDataChanged = () => {
-  // WARNING: マスターデータのローカル状態を整合性を持って更新するのは複雑なため、
-  //          現時点では最も安全なリロード戦略をとる。
   location.reload();
 };
 </script>

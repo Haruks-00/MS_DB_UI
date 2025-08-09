@@ -2,7 +2,6 @@
   <div>
     <h2>アイテム管理</h2>
     <v-form>
-      <!-- #region [Update Items Section] -->
       <v-card variant="outlined" class="mb-5">
         <v-card-title>所持キャラクターのアイテムを変更</v-card-title>
         <v-card-text>
@@ -48,9 +47,7 @@
           </v-container>
         </v-card-text>
       </v-card>
-      <!-- #endregion -->
 
-      <!-- #region [Move Items Section] -->
       <v-card variant="outlined">
         <v-card-title>キャラクター間でアイテムを移動</v-card-title>
         <v-card-text>
@@ -109,7 +106,6 @@
           </v-container>
         </v-card-text>
       </v-card>
-      <!-- #endregion -->
     </v-form>
   </div>
 </template>
@@ -129,7 +125,6 @@ const props = defineProps({
 
 const emit = defineEmits(['items-updated', 'items-moved']);
 
-// #region [State]
 // NOTE: updateForm.itemsを配列に変更し、v-select(multiple)に対応させます
 const updateForm = reactive({ search: '', selectedOwnedId: null, items: [] });
 const moveForm = reactive({ from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] });
@@ -170,9 +165,7 @@ const movableItems = computed(() => {
   if (!fromChar || !fromChar.items) return [];
   return fromChar.items.map (itemId => ({ id: Number(itemId), name: props.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` }));
 });
-// #endregion
 
-// #region [Computed: v-list Proxies]
 const updateSelectedIdProxy = computed({
   get: () => updateForm.selectedOwnedId ? [updateForm.selectedOwnedId] : [],
   set: (val) => { updateForm.selectedOwnedId = val[0] || null; }
@@ -185,9 +178,7 @@ const moveToSelectedIdProxy = computed({
   get: () => moveForm.to.selectedId ? [moveForm.to.selectedId] : [],
   set: (val) => { moveForm.to.selectedId = val[0] || null; }
 });
-// #endregion
 
-// #region [Watchers]
 const resetForms = () => {
     Object.assign(updateForm, { search: '', selectedOwnedId: null, items: [] });
     Object.assign(moveForm, { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] });
@@ -270,6 +261,6 @@ const handleMoveItems = async () => {
 };
 
 const formatCharForDisplay = (char, includeItems) => {
-  return formatOwnedCharDisplayName(char, includeItems, props.characterMastersMap, props.itemMastersMap);
+  return formatOwnedCharDisplayName(char, includeItems, props.characterMastersMap, props.ownedCharactersData, props.itemMastersMap, props.selectedAccountId);
 };
 </script>
