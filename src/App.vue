@@ -48,10 +48,8 @@
         :character-masters-map="characterMastersMap"
         :item-masters="itemMasters"
         :item-masters-map="itemMastersMap"
-        :is-updating="itemManage.isUpdating"
-        :is-moving="itemMove.isMoving"
-        @update-items="updateItems"
-        @move-items="moveItems"
+        @items-updated="handleItemsUpdated"
+        @items-moved="handleItemsMoved"
       />
       
       <manage-teams-tab
@@ -128,8 +126,6 @@ export default {
       activeTab: 'view-all', selectedAccountId: null,
 
       // INFO: 各コンポーネントが管理する状態（将来的にはコンポーネント内に移動）
-      itemManage: { isUpdating: false },
-      itemMove: { isMoving: false },
       teamManage: { isSaving: false },
       master: { isSaving: false },
       editMaster: { isUpdating: false },
@@ -206,42 +202,32 @@ export default {
       this.$set(this.ownedCountMap, countKey, currentCount + 1);
     },
     
-    async updateItems({ ownedCharacterId, items }) {
-      if (!ownedCharacterId) return;
-      this.itemManage.isUpdating = true;
-      try {
-        await databaseService.updateCharacterItems(this.selectedAccountId, ownedCharacterId, items);
-        const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
+    /**
+     * [概要] ManageItemsTabからの通知を受け、キャラクターのアイテム情報をローカルで更新する。
+     * @param {Object} payload - { accountId, ownedCharacterId, items }
+     */
+    handleItemsUpdated({ accountId, ownedCharacterId, items }) {
+      const accountChars = this.ownedCharactersData.get(accountId) || [];
         const charToUpdate = accountChars.find(c => c.id === ownedCharacterId);
-        if (charToUpdate) { this.$set(charToUpdate, 'items', items); }
-        alert('アイテムを更新しました。');
-      } catch(e) { alert('エラー: ' + e.message); } 
-      finally { this.itemManage.isUpdating = false; }
+      if (charToUpdate) {
+        this.$set(charToUpdate, 'items', items);
+      }
     },
-    
-    async moveItems({ from, to, selectedItemIds }) {
-      this.itemMove.isMoving = true;
-      try {
-        if (from.id     === to.id     || !from.id || !to.id) throw new Error('有効な移動元と移動先を選択してください。');
-        if (selectedItemIds.length === 0) throw new Error('移動するアイテムを選択してください。');
-        const accountChars = this.ownedCharactersData.get(this.selectedAccountId) || [];
-        const fromChar = accountChars.find(c => c.id === from.id);
-        const toChar = accountChars.find(c => c.id === to.id);
-        if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
-        const numericIds = selectedItemIds.map (Number);
-        if ((toChar.items?.length || 0) + numericIds.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
-        
-        // NOTE: 移動元と移動先の新しいアイテムリストを作成
-        const newFromItems = (fromChar.items || []).map(Number).filter(id => !numericIds.includes(id));
-        const newToItems = [...(toChar.items || []).map(Number), ...numericIds];
-        
-        // NOTE: トランザクションでDBを更新し、成功後にローカルを更新
-        await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.id, items: newFromItems }, { id: to.id, items: newToItems });
-        this.$set(fromChar, 'items', newFromItems);
-        this.$set(toChar, 'items', newToItems);
-        alert('アイテムを移動しました。');
-      } catch (e) { alert(`エラー: ${e.message}`); } 
-      finally { this.itemMove.isMoving = false; }
+
+    /**
+     * [概要] ManageItemsTabからの通知を受け、アイテム移動をローカルで反映する。
+     * @param {Object} payload - { accountId, from: {id, items}, to: {id, items} }
+     */
+    handleItemsMoved({ accountId, from, to }) {
+      const accountChars = this.ownedCharactersData.get(accountId) || [];
+      const fromChar = accountChars.find(c => c.id === from.id );
+      const toChar = accountChars.find(c => c.id === to.id );
+      if (fromChar) {
+        this.$set(fromChar, 'items', from.items);
+      }
+      if (toChar) {
+        this.$set(toChar, 'items', to.items);
+      }
     },
     
     async handleSaveTeam(teamFormData) {

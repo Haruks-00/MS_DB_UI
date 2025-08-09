@@ -7,7 +7,7 @@
       <input type="text" v-model="updateForm.search " placeholder="キャラクター名で検索">
       <label for="item-char-selector">キャラクター選択:</label>
       <select id="item-char-selector" v-model="updateForm.selectedOwnedId" size="10" style="width:100%">
-        <option v-for="char in manageableCharactersForUpdate" :key="char.id" :value="char.id">
+        <option v-for="char in manageableCharactersForUpdate" :key="char.id        " :value="char.id">
           {{ formatCharForDisplay(char, true) }}
         </option>
       </select>
@@ -15,7 +15,7 @@
       <div class="item-select-container">
         <select v-model="updateForm.items[0]">
           <option value="">(アイテムなし)</option>
-          <option v-for="item in itemMasters" :key="item.id" :value="item.id">[{{ item.id }}] {{ item.name }}</option>
+          <option v-for="item in itemMasters" :key="item.id             " :value="item.id">[{{ item.id }}] {{ item.name     }}</option>
         </select>
         <select v-model="updateForm.items[1]">
           <option value="">(アイテムなし)</option>
@@ -76,9 +76,11 @@
 
 <script>
 import { formatOwnedCharDisplayName } from '../utils/formatters.js';
+import { databaseService } from '../services/database.js';
+
 /**
  * [概要] アイテムの変更・移動を行うタブUIコンポーネント。
- * @note 親からデータを受け取り、UIの状態管理に責務を持つ。DB更新は親に通知する。
+ * @note 状態管理とDB更新ロジックを自己完結させ、結果を親に通知する責務を持つ。
  */
 export default {
   name: 'ManageItemsTab',
@@ -88,15 +90,15 @@ export default {
     characterMastersMap: { type: Map, required: true },
     itemMasters: { type: Array, required: true },
     itemMastersMap: { type: Map, required: true },
-    isUpdating: { type: Boolean, default: false },
-    isMoving: { type: Boolean, default: false },
   },
 
   data() {
     return {
       updateForm: { search: '', selectedOwnedId: null, items: ["", "", ""] },
       moveForm: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] },
-    }
+      isUpdating: false,
+      isMoving: false,
+    };
   },
 
   computed: {
@@ -157,29 +159,68 @@ export default {
   },
 
   methods: {
-    /**
-     * [概要] 親コンポーネントにアイテム更新イベントを通知する
-     */
-    handleUpdateItems() {
-      this.$emit('update-items', {
+    async handleUpdateItems() {
+      if (!this.updateForm.selectedOwnedId) return;
+      this.isUpdating = true;
+      try {
+        const itemsToUpdate = this.updateForm.items.filter(Boolean).map(Number);
+        await databaseService.updateCharacterItems(this.selectedAccountId, this.updateForm.selectedOwnedId, itemsToUpdate);
+        
+        // NOTE: DB更新成功後、親にローカルデータ更新を依頼
+        this.$emit('items-updated', {
+          accountId: this.selectedAccountId,
         ownedCharacterId: this.updateForm.selectedOwnedId,
-        items: this.updateForm.items.filter(Boolean).map(Number)
-      });
+          items: itemsToUpdate,
+        });
+        alert('アイテムを更新しました。');
+      } catch (e) {
+        alert('エラー: ' + e.message);
+      } finally {
+        this.isUpdating = false;
+      }
     },
-    /**
-     * [概要] 親コンポーネントにアイテム移動イベントを通知する
-     */
-    handleMoveItems() {
-      this.$emit('move-items', {
-        from: { id: this.moveForm.from.selectedId },
-        to: { id: this.moveForm.to.selectedId },
-        selectedItemIds: this.moveForm.selectedItemIds,
-      });
-    },
+    
+    async handleMoveItems() {
+      this.isMoving = true;
+      try {
+        const fromId = this.moveForm.from.selectedId;
+        const toId = this.moveForm.to.selectedId;
+        const itemIdsToMove = this.moveForm.selectedItemIds.map (Number);
 
-    /**
-     * [概要] 共通フォーマッタを呼び出すラッパーメソッド
-     */
+        if (fromId === toId || !fromId || !toId) throw new Error('有効な移動元と移動先を選択してください。');
+        if (itemIdsToMove.length === 0) throw new Error('移動するアイテムを選択してください。');
+        
+        const fromChar = this.currentOwnedCharacters.find(c => c.id === fromId);
+        const toChar = this.currentOwnedCharacters.find(c => c.id === toId);
+        if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
+        
+        if ((toChar.items?.length || 0) + itemIdsToMove.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
+        
+        const newFromItems = (fromChar.items || []).map(Number).filter(id => !itemIdsToMove.includes(id));
+        const newToItems = [...(toChar.items || []).map(Number), ...itemIdsToMove];
+        
+        await databaseService.moveCharacterItems(this.selectedAccountId, { id: fromId, items: newFromItems }, { id: toId, items: newToItems });
+
+        // NOTE: DB更新成功後、親にローカルデータ更新を依頼
+        this.$emit('items-moved', {
+            accountId: this.selectedAccountId,
+            from: { id: fromId, items: newFromItems },
+            to: { id: toId, items: newToItems },
+        });
+
+        alert('アイテムを移動しました。');
+        // INFO: フォームをリセットして次の操作に備える
+        this.moveForm.from.selectedId = null;
+        this.moveForm.to.selectedId = null;
+        this.moveForm.selectedItemIds = [];
+
+      } catch (e) {
+        alert(`エラー: ${e.message}`);
+      } finally {
+        this.isMoving = false;
+      }
+    },
+    
     formatCharForDisplay(char, includeItems) {
       // INFO: テンプレートから直接呼び出すために、thisのコンテキストを渡すラッパーを用意
       return formatOwnedCharDisplayName(char, includeItems, this.characterMastersMap, this.ownedCharactersData, this.itemMastersMap, this.selectedAccountId);
