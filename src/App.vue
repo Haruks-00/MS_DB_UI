@@ -54,15 +54,16 @@
       
       <manage-teams-tab
         v-if="activeTab === 'manage-teams'"
+        :user-id="user.uid"
         :data-loaded="dataLoaded"
         :teams="teams"
         :accounts="accounts"
         :owned-characters-data="ownedCharactersData"
         :character-masters-map="characterMastersMap"
         :item-masters-map="itemMastersMap"
-        :is-saving="teamManage.isSaving"
-        @save-team="handleSaveTeam"
-        @delete-team="deleteTeam"
+        @team-added="handleTeamAdded"
+        @team-updated="handleTeamUpdated"
+        @team-deleted="handleTeamDeleted"
       />
 
       <add-master-character-tab
@@ -126,7 +127,6 @@ export default {
       activeTab: 'view-all', selectedAccountId: null,
 
       // INFO: 各コンポーネントが管理する状態（将来的にはコンポーネント内に移動）
-      teamManage: { isSaving: false },
       master: { isSaving: false },
       editMaster: { isUpdating: false },
     }
@@ -230,32 +230,18 @@ export default {
       }
     },
     
-    async handleSaveTeam(teamFormData) {
-      this.teamManage.isSaving = true;
-      const teamData = { userId: this.user.uid, name: teamFormData.name , type: teamFormData.type, characters: teamFormData.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId })) };
-      try {
-        const id = teamFormData.id ;
-        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        const result = await databaseService.saveTeam(id, teamData);
-        if (id) {
-          const index = this.teams.findIndex(t => t.id === id);
-          if (index > -1) this.$set(this.teams, index, { ...this.teams[index], ...teamData });
-          alert('編成を更新しました。');
-        } else {
-          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
+    // NOTE: 以下、新しく追加された編成管理ハンドラ
+    handleTeamAdded(newTeam) {
           this.teams.unshift(newTeam);
-          alert('編成を保存しました。');
-        }
-      } catch (error) { console.error('編成保存失敗:', error); alert('エラー: ' + error.message); } 
-      finally { this.teamManage.isSaving = false; }
     },
-    
-    async deleteTeam(teamId) {
-      try {
-        await databaseService.deleteTeam(teamId);
+    handleTeamUpdated(updatedTeam) {
+      const index = this.teams.findIndex(t => t.id === updatedTeam.id );
+      if (index > -1) {
+        this.$set(this.teams, index, { ...this.teams[index], ...updatedTeam });
+      }
+    },
+    handleTeamDeleted(teamId) {
         this.teams = this.teams.filter(t => t.id !== teamId);
-        alert('編成を削除しました。');
-      } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
     },
 
     async saveMaster(masterData) {

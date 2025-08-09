@@ -72,20 +72,23 @@
 </template>
 
 <script>
+import firebase from 'firebase/compat/app';
 import { formatOwnedCharDisplayName } from '../utils/formatters.js';
+import { databaseService } from '../services/database.js';
+
 /**
  * [概要] 編成の閲覧・作成・編集・削除を行うタブUIコンポーネント。
  */
 export default {
   name: 'ManageTeamsTab',
   props: {
+    userId: { type: String, required: true },
     dataLoaded: { type: Boolean, required: true },
     teams: { type: Array, required: true },
     accounts: { type: Array, required: true },
     ownedCharactersData: { type: Map, required: true },
     characterMastersMap: { type: Map, required: true },
     itemMastersMap: { type: Map, required: true },
-    isSaving: { type: Boolean, default: false },
   },
 
   data() {
@@ -102,7 +105,8 @@ export default {
           characterSearch: ''
         })),
       },
-    }
+      isSaving: false,
+    };
   },
 
   computed: {
@@ -167,19 +171,55 @@ export default {
         }))
       };
     },
-    handleSaveTeam() {
+    async handleSaveTeam() {
       if (!this.isTeamFormValid) {
         alert('編成名、タイプ、4体のキャラを全て選択してください。');
         return;
       }
-      this.$emit('save-team', { ...this.teamForm });
+      this.isSaving = true;
+      const teamData = {
+        userId: this.userId,
+        name: this.teamForm.name,
+        type: this.teamForm.type,
+        characters: this.teamForm.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId }))
+      };
+      
+      try {
+        const id = this.teamForm.id  ;
+        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        const result = await databaseService.saveTeam(id, teamData);
+        
+        if (id) {
+          // INFO: 更新の場合、親に更新後のデータを通知
+          this.$emit('team-updated', { ...teamData, id });
+          alert('編成を更新しました。');
+        } else {
+          // INFO: 新規作成の場合、親に新しいデータを通知
+          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
+          this.$emit('team-added', newTeam);
+          alert('編成を保存しました。');
+          this.resetTeamForm(); // INFO: 新規作成後はフォームをリセット
+        }
+      } catch (error) {
+        console.error('編成保存失敗:', error);
+        alert('エラー: ' + error.message);
+      } finally {
+        this.isSaving = false;
+      }
     },
-    handleDeleteTeam(teamId) {
+    async handleDeleteTeam(teamId) {
       if (confirm('この編成を本当に削除しますか？')) {
-        this.$emit('delete-team', teamId);
-        // INFO: もし削除対象が編集中だったらフォームをリセットする
-        if (this.teamForm.id  === teamId) {
+        try {
+          await databaseService.deleteTeam(teamId);
+          // INFO: DB削除成功後、親にIDを通知してローカルデータを更新させる
+          this.$emit('team-deleted', teamId);
+          alert('編成を削除しました。');
+          if (this.teamForm.id === teamId) {
           this.resetTeamForm();
+          }
+        } catch (error) {
+          console.error('編成削除失敗:', error);
+          alert('エラー: ' + error.message);
         }
       }
     },
