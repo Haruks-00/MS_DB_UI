@@ -83,7 +83,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue';
 import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
 import AuthStatus from './components/AuthStatus.vue';
@@ -95,140 +96,165 @@ import ManageTeamsTab from './components/ManageTeamsTab.vue';
 import AddMasterCharacterTab from './components/AddMasterCharacterTab.vue';
 import EditMasterCharacterTab from './components/EditMasterCharacterTab.vue';
 
-export default {
-  name: 'App',
-  components: {
-    AuthStatus,
-    AccountSelector,
-    ViewAllCharactersTab,
-    AddOwnedCharacterTab,
-    ManageItemsTab,
-    ManageTeamsTab,
-    AddMasterCharacterTab,
-    EditMasterCharacterTab,
-  },
-  
-  data() {
-    return {
-      // INFO: 全体的なアプリケーション状態
-      user: null, isAuthReady: false, dataLoaded: false,
-      
-      // INFO: Firestoreから取得するマスターデータとユーザーデータ
-      accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [],
-      
-      // INFO: パフォーマンス向上のためのデータ構造
-      itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(),
-      
-      // INFO: UIの状態管理
-      activeTab: 'view-all', selectedAccountId: null,
+// INFO: 全体的なアプリケーション状態
+const user = ref(null);
+const isAuthReady = ref(false);
+const dataLoaded = ref(false);
+
+// INFO: Firestoreから取得するマスターデータとユーザーデータ
+const accounts = ref([]);
+const characterMasters = ref([]);
+const itemMasters = ref([]);
+const gachaMasters = ref([]);
+const teams = ref([]);
+
+// INFO: パフォーマンス向上のためのデータ構造
+const itemMastersMap = ref(new Map());
+const ownedCountMap = ref(new Map());
+const ownedCharactersData = ref(new Map());
+const characterMastersMap = ref(new Map());
+
+// INFO: UIの状態管理
+const activeTab = ref('view-all');
+const selectedAccountId = ref(null);
+
+const isAccountControlVisible = computed(() => {
+  return activeTab.value === 'add-owned' || activeTab.value === 'manage-items';
+});
+
+
+// INFO: onAuthStateChanged は createdフックの代わりとして<script setup>のトップレベルで呼び出します
+authService.onAuthStateChanged(newUser => {
+  user.value = newUser;
+  isAuthReady.value = true;
+  if (newUser) {
+    loadInitialData();
+  } else {
+    resetLoadedData();
+  }
+});
+
+const handleLogin = () => {
+  authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。"));
+};
+
+const handleLogout = () => {
+  authService.logout();
+};
+
+const resetLoadedData = () => {
+  dataLoaded.value = false;
+  accounts.value = [];
+  characterMasters.value = [];
+  itemMasters.value = [];
+  gachaMasters.value = [];
+  teams.value = [];
+  itemMastersMap.value = new Map();
+  ownedCountMap.value = new Map();
+  ownedCharactersData.value = new Map();
+  characterMastersMap.value = new Map();
+  selectedAccountId.value = null;
+};
+
+/**
+ * [概要] データを読み込み、コンポーネントの状態を更新する。
+ */
+async function loadInitialData() {
+  if (dataLoaded.value) return;
+  if (!user.value) return;
+  console.log("初期データの読み込みを開始...");
+  try {
+    const processedData = await databaseService.loadAndProcessInitialData(user.value.uid);
+    
+    // INFO: サービスから受け取った整形済みのデータをまとめてコンポーネントのdataにセットします
+    accounts.value = processedData.accounts;
+    characterMasters.value = processedData.characterMasters;
+    itemMasters.value = processedData.itemMasters;
+    gachaMasters.value = processedData.gachaMasters;
+    teams.value = processedData.teams;
+    itemMastersMap.value = processedData.itemMastersMap;
+    ownedCountMap.value = processedData.ownedCountMap;
+    ownedCharactersData.value = processedData.ownedCharactersData;
+    characterMastersMap.value = processedData.characterMastersMap;
+    
+    if (accounts.value.length > 0) {
+      selectedAccountId.value = accounts.value[0].id;
     }
-  },
-
-  created() {
-    authService.onAuthStateChanged(user => {
-      this.user = user;
-      this.isAuthReady = true;
-      if (user) { this.loadInitialData(); } else { this.resetLoadedData(); }
-    });
-  },
-
-  computed: {
-    isAccountControlVisible() { return this.activeTab === 'add-owned' || this.activeTab === 'manage-items'; },
-  },
-
-  methods: {
-    handleLogin() { authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。")); },
-    handleLogout() { authService.logout(); },
-
-    resetLoadedData() { Object.assign(this, { dataLoaded: false, accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [], itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(), selectedAccountId: null }); },
-    async loadInitialData() {
-      if (this.dataLoaded) return;
-      if (!this.user) return;
-      console.log("初期データの読み込みを開始...");
-      try {
-        const processedData = await databaseService.loadAndProcessInitialData(this.user.uid);
-        
-        // INFO: サービスから受け取った整形済みのデータをまとめてコンポーネントのdataにセットします
-        Object.assign(this, processedData);
-        
-        if (this.accounts.length > 0) this.selectedAccountId = this.accounts[0].id;
-        this.dataLoaded = true;
-        console.log("初期データの読み込み完了");
-      } catch (e) { 
-        console.error("データ読み込みエラー:", e);
-        alert(`データ読み込みエラー: ${e.message}`); 
-      }
-    },
-    /**
-     * [概要] AddOwnedCharacterTabからの通知を受け、ローカルの状態を更新する。
-     * @param {Object} payload - { accountId, newCharacter } を含むオブジェクト
-     */
-    handleCharacterAdded({ accountId, newCharacter }) {
-      // INFO: 子コンポーネントがDB更新済みのため、このメソッドはローカル状態の更新に専念する
-      if (!this.ownedCharactersData.has(accountId)) {
-        this.$set(this.ownedCharactersData, accountId, []);
-      }
-      this.ownedCharactersData.get(accountId).push(newCharacter);
-
-      const masterId = newCharacter.characterMasterId;
-      const countKey = `${masterId}-${accountId}`;
-      const currentCount = this.ownedCountMap.get(countKey) || 0;
-      this.$set(this.ownedCountMap, countKey, currentCount + 1);
-    },
-    
-    /**
-     * [概要] ManageItemsTabからの通知を受け、キャラクターのアイテム情報をローカルで更新する。
-     * @param {Object} payload - { accountId, ownedCharacterId, items }
-     */
-    handleItemsUpdated({ accountId, ownedCharacterId, items }) {
-      const accountChars = this.ownedCharactersData.get(accountId) || [];
-        const charToUpdate = accountChars.find(c => c.id === ownedCharacterId);
-      if (charToUpdate) {
-        this.$set(charToUpdate, 'items', items);
-      }
-    },
-
-    /**
-     * [概要] ManageItemsTabからの通知を受け、アイテム移動をローカルで反映する。
-     * @param {Object} payload - { accountId, from: {id, items}, to: {id, items} }
-     */
-    handleItemsMoved({ accountId, from, to }) {
-      const accountChars = this.ownedCharactersData.get(accountId) || [];
-      const fromChar = accountChars.find(c => c.id === from.id );
-      const toChar = accountChars.find(c => c.id === to.id );
-      if (fromChar) {
-        this.$set(fromChar, 'items', from.items);
-      }
-      if (toChar) {
-        this.$set(toChar, 'items', to.items);
-      }
-    },
-    
-    // NOTE: 以下、新しく追加された編成管理ハンドラ
-    handleTeamAdded(newTeam) {
-          this.teams.unshift(newTeam);
-    },
-    handleTeamUpdated(updatedTeam) {
-      const index = this.teams.findIndex(t => t.id === updatedTeam.id );
-      if (index > -1) {
-        this.$set(this.teams, index, { ...this.teams[index], ...updatedTeam });
-      }
-    },
-    handleTeamDeleted(teamId) {
-        this.teams = this.teams.filter(t => t.id !== teamId);
-    },
-
-    /**
-     * [概要] マスターデータが変更された際のハンドラ。
-     * @note マスターデータの変更は影響範囲が大きいため、安全策としてページをリロードする。
-     */
-    handleMasterDataChanged() {
-      // WARNING: マスターデータのローカル状態を整合性を持って更新するのは複雑なため、
-      //          現時点では最も安全なリロード戦略をとる。
-        location.reload();
-    },
-  },
+    dataLoaded.value = true;
+    console.log("初期データの読み込み完了");
+  } catch (e) { 
+    console.error("データ読み込みエラー:", e);
+    alert(`データ読み込みエラー: ${e.message}`); 
+  }
 }
+
+/**
+ * [概要] AddOwnedCharacterTabからの通知を受け、ローカルの状態を更新する。
+ * @param {Object} payload - { accountId, newCharacter } を含むオブジェクト
+ */
+const handleCharacterAdded = ({ accountId, newCharacter }) => {
+  if (!ownedCharactersData.value.has(accountId)) {
+    ownedCharactersData.value.set(accountId, []);
+  }
+  ownedCharactersData.value.get(accountId).push(newCharacter);
+
+  const masterId = newCharacter.characterMasterId;
+  const countKey = `${masterId}-${accountId}`;
+  const currentCount = ownedCountMap.value.get(countKey) || 0;
+  ownedCountMap.value.set(countKey, currentCount + 1);
+};
+
+/**
+ * [概要] ManageItemsTabからの通知を受け、キャラクターのアイテム情報をローカルで更新する。
+ * @param {Object} payload - { accountId, ownedCharacterId, items }
+ */
+const handleItemsUpdated = ({ accountId, ownedCharacterId, items }) => {
+  const accountChars = ownedCharactersData.value.get(accountId) || [];
+  const charToUpdate = accountChars.find(c => c.id    === ownedCharacterId);
+  if (charToUpdate) {
+    charToUpdate.items = items; 
+  }
+};
+
+/**
+ * [概要] ManageItemsTabからの通知を受け、アイテム移動をローカルで反映する。
+ * @param {Object} payload - { accountId, from: {id, items}, to: {id, items} }
+ */
+const handleItemsMoved = ({ accountId, from, to }) => {
+  const accountChars = ownedCharactersData.value.get(accountId) || [];
+  const fromChar = accountChars.find(c => c.id === from.id );
+  const toChar = accountChars.find(c => c.id === to.id );
+  if (fromChar) {
+    fromChar.items = from.items; 
+  }
+  if (toChar) {
+    toChar.items = to.items; 
+  }
+};
+
+const handleTeamAdded = (newTeam) => {
+  teams.value.unshift(newTeam);
+};
+
+const handleTeamUpdated = (updatedTeam) => {
+  const index = teams.value.findIndex(t => t.id   === updatedTeam.id );
+  if (index > -1) {
+    teams.value[index] = { ...teams.value[index], ...updatedTeam };
+  }
+};
+
+const handleTeamDeleted = (teamId) => {
+  teams.value = teams.value.filter(t => t.id !== teamId);
+};
+
+/**
+ * [概要] マスターデータが変更された際のハンドラ。
+ */
+const handleMasterDataChanged = () => {
+  // WARNING: マスターデータのローカル状態を整合性を持って更新するのは複雑なため、
+  //          現時点では最も安全なリロード戦略をとる。
+  location.reload();
+};
 </script>
 
 <style>

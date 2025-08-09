@@ -18,134 +18,96 @@
   </div>
 </template>
 
-<script>
-import firebase from 'firebase/compat/app';
+<script setup>
+import { ref, computed, watch } from 'vue';
+import firebase from 'firebase/compat/app'; // INFO: serverTimestampのために必要
 import { databaseService } from '../services/database.js';
 
 /**
- * [概要] 所持キャラクターを追加するためのタブUIコンポーネント。
- * @note 状態管理とDB追加ロジックを自己完結させ、結果を親に通知する責務を持つ。
+ * [概要] コンポーネントが受け取るプロパティを定義します。
  */
-export default {
-  name: 'AddOwnedCharacterTab',
-  props: {
-    /**
-     * @property {Array} characterMasters - 全キャラクターマスターのリスト
-     */
-    characterMasters: {
-      type: Array,
-      required: true,
-    },
-    /**
-     * @property {Map<string, Object>} characterMastersMap - 高速検索用のキャラクターマスターMap
-     */
-    characterMastersMap: {
-      type: Map,
-      required: true,
-    },
-    /**
-     * @property {String} selectedAccountId - 現在選択されているアカウントID
-     */
-    selectedAccountId: {
-      type: String,
-      default: null,
-    },
-    /**
-     * @property {Map<string, number>} ownedCountMap - 'masterId-accountId'をキーとする所持数マップ
-     */
-    ownedCountMap: {
-      type: Map,
-      required: true,
-    },
-  },
+const props = defineProps({
+  characterMasters: { type: Array, required: true },
+  characterMastersMap: { type: Map, required: true },
+  selectedAccountId: { type: String, default: null },
+  ownedCountMap: { type: Map, required: true },
+});
 
-  data() {
-    return {
-      /** @type {string} 検索用の文字列 */
-      search: '',
-      /** @type {string | null} 選択されたキャラクターマスターID */
-      selectedMasterId: null,
-      /** @type {boolean} 追加処理が実行中かどうかのフラグ（内部管理） */
-      isAdding: false,
-    };
-  },
+/**
+ * [概要] 親コンポーネントに通知するイベントを定義します。
+ */
+const emit = defineEmits(['character-added']);
 
-  computed: {
-    /**
-     * [概要] 検索条件と所持状況に基づき、追加可能なキャラクターのリストを返す。
-     * @returns {Array<Object>} 追加可能なキャラクターの配列
-     */
-    addableCharacters() {
-      // INFO: アカウントが選択されていない場合は空リストを返す
-      if (!this.selectedAccountId) return [];
+// INFO: data() は ref() を使ってリアクティブな状態として定義します
+const search = ref('');
+const selectedMasterId = ref(null);
+const isAdding = ref(false);
 
-      const lowerSearch = this.search .toLowerCase();
-      return this.characterMasters.filter(master => {
-        const isNotFull = this.getOwnedCountForMaster(master.id) < 2;
-        const matchesSearch = !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch);
-        return isNotFull && matchesSearch;
-      });
-    },
-  },
+/**
+ * [概要] 検索条件と所持状況に基づき、追加可能なキャラクターのリストを返す。
+ * @returns {Array<Object>} 追加可能なキャラクターの配列
+ */
+const addableCharacters = computed(() => {
+  // INFO: this. は不要になり、propsを直接参照します
+  if (!props.selectedAccountId) return [];
 
-  watch: {
-    /**
-     * [概要] 選択中のアカウントが変更されたら、選択中のキャラをリセットする。
-     * @note ユーザーがアカウントを切り替えた際の意図しない追加を防ぐ。
-     */
-    selectedAccountId() {
-      this.selectedMasterId = null;
-    }
-  },
+  const lowerSearch = search.value.toLowerCase();
+  return props.characterMasters.filter(master => {
+    const isNotFull = getOwnedCountForMaster(master.id) < 2;
+    const matchesSearch = !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch);
+    return isNotFull && matchesSearch;
+  });
+});
+
+/**
+ * [概要] 選択中のアカウントが変更されたら、選択中のキャラをリセットする。
+ * @note INFO: watchオプションはwatch関数に置き換わります
+ */
+watch(() => props.selectedAccountId, () => {
+  selectedMasterId.value = null;
+});
+
+/**
+ * [概要] 特定マスターIDの所持数を返すヘルパー関数。
+ * @param {string} masterId - キャラクターマスターID
+ * @returns {number} 所持数
+ */
+const getOwnedCountForMaster = (masterId) => {
+  if (!props.selectedAccountId) return 0;
+  return props.ownedCountMap.get(`${masterId}-${props.selectedAccountId}`) || 0;
+};
+
+/**
+ * [概要] キャラクター追加ボタンがクリックされた際の処理。
+ */
+const handleAddCharacter = async () => {
+  if (!selectedMasterId.value || !props.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
+  if (getOwnedCountForMaster(selectedMasterId.value) >= 2) return alert('このキャラは既に2体所持しています。');
   
-  methods: {
-    /**
-     * [概要] 特定マスターIDの所持数を返すヘルパー関数。
-     * @param {string} masterId - キャラクターマスターID
-     * @returns {number} 所持数
-     */
-    getOwnedCountForMaster(masterId) {
-      if (!this.selectedAccountId) return 0;
-      return this.ownedCountMap.get(`${masterId}-${this.selectedAccountId}`) || 0;
-    },
+  isAdding.value = true;
+  try {
+    const master = props.characterMastersMap.get(selectedMasterId.value);
+    if (!master) throw new Error('キャラのマスター情報が見つかりません。');
+    
+    const newOwnedCharData = {
+      characterMasterId: selectedMasterId.value,
+      monsterName: master.monsterName,
+      items: [],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
 
-    /**
-     * [概要] キャラクター追加ボタンがクリックされた際の処理。
-     * @note DBへのキャラクター追加処理を呼び出し、完了後に親へ通知する。
-     */
-    async handleAddCharacter() {
-      if (!this.selectedMasterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
-      // NOTE: 算出プロパティではなく、このメソッド内でも明示的にチェックする
-      if (this.getOwnedCountForMaster(this.selectedMasterId) >= 2) return alert('このキャラは既に2体所持しています。');
-      
-      this.isAdding = true;
-      try {
-        const master = this.characterMastersMap.get(this.selectedMasterId);
-        if (!master) throw new Error('キャラのマスター情報が見つかりません。');
-        
-        const newOwnedCharData = {
-          characterMasterId: this.selectedMasterId,
-          monsterName: master.monsterName,
-          items: [],
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        };
+    const docRef = await databaseService.addOwnedCharacter(props.selectedAccountId, newOwnedCharData);
+    
+    const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() } };
+    emit('character-added', { accountId: props.selectedAccountId, newCharacter: newLocalChar });
 
-        // INFO: DBサービスを呼び出してキャラクターを追加
-        const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
-        
-        // NOTE: DB追加後、ローカル状態を即時反映させるため、新しいキャラクターデータを親コンポーネントに通知する
-        const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() } };
-        this.$emit('character-added', { accountId: this.selectedAccountId, newCharacter: newLocalChar });
-
-        alert(`「${master.monsterName}」を所持リストに追加しました。`);
-        this.selectedMasterId = null; // INFO: 追加後は選択をリセット
-      } catch (error) {
-        console.error('キャラ追加失敗:', error);
-        alert('エラー: ' + error.message);
-      } finally {
-        this.isAdding = false;
-      }
-    }
-  },
+    alert(`「${master.monsterName}」を所持リストに追加しました。`);
+    selectedMasterId.value = null;
+  } catch (error) {
+    console.error('キャラ追加失敗:', error);
+    alert('エラー: ' + error.message);
+  } finally {
+    isAdding.value = false;
+  }
 };
 </script>

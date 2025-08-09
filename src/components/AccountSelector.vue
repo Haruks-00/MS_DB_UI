@@ -7,53 +7,47 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue';
+
 /**
- * [概要] 管理対象アカウントを選択するためのUIコンポーネント。
- * @note v-modelによる双方向バインディングをサポートする。
+ * [概要] 親コンポーネントから渡されるプロパティを定義します。
  */
-export default {
-  // #region COMPONENT_CONFIG
-  name: 'AccountSelector',
-  props: {
-    /**
-     * @property {Array} accounts - 表示するアカウントのリスト
-     */
-    accounts: {
-      type: Array,
-      required: true,
-    },
-    /**
-     * @property {String} value - v-model用のプロパティ。現在選択されているアカウントID。
-     */
-    value: {
-      type: String,
-      default: null,
-    },
-    /**
-     * @property {Boolean} visible - このコンポーネントの表示/非表示を制御する
-     */
-    visible: {
-      type: Boolean,
-      default: false,
-    }
+const props = defineProps({
+  accounts: {
+    type: Array,
+    required: true,
   },
-  
-  computed: {
-    /**
-     * [概要] v-modelをコンポーネント内で安全に扱うための算出プロパティ。
-     * @note 親から受け取ったprop(value)を直接変更せず、変更を`input`イベントで通知する。
-     */
-    selectedId: {
-      get() {
-        return this.value;
-      },
-      set(newValue) {
-        this.$emit('input', newValue);
-      }
-    }
+  /**
+   * @property {String} modelValue - INFO: Vue 3のv-modelは 'modelValue' prop を使用します。
+   */
+  modelValue: {
+    type: String,
+    default: null,
+  },
+  visible: {
+    type: Boolean,
+    default: false,
   }
-}
+});
+
+/**
+ * [概要] 親コンポーネントに通知するイベントを定義します。
+ */
+const emit = defineEmits(['update:modelValue']); // INFO: Vue 3のv-modelは 'update:modelValue' イベントを使用します。
+
+/**
+ * [概要] v-modelをコンポーネント内で安全に扱うための算出プロパティ。
+ * @note INFO: Vue 3のv-modelの規約に合わせて、props.modelValueをgetし、update:modelValueイベントをemitします。
+ */
+const selectedId = computed({
+  get() {
+    return props.modelValue;
+  },
+  set(newValue) {
+    emit('update:modelValue', newValue);
+  }
+});
 </script>
 
 <style scoped>

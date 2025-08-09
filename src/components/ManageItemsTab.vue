@@ -74,157 +74,147 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch } from 'vue';
 import { formatOwnedCharDisplayName } from '../utils/formatters.js';
 import { databaseService } from '../services/database.js';
 
-/**
- * [概要] アイテムの変更・移動を行うタブUIコンポーネント。
- * @note 状態管理とDB更新ロジックを自己完結させ、結果を親に通知する責務を持つ。
- */
-export default {
-  name: 'ManageItemsTab',
-  props: {
-    selectedAccountId: { type: String, default: null },
-    ownedCharactersData: { type: Map, required: true },
-    characterMastersMap: { type: Map, required: true },
-    itemMasters: { type: Array, required: true },
-    itemMastersMap: { type: Map, required: true },
-  },
+const props = defineProps({
+  selectedAccountId: { type: String, default: null },
+  ownedCharactersData: { type: Map, required: true },
+  characterMastersMap: { type: Map, required: true },
+  itemMasters: { type: Array, required: true },
+  itemMastersMap: { type: Map, required: true },
+});
 
-  data() {
-    return {
-      updateForm: { search: '', selectedOwnedId: null, items: ["", "", ""] },
-      moveForm: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] },
-      isUpdating: false,
-      isMoving: false,
-    };
-  },
+const emit = defineEmits(['items-updated', 'items-moved']);
 
-  computed: {
-    /**
-     * [概要] 現在選択中のアカウントが所持するキャラクターのリストを返す
-     * @returns {Array} 所持キャラクターオブジェクトの配列
-     */
-    currentOwnedCharacters() {
-      if (!this.selectedAccountId || !this.ownedCharactersData.has(this.selectedAccountId)) return [];
-      const ownedList = this.ownedCharactersData.get(this.selectedAccountId) || [];
-      return ownedList.map  (char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
-      }).sort((a, b) => a.indexNumber - b.indexNumber);
-    },
-    manageableCharactersForUpdate() {
-      const lowerSearch = this.updateForm.search .toLowerCase();
-      return this.currentOwnedCharacters.filter(char => !lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch));
-    },
-    manageableCharactersForMoveFrom() {
-      const lowerSearch = this.moveForm.from.search .toLowerCase();
-      return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.moveForm.to  .selectedId);
-    },
-    manageableCharactersForMoveTo() {
-      const lowerSearch = this.moveForm.to.search .toLowerCase();
-      return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.moveForm.from.selectedId);
-    },
-    movableItems() {
-      if (!this.moveForm.from.selectedId) return [];
-      const fromChar = this.currentOwnedCharacters.find(c => c.id === this.moveForm.from.selectedId);
-      if (!fromChar || !fromChar.items) return [];
-      return fromChar.items.map (itemId => ({ id: Number(itemId), name: this.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` }));
-    },
-  },
+// INFO: 2つのフォームの状態をそれぞれ `reactive` で管理します
+const updateForm = reactive({ search: '', selectedOwnedId: null, items: ["", "", ""] });
+const moveForm = reactive({ from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] });
+const isUpdating = ref(false);
+const isMoving = ref(false);
 
-  watch: {
-    selectedAccountId() {
-      // INFO: アカウントが切り替わったらフォームをリセットする
-      this.updateForm = { search: '', selectedOwnedId: null, items: ["", "", ""] };
-      this.moveForm = { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] };
-    },
-    'updateForm.selectedOwnedId'(newId) {
-      if (!newId) {
-        this.updateForm.items = ["", "", ""];
-        return;
-      }
-      const character = this.currentOwnedCharacters.find(c => c.id === newId);
-      if (character && character.items) {
-        const itemIds = character.items.map (String);
-        this.updateForm.items = [itemIds[0] || "", itemIds[1] || "", itemIds[2] || ""];
-      } else {
-        this.updateForm.items = ["", "", ""];
-      }
-    },
-    'moveForm.from.selectedId'() {
-      this.moveForm.selectedItemIds = [];
-    },
-  },
+const currentOwnedCharacters = computed(() => {
+  if (!props.selectedAccountId || !props.ownedCharactersData.has(props.selectedAccountId)) return [];
+  const ownedList = props.ownedCharactersData.get(props.selectedAccountId) || [];
+  return ownedList.map (char => {
+    const master = props.characterMastersMap.get(char.characterMasterId);
+    return { ...char, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
+  }).sort((a, b) => a.indexNumber - b.indexNumber);
+});
 
-  methods: {
-    async handleUpdateItems() {
-      if (!this.updateForm.selectedOwnedId) return;
-      this.isUpdating = true;
-      try {
-        const itemsToUpdate = this.updateForm.items.filter(Boolean).map(Number);
-        await databaseService.updateCharacterItems(this.selectedAccountId, this.updateForm.selectedOwnedId, itemsToUpdate);
-        
-        // NOTE: DB更新成功後、親にローカルデータ更新を依頼
-        this.$emit('items-updated', {
-          accountId: this.selectedAccountId,
-        ownedCharacterId: this.updateForm.selectedOwnedId,
-          items: itemsToUpdate,
-        });
-        alert('アイテムを更新しました。');
-      } catch (e) {
-        alert('エラー: ' + e.message);
-      } finally {
-        this.isUpdating = false;
-      }
-    },
-    
-    async handleMoveItems() {
-      this.isMoving = true;
-      try {
-        const fromId = this.moveForm.from.selectedId;
-        const toId = this.moveForm.to.selectedId;
-        const itemIdsToMove = this.moveForm.selectedItemIds.map (Number);
+const manageableCharactersForUpdate = computed(() => {
+  const lowerSearch = updateForm.search.toLowerCase();
+  return currentOwnedCharacters.value.filter(char => !lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch));
+});
 
-        if (fromId === toId || !fromId || !toId) throw new Error('有効な移動元と移動先を選択してください。');
-        if (itemIdsToMove.length === 0) throw new Error('移動するアイテムを選択してください。');
-        
-        const fromChar = this.currentOwnedCharacters.find(c => c.id === fromId);
-        const toChar = this.currentOwnedCharacters.find(c => c.id === toId);
-        if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
-        
-        if ((toChar.items?.length || 0) + itemIdsToMove.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
-        
-        const newFromItems = (fromChar.items || []).map(Number).filter(id => !itemIdsToMove.includes(id));
-        const newToItems = [...(toChar.items || []).map(Number), ...itemIdsToMove];
-        
-        await databaseService.moveCharacterItems(this.selectedAccountId, { id: fromId, items: newFromItems }, { id: toId, items: newToItems });
+const manageableCharactersForMoveFrom = computed(() => {
+  const lowerSearch = moveForm.from.search.toLowerCase();
+  return currentOwnedCharacters.value.filter(char => 
+    (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== moveForm.to.selectedId
+  );
+});
 
-        // NOTE: DB更新成功後、親にローカルデータ更新を依頼
-        this.$emit('items-moved', {
-            accountId: this.selectedAccountId,
-            from: { id: fromId, items: newFromItems },
-            to: { id: toId, items: newToItems },
-        });
+const manageableCharactersForMoveTo = computed(() => {
+  const lowerSearch = moveForm.to.search .toLowerCase();
+  return currentOwnedCharacters.value.filter(char => 
+    (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== moveForm.from.selectedId
+  );
+});
 
-        alert('アイテムを移動しました。');
-        // INFO: フォームをリセットして次の操作に備える
-        this.moveForm.from.selectedId = null;
-        this.moveForm.to.selectedId = null;
-        this.moveForm.selectedItemIds = [];
+const movableItems = computed(() => {
+  if (!moveForm.from.selectedId) return [];
+  const fromChar = currentOwnedCharacters.value.find(c => c.id     === moveForm.from.selectedId);
+  if (!fromChar || !fromChar.items) return [];
+  return fromChar.items.map (itemId => ({ id: Number(itemId), name: props.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` }));
+});
 
-      } catch (e) {
-        alert(`エラー: ${e.message}`);
-      } finally {
-        this.isMoving = false;
-      }
-    },
-    
-    formatCharForDisplay(char, includeItems) {
-      // INFO: テンプレートから直接呼び出すために、thisのコンテキストを渡すラッパーを用意
-      return formatOwnedCharDisplayName(char, includeItems, this.characterMastersMap, this.ownedCharactersData, this.itemMastersMap, this.selectedAccountId);
-    },
+const resetForms = () => {
+    Object.assign(updateForm, { search: '', selectedOwnedId: null, items: ["", "", ""] });
+    Object.assign(moveForm, { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [] });
+};
+
+watch(() => props.selectedAccountId, resetForms);
+
+watch(() => updateForm.selectedOwnedId, (newId) => {
+  if (!newId) {
+    updateForm.items = ["", "", ""];
+    return;
   }
-}
+  const character = currentOwnedCharacters.value.find(c => c.id === newId);
+  if (character && character.items) {
+    const itemIds = character.items.map (String);
+    updateForm.items = [itemIds[0] || "", itemIds[1] || "", itemIds[2] || ""];
+  } else {
+    updateForm.items = ["", "", ""];
+  }
+});
+
+watch(() => moveForm.from.selectedId, () => {
+  moveForm.selectedItemIds = [];
+});
+
+const handleUpdateItems = async () => {
+  if (!updateForm.selectedOwnedId) return;
+  isUpdating.value = true;
+  try {
+    const itemsToUpdate = updateForm.items.filter(Boolean).map(Number);
+    await databaseService.updateCharacterItems(props.selectedAccountId, updateForm.selectedOwnedId, itemsToUpdate);
+    
+    emit('items-updated', {
+      accountId: props.selectedAccountId,
+      ownedCharacterId: updateForm.selectedOwnedId,
+      items: itemsToUpdate,
+    });
+    alert('アイテムを更新しました。');
+  } catch (e) {
+    alert('エラー: ' + e.message);
+  } finally {
+    isUpdating.value = false;
+  }
+};
+
+const handleMoveItems = async () => {
+  isMoving.value = true;
+  try {
+    const fromId = moveForm.from.selectedId;
+    const toId = moveForm.to.selectedId;
+    const itemIdsToMove = moveForm.selectedItemIds.map (Number);
+
+    if (fromId === toId || !fromId || !toId) throw new Error('有効な移動元と移動先を選択してください。');
+    if (itemIdsToMove.length === 0) throw new Error('移動するアイテムを選択してください。');
+    
+    const fromChar = currentOwnedCharacters.value.find(c => c.id === fromId);
+    const toChar = currentOwnedCharacters.value.find(c => c.id === toId);
+    if (!fromChar || !toChar) throw new Error('キャラクター情報が見つかりません。');
+    
+    if ((toChar.items?.length || 0) + itemIdsToMove.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
+    
+    const newFromItems = (fromChar.items || []).map(Number).filter(id => !itemIdsToMove.includes(id));
+    const newToItems = [...(toChar.items || []).map(Number), ...itemIdsToMove];
+    
+    await databaseService.moveCharacterItems(props.selectedAccountId, { id: fromId, items: newFromItems }, { id: toId, items: newToItems });
+
+    emit('items-moved', {
+      accountId: props.selectedAccountId,
+      from: { id: fromId, items: newFromItems },
+      to: { id: toId, items: newToItems },
+    });
+
+    alert('アイテムを移動しました。');
+    moveForm.from.selectedId = null;
+    moveForm.to.selectedId = null;
+    moveForm.selectedItemIds = [];
+
+  } catch (e) {
+    alert(`エラー: ${e.message}`);
+  } finally {
+    isMoving.value = false;
+  }
+};
+
+const formatCharForDisplay = (char, includeItems) => {
+  return formatOwnedCharDisplayName(char, includeItems, props.characterMastersMap, props.ownedCharactersData, props.itemMastersMap, props.selectedAccountId);
+};
 </script>
