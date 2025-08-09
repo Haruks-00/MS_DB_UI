@@ -35,10 +35,10 @@
       <add-owned-character-tab 
         v-if="activeTab === 'add-owned'"
         :character-masters="characterMasters"
+        :character-masters-map="characterMastersMap"
         :selected-account-id="selectedAccountId"
         :owned-count-map="ownedCountMap"
-        :is-adding="addChar.isAdding"
-        @add-character="addOwnedCharacter"
+        @character-added="handleCharacterAdded"
       />
 
       <manage-items-tab
@@ -128,7 +128,6 @@ export default {
       activeTab: 'view-all', selectedAccountId: null,
 
       // INFO: 各コンポーネントが管理する状態（将来的にはコンポーネント内に移動）
-      addChar: { isAdding: false },
       itemManage: { isUpdating: false },
       itemMove: { isMoving: false },
       teamManage: { isSaving: false },
@@ -190,28 +189,21 @@ export default {
         console.log("初期データの読み込み完了");
       } catch (e) { console.error("データ読み込みエラー:", e); alert(`データ読み込みエラー: ${e.message}`); }
     },
+    /**
+     * [概要] AddOwnedCharacterTabからの通知を受け、ローカルの状態を更新する。
+     * @param {Object} payload - { accountId, newCharacter } を含むオブジェクト
+     */
+    handleCharacterAdded({ accountId, newCharacter }) {
+      // INFO: 子コンポーネントがDB更新済みのため、このメソッドはローカル状態の更新に専念する
+      if (!this.ownedCharactersData.has(accountId)) {
+        this.$set(this.ownedCharactersData, accountId, []);
+      }
+      this.ownedCharactersData.get(accountId).push(newCharacter);
 
-    getOwnedCount(masterId, accountId) { return this.ownedCountMap.get(`${masterId}-${accountId}`) || 0; },
-    
-    async addOwnedCharacter(masterId) {
-      if (!masterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
-      if (this.getOwnedCount(masterId, this.selectedAccountId) >= 2) return alert('このキャラは既に2体所持しています。');
-      this.addChar.isAdding = true;
-      try {
-        const master = this.characterMastersMap.get(masterId);
-        if (!master) throw new Error('キャラのマスター情報が見つかりません。');
-        const newOwnedCharData = { characterMasterId: masterId, monsterName: master.monsterName, items: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-        const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
-        
-        // NOTE: DB追加後、ローカルの状態も更新して即時反映させる
-        const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() }};
-        if (!this.ownedCharactersData.has(this.selectedAccountId)) { this.$set(this.ownedCharactersData, this.selectedAccountId, []); }
-        this.ownedCharactersData.get(this.selectedAccountId).push(newLocalChar);
-        const countKey = `${masterId}-${this.selectedAccountId}`;
-        this.$set(this.ownedCountMap, countKey, (this.ownedCountMap.get(countKey) || 0) + 1);
-        alert(`「${master.monsterName}」を所持リストに追加しました。`);
-      } catch (error) { console.error('キャラ追加失敗:', error); alert('エラー: ' + error.message); } 
-      finally { this.addChar.isAdding = false; }
+      const masterId = newCharacter.characterMasterId;
+      const countKey = `${masterId}-${accountId}`;
+      const currentCount = this.ownedCountMap.get(countKey) || 0;
+      this.$set(this.ownedCountMap, countKey, currentCount + 1);
     },
     
     async updateItems({ ownedCharacterId, items }) {
