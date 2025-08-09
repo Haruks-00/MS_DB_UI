@@ -28,61 +28,65 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive } from 'vue';
 import { databaseService } from '../services/database.js';
 
 /**
- * [概要] キャラクターマスターを新規追加するためのフォームUIコンポーネント。
- * @note 状態管理とDB追加ロジックを自己完結させ、結果を親に通知する責務を持つ。
+ * [概要] 親から渡されるガチャのマスターデータ。
  */
-export default {
-  name: 'AddMasterCharacterTab',
-  props: {
-    gachaMasters: {
-      type: Array,
-      required: true,
-    },
+const props = defineProps({
+  gachaMasters: {
+    type: Array,
+    required: true,
   },
-  data() {
-    return {
-      /** @type {Object} フォームの入力データを保持するオブジェクト */
-      masterData: {
-        no: '',
-        name: '',
-        element: '',
-        type: '恒常',
-        gacha: '',
-      },
-    }
-  },
+});
 
-  methods: {
-    /**
-     * [概要] マスターデータをDBに保存し、完了後に親に通知する。
-     */
-    async handleSaveMaster() {
-      if (!this.masterData.name  ) return alert('キャラクター名は必須です。');
-      this.isSaving = true;
-      try {
-        const newData = {
-          indexNumber: this.masterData.no   ? Number(this.masterData.no) : 0,
-          monsterName: this.masterData.name,
-          element: this.masterData.element || '',
-          type: this.masterData.type || '恒常',
-          ejectionGacha: this.masterData.gacha || ''
-        };
-        await databaseService.addCharacterMaster(newData);
-        
-        // NOTE: DB追加成功後、親コンポーネントに通知する
-        alert('マスターを追加しました。ページをリロードして反映してください。');
-        this.$emit('master-added');
+/**
+ * [概要] 親にマスターデータが追加されたことを通知するイベント。
+ */
+const emit = defineEmits(['master-added']);
 
-      } catch (e) {
-        alert('エラー: ' + e.message);
-      } finally {
-        this.isSaving = false;
-      }
-    },
-  },
+/**
+ * @type {Object} フォームの入力データを保持するリアクティブなオブジェクト。
+ * @note INFO: 複数のプロパティを持つオブジェクトは `reactive` を使うと便利です。
+ */
+const masterData = reactive({
+  no: '',
+  name: '',
+  element: '',
+  type: '恒常',
+  gacha: '',
+});
+
+/** @type {import('vue').Ref<boolean>} 保存処理が実行中かどうかのフラグ */
+const isSaving = ref(false);
+
+/**
+ * [概要] マスターデータをDBに保存し、完了後に親に通知する。
+ */
+const handleSaveMaster = async () => {
+  if (!masterData.name) return alert('キャラクター名は必須です。');
+  
+  isSaving.value = true;
+  try {
+    const newData = {
+      indexNumber: masterData.no ? Number(masterData.no) : 0,
+      monsterName: masterData.name,
+      element: masterData.element || '',
+      type: masterData.type || '恒常',
+      ejectionGacha: masterData.gacha || ''
+    };
+    await databaseService.addCharacterMaster(newData);
+    
+    // NOTE: DB追加成功後、親コンポーネントに通知する
+    alert('マスターを追加しました。ページをリロードして反映してください。');
+    emit('master-added');
+
+  } catch (e) {
+    alert('エラー: ' + e.message);
+  } finally {
+    isSaving.value = false;
+  }
 };
 </script>

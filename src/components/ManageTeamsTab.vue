@@ -71,161 +71,153 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed } from 'vue';
 import firebase from 'firebase/compat/app';
 import { formatOwnedCharDisplayName } from '../utils/formatters.js';
 import { databaseService } from '../services/database.js';
 
+const props = defineProps({
+  userId: { type: String, required: true },
+  dataLoaded: { type: Boolean, required: true },
+  teams: { type: Array, required: true },
+  accounts: { type: Array, required: true },
+  ownedCharactersData: { type: Map, required: true },
+  characterMastersMap: { type: Map, required: true },
+  itemMastersMap: { type: Map, required: true },
+});
+
+const emit = defineEmits(['team-added', 'team-updated', 'team-deleted']);
+
+const teamTypes = ['禁忌', '天魔', '庭園', '轟絶', '黎絶'];
+const teamFilters = reactive({ type: '' });
+const isSaving = ref(false);
+
 /**
- * [概要] 編成の閲覧・作成・編集・削除を行うタブUIコンポーネント。
+ * [概要] teamFormの初期状態を生成するヘルパー関数
+ * @returns {Object} 新しいteamFormオブジェクト
  */
-export default {
-  name: 'ManageTeamsTab',
-  props: {
-    userId: { type: String, required: true },
-    dataLoaded: { type: Boolean, required: true },
-    teams: { type: Array, required: true },
-    accounts: { type: Array, required: true },
-    ownedCharactersData: { type: Map, required: true },
-    characterMastersMap: { type: Map, required: true },
-    itemMastersMap: { type: Map, required: true },
-  },
+const createInitialTeamFormState = () => ({
+  id: null,
+  name: '',
+  type: '',
+  slots: Array(4).fill().map(() => ({
+    selectedAccountId: '',
+    selectedOwnedId: '',
+    characterSearch: ''
+  })),
+});
 
-  data() {
-    return {
-      teamTypes: ['禁忌', '天魔', '庭園', '轟絶', '黎絶'],
-      teamFilters: { type: '' },
-      teamForm: {
-        id: null,
-        name: '',
-        type: '',
-        slots: Array(4).fill().map(() => ({
-          selectedAccountId: '',
-          selectedOwnedId: '',
-          characterSearch: ''
-        })),
-      },
-      isSaving: false,
-    };
-  },
+const teamForm = reactive(createInitialTeamFormState());
 
-  computed: {
-    filteredTeams() {
-      return !this.teamFilters.type ? this.teams : this.teams.filter(team => team.type === this.teamFilters.type);
-    },
-    isTeamFormValid() {
-      return this.teamForm.name  && this.teamForm.type && this.teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId);
-    },
-  },
+const filteredTeams = computed(() => {
+  return !teamFilters.type ? props.teams : props.teams.filter(team => team.type === teamFilters.type);
+});
 
-  methods: {
-    getCharactersForSlot(slot) {
-      if (!slot.selectedAccountId) return [];
-      const ownedList = this.ownedCharactersData.get(slot.selectedAccountId) || [];
-      const charList = ownedList.map (char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, accountId: slot.selectedAccountId, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
-      }).sort((a,b) => a.indexNumber - b.indexNumber);
-      const lowerSearch = slot.characterSearch.toLowerCase();
-      return !lowerSearch ? charList : charList.filter(char => char.monsterName.toLowerCase().includes(lowerSearch));
-    },
-    isCharSelectedInOtherSlot(ownedId, currentIndex) {
-      return !ownedId ? false : this.teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId);
-    },
-    getTeamSlotDetails(team, slotIndex) {
-      const emptySlot = { characterName: '—', accountName: '—', items: [] };
-      if (!team.characters || !this.dataLoaded || slotIndex >= team.characters.length) return emptySlot;
-      const charSlot = team.characters[slotIndex];
-      const account = this.accounts.find(acc => acc.id === charSlot.accountId);
-      const ownedChar = (this.ownedCharactersData.get(charSlot.accountId) || []).find(c => c.id === charSlot.ownedCharacterId);
-      if (!ownedChar) return { characterName: 'キャラ不明', accountName: account?.name || '不明', items: [] };
-      const master = this.characterMastersMap.get(ownedChar.characterMasterId);
-      return {
-        characterName: master?.monsterName || '不明',
-        accountName: account?.name || '不明',
-        items: (ownedChar.items || []).map(id => this.itemMastersMap.get(Number(id)) || `不明ID:${id}`).filter(Boolean)
-      };
-    },
-    selectTeam(team) {
-      this.teamForm = {
-        ...this.teamForm,
-        id: team.id,
-        name: team.name,
-        type: team.type,
-        slots: team.characters.map (char => ({
-          selectedAccountId: char.accountId,
-          selectedOwnedId: char.ownedCharacterId,
-          characterSearch: ''
-        }))
-      };
-    },
-    resetTeamForm() {
-      this.teamForm = {
-        id: null,
-        name: '',
-        type: '',
-        slots: Array(4).fill().map(() => ({
-          selectedAccountId: '',
-          selectedOwnedId: '',
-          characterSearch: ''
-        }))
-      };
-    },
-    async handleSaveTeam() {
-      if (!this.isTeamFormValid) {
-        alert('編成名、タイプ、4体のキャラを全て選択してください。');
-        return;
-      }
-      this.isSaving = true;
-      const teamData = {
-        userId: this.userId,
-        name: this.teamForm.name,
-        type: this.teamForm.type,
-        characters: this.teamForm.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId }))
-      };
-      
-      try {
-        const id = this.teamForm.id  ;
-        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        const result = await databaseService.saveTeam(id, teamData);
-        
-        if (id) {
-          // INFO: 更新の場合、親に更新後のデータを通知
-          this.$emit('team-updated', { ...teamData, id });
-          alert('編成を更新しました。');
-        } else {
-          // INFO: 新規作成の場合、親に新しいデータを通知
-          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
-          this.$emit('team-added', newTeam);
-          alert('編成を保存しました。');
-          this.resetTeamForm(); // INFO: 新規作成後はフォームをリセット
-        }
-      } catch (error) {
-        console.error('編成保存失敗:', error);
-        alert('エラー: ' + error.message);
-      } finally {
-        this.isSaving = false;
-      }
-    },
-    async handleDeleteTeam(teamId) {
-      if (confirm('この編成を本当に削除しますか？')) {
-        try {
-          await databaseService.deleteTeam(teamId);
-          // INFO: DB削除成功後、親にIDを通知してローカルデータを更新させる
-          this.$emit('team-deleted', teamId);
-          alert('編成を削除しました。');
-          if (this.teamForm.id === teamId) {
-          this.resetTeamForm();
-          }
-        } catch (error) {
-          console.error('編成削除失敗:', error);
-          alert('エラー: ' + error.message);
-        }
-      }
-    },
-    formatCharForDisplay(char, includeItems) {
-      return formatOwnedCharDisplayName(char, includeItems, this.characterMastersMap, this.ownedCharactersData, this.itemMastersMap, null);
-    },
+const isTeamFormValid = computed(() => {
+  return teamForm.name && teamForm.type && teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId);
+});
+
+const getCharactersForSlot = (slot) => {
+  if (!slot.selectedAccountId) return [];
+  const ownedList = props.ownedCharactersData.get(slot.selectedAccountId) || [];
+  const charList = ownedList.map (char => {
+    const master = props.characterMastersMap.get(char.characterMasterId);
+    return { ...char, accountId: slot.selectedAccountId, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
+  }).sort((a,b) => a.indexNumber - b.indexNumber);
+  const lowerSearch = slot.characterSearch.toLowerCase();
+  return !lowerSearch ? charList : charList.filter(char => char.monsterName.toLowerCase().includes(lowerSearch));
+};
+
+const isCharSelectedInOtherSlot = (ownedId, currentIndex) => {
+  return !ownedId ? false : teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId);
+};
+
+const getTeamSlotDetails = (team, slotIndex) => {
+  const emptySlot = { characterName: '—', accountName: '—', items: [] };
+  if (!team.characters || !props.dataLoaded || slotIndex >= team.characters.length) return emptySlot;
+  const charSlot = team.characters[slotIndex];
+  const account = props.accounts.find(acc => acc.id === charSlot.accountId);
+  const ownedChar = (props.ownedCharactersData.get(charSlot.accountId) || []).find(c => c.id === charSlot.ownedCharacterId);
+  if (!ownedChar) return { characterName: 'キャラ不明', accountName: account?.name || '不明', items: [] };
+  const master = props.characterMastersMap.get(ownedChar.characterMasterId);
+  return {
+    characterName: master?.monsterName || '不明',
+    accountName: account?.name || '不明',
+    items: (ownedChar.items || []).map(id => props.itemMastersMap.get(Number(id)) || `不明ID:${id}`).filter(Boolean)
+  };
+};
+
+const selectTeam = (team) => {
+  // INFO: リアクティブオブジェクトは直接代入せず、プロパティを更新する
+  Object.assign(teamForm, {
+    id: team.id,
+    name: team.name,
+    type: team.type,
+    slots: team.characters.map (char => ({
+      selectedAccountId: char.accountId,
+      selectedOwnedId: char.ownedCharacterId,
+      characterSearch: ''
+    }))
+  });
+};
+
+const resetTeamForm = () => {
+  Object.assign(teamForm, createInitialTeamFormState());
+};
+
+const handleSaveTeam = async () => {
+  if (!isTeamFormValid.value) {
+    alert('編成名、タイプ、4体のキャラを全て選択してください。');
+    return;
   }
-}
+  isSaving.value = true;
+  const teamData = {
+    userId: props.userId,
+    name: teamForm.name,
+    type: teamForm.type,
+    characters: teamForm.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId }))
+  };
+  
+  try {
+    const id = teamForm.id;
+    Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    const result = await databaseService.saveTeam(id, teamData);
+    
+    if (id) {
+      emit('team-updated', { ...teamData, id });
+      alert('編成を更新しました。');
+    } else {
+      const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
+      emit('team-added', newTeam);
+      alert('編成を保存しました。');
+      resetTeamForm();
+    }
+  } catch (error) {
+    console.error('編成保存失敗:', error);
+    alert('エラー: ' + error.message);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const handleDeleteTeam = async (teamId) => {
+  if (confirm('この編成を本当に削除しますか？')) {
+    try {
+      await databaseService.deleteTeam(teamId);
+      emit('team-deleted', teamId);
+      alert('編成を削除しました。');
+      if (teamForm.id === teamId) {
+        resetTeamForm();
+      }
+    } catch (error) {
+      console.error('編成削除失敗:', error);
+      alert('エラー: ' + error.message);
+    }
+  }
+};
+
+const formatCharForDisplay = (char, includeItems) => {
+  return formatOwnedCharDisplayName(char, includeItems, props.characterMastersMap, props.ownedCharactersData, props.itemMastersMap, null);
+};
 </script>

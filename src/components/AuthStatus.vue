@@ -11,39 +11,38 @@
   </div>
 </template>
 
-<script>
+<script setup>
 /**
- * [概要] ユーザーの認証状態を表示し、ログイン/ログアウトアクションを親に通知するコンポーネント。
- * @note UIの表示責務のみを持ち、認証のビジネスロジックは持たない。
+ * [概要] 親から渡されるプロパティを定義します。
  */
-export default {
-  name: 'AuthStatus',
-  props: {
-    /**
-     * @property {Object | null} user - Firebaseのユーザーオブジェクト。nullの場合は未ログイン状態。
-     */
-    user: {
-      type: Object,
-      default: null,
-    },
+const props = defineProps({
+  /**
+   * @property {Object | null} user - Firebaseのユーザーオブジェクト。nullの場合は未ログイン状態。
+   */
+  user: {
+    type: Object,
+    default: null,
   },
-  methods: {
-    /**
-     * [概要] ログインボタンクリック時に`login`イベントを発行する。
-     */
-    handleLogin() {
-      // INFO: 実際のログイン処理は親コンポーネントに委譲する
-      this.$emit('login');
-    },
-    /**
-     * [概要] ログアウトボタンクリック時に`logout`イベントを発行する。
-     */
-    handleLogout() {
-      // INFO: 実際のログアウト処理は親コンポーネントに委譲する
-      this.$emit('logout');
-    },
-  },
-}
+});
+
+/**
+ * [概要] 親コンポーネントに通知するイベントを定義します。
+ */
+const emit = defineEmits(['login', 'logout']);
+
+/**
+ * [概要] ログインボタンクリック時に`login`イベントを発行する。
+ */
+const handleLogin = () => {
+  emit('login');
+};
+
+/**
+ * [概要] ログアウトボタンクリック時に`logout`イベントを発行する。
+ */
+const handleLogout = () => {
+  emit('logout');
+};
 </script>
 
 <style scoped>

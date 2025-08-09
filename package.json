@@ -19,9 +19,9 @@
   },
   "homepage": "https://github.com/Haruks-00/MS_DB_UI#readme",
   "devDependencies": {
-    "@vitejs/plugin-vue2": "^2.3.3",
-    "firebase": "^9.6.1",
-    "vite": "^5.4.19",
-    "vue": "^2.7.16"
-  }
+  "@vitejs/plugin-vue": "^5.0.5",
+  "firebase": "^9.6.1",
+  "vite": "^5.4.19",
+  "vue": "^3.4.31"
+}
 }

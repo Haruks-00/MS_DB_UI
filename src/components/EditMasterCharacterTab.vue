@@ -34,103 +34,98 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch } from 'vue';
 import { databaseService } from '../services/database.js';
 
+const props = defineProps({
+  characterMasters: { type: Array, required: true },
+  gachaMasters: { type: Array, required: true },
+});
+
+const emit = defineEmits(['master-updated']);
+
 /**
- * [概要] キャラクターマスターを編集するためのフォームUIコンポーネント。
- * @note 状態管理とDB更新ロジックを自己完結させ、結果を親に通知する責務を持つ。
+ * @type {Object} フォームの検索、選択、入力データを保持するリアクティブなオブジェクト
  */
-export default {
-  name: 'EditMasterCharacterTab',
-  props: {
-    characterMasters: { type: Array, required: true },
-    gachaMasters: { type: Array, required: true },
-  },
+const form = reactive({
+  search: '',
+  selectedMasterId: null,
+  no: '',
+  name: '',
+  element: '',
+  type: '',
+  gacha: '',
+});
 
-  data() {
-    return {
-      /** @type {Object} フォームの検索、選択、入力データを保持するオブジェクト */
-      form: {
-        search: '',
-        selectedMasterId: null,
-        no: '',
-        name: '',
-        element: '',
-        type: '',
-        gacha: '',
-      },
-      isUpdating: false,
-    };
-  },
+/** @type {import('vue').Ref<boolean>} 更新処理が実行中かどうかのフラグ */
+const isUpdating = ref(false);
   
-  computed: {
-    /**
-     * [概要] 検索文字列に基づいて編集可能なマスターリストをフィルタリングする。
-     * @returns {Array<Object>} フィルタリングされたキャラクターマスターの配列
-     */
-    editableMasters() {
-      if (!this.characterMasters.length) return [];
-      const lowerSearch = this.form.search .toLowerCase();
-      return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch));
-    },
-    /**
-     * [概要] IDによる高速アクセスのため、マスターリストをMap形式に変換する。
-     * @returns {Map<string, Object>} キャラクターマスターIDをキーとするMap
-     */
-    characterMastersMap() {
-      return new Map(this.characterMasters.map  (m => [m.id  , m]));
-    }
-  },
+/**
+ * [概要] IDによる高速アクセスのため、マスターリストをMap形式に変換する。
+ * @returns {Map<string, Object>} キャラクターマスターIDをキーとするMap
+ */
+const characterMastersMap = computed(() => {
+  return new Map(props.characterMasters.map (m => [m.id , m]));
+});
 
-  watch: {
-    /**
-     * [概要] 選択されたマスターIDが変更された際にフォームを更新する。
-     * @param {string | null} newId - 新しく選択されたマスターID
-     */
-    'form.selectedMasterId'(newId) {
-      if (!newId) {
-        // INFO: 選択が解除されたらフォームをリセット
-        Object.assign(this.form, { name: '', no: '', element: '', type: '', gacha: '' });
-        return;
-      }
-      const master = this.characterMastersMap.get(newId);
-      if (master) {
-        Object.assign(this.form, {
-          name: master.monsterName,
-          no: master.indexNumber,
-          element: master.element,
-          type: master.type,
-          gacha: master.ejectionGacha
-        });
-      }
-    },
-  },
+/**
+ * [概要] 検索文字列に基づいて編集可能なマスターリストをフィルタリングする。
+ * @returns {Array<Object>} フィルタリングされたキャラクターマスターの配列
+ */
+const editableMasters = computed(() => {
+  if (!props.characterMasters.length) return [];
+  const lowerSearch = form.search.toLowerCase();
+  return props.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch));
+});
 
-  methods: {
-    async handleUpdateMaster() {
-      if (!this.form.selectedMasterId || !this.form.name  ) return alert('キャラを選択し名前を入力してください。');
-      this.isUpdating = true;
-      try {
-        const updatedData = {
-          monsterName: this.form.name,
-          indexNumber: this.form.no   ? Number(this.form.no) : 0,
-          element: this.form.element,
-          type: this.form.type,
-          ejectionGacha: this.form.gacha
-        };
-        await databaseService.updateCharacterMaster(this.form.selectedMasterId, updatedData);
-        
-        // NOTE: DB更新成功後、親コンポーネントに通知する
-        alert('マスター情報を更新しました。ページをリロードしてください。');
-        this.$emit('master-updated');
+/**
+ * [概要] 選択されたマスターIDが変更された際にフォームを更新する。
+ * @param {string | null} newId - 新しく選択されたマスターID
+ */
+watch(() => form.selectedMasterId, (newId) => {
+  if (!newId) {
+    // INFO: 選択が解除されたらフォームをリセット
+    Object.assign(form, { name: '', no: '', element: '', type: '', gacha: '' });
+    return;
+  }
+  // INFO: .valueは不要 (computedはRefオブジェクトを返すため)
+  const master = characterMastersMap.value.get(newId);
+  if (master) {
+    Object.assign(form, {
+      name: master.monsterName,
+      no: master.indexNumber,
+      element: master.element,
+      type: master.type,
+      gacha: master.ejectionGacha
+    });
+  }
+});
 
-      } catch (e) {
-        alert('更新に失敗: ' + e.message);
-      } finally {
-        this.isUpdating = false;
-      }
-    },
-  },
+/**
+ * [概要] マスター情報を更新する。
+ */
+const handleUpdateMaster = async () => {
+  if (!form.selectedMasterId || !form.name) return alert('キャラを選択し名前を入力してください。');
+  
+  isUpdating.value = true;
+  try {
+    const updatedData = {
+      monsterName: form.name,
+      indexNumber: form.no ? Number(form.no) : 0,
+      element: form.element,
+      type: form.type,
+      ejectionGacha: form.gacha
+    };
+    await databaseService.updateCharacterMaster(form.selectedMasterId, updatedData);
+    
+    alert('マスター情報を更新しました。ページをリロードしてください。');
+    emit('master-updated');
+
+  } catch (e) {
+    alert('更新に失敗: ' + e.message);
+  } finally {
+    isUpdating.value = false;
+  }
 };
 </script>
