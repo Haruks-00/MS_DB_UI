@@ -69,16 +69,14 @@
       <add-master-character-tab
         v-if="activeTab === 'add-master'"
         :gacha-masters="gachaMasters"
-        :is-saving="master.isSaving"
-        @save-master="saveMaster"
+        @master-added="handleMasterDataChanged"
       />
       
       <edit-master-character-tab
         v-if="activeTab === 'edit-master'"
         :character-masters="characterMasters"
         :gacha-masters="gachaMasters"
-        :is-updating="editMaster.isUpdating"
-        @update-master="updateMaster"
+        @master-updated="handleMasterDataChanged"
       />
 
     </div>
@@ -125,10 +123,6 @@ export default {
       
       // INFO: UIの状態管理
       activeTab: 'view-all', selectedAccountId: null,
-
-      // INFO: 各コンポーネントが管理する状態（将来的にはコンポーネント内に移動）
-      master: { isSaving: false },
-      editMaster: { isUpdating: false },
     }
   },
 
@@ -244,34 +238,14 @@ export default {
         this.teams = this.teams.filter(t => t.id !== teamId);
     },
 
-    async saveMaster(masterData) {
-      if (!masterData.name  ) return alert('キャラクター名は必須です。');
-      this.master.isSaving = true;
-      try {
-        const newData = { indexNumber: masterData.no   ? Number(masterData.no) : 0, monsterName: masterData.name, element: masterData.element || '', type: masterData.type || '恒常', ejectionGacha: masterData.gacha || '' };
-        await databaseService.addCharacterMaster(newData);
-        alert('マスターを追加しました。ページをリロードして反映してください。');
+    /**
+     * [概要] マスターデータが変更された際のハンドラ。
+     * @note マスターデータの変更は影響範囲が大きいため、安全策としてページをリロードする。
+     */
+    handleMasterDataChanged() {
+      // WARNING: マスターデータのローカル状態を整合性を持って更新するのは複雑なため、
+      //          現時点では最も安全なリロード戦略をとる。
         location.reload();
-      } catch(e) { alert('エラー: ' + e.message); } 
-      finally { this.master.isSaving = false; }
-    },
-    
-    async updateMaster(editMasterData) {
-      if (!editMasterData.selectedMasterId || !editMasterData.name  ) return alert('キャラを選択し名前を入力してください。');
-      this.editMaster.isUpdating = true;
-      try {
-        const updatedData = {
-          monsterName: editMasterData.name,
-          indexNumber: editMasterData.no   ? Number(editMasterData.no) : 0,
-          element: editMasterData.element,
-          type: editMasterData.type,
-          ejectionGacha: editMasterData.gacha
-        };
-        await databaseService.updateCharacterMaster(editMasterData.selectedMasterId, updatedData);
-        alert('マスター情報を更新しました。ページをリロードしてください。');
-        location.reload();
-      } catch (e) { alert('更新に失敗: ' + e.message); } 
-      finally { this.editMaster.isUpdating = false; }
     },
   },
 }

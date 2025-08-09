@@ -35,16 +35,17 @@
 </template>
 
 <script>
+import { databaseService } from '../services/database.js';
+
 /**
  * [概要] キャラクターマスターを編集するためのフォームUIコンポーネント。
- * @note フォームの状態管理と更新イベントの発行に責務を持つ。
+ * @note 状態管理とDB更新ロジックを自己完結させ、結果を親に通知する責務を持つ。
  */
 export default {
   name: 'EditMasterCharacterTab',
   props: {
     characterMasters: { type: Array, required: true },
     gachaMasters: { type: Array, required: true },
-    isUpdating: { type: Boolean, default: false },
   },
 
   data() {
@@ -59,7 +60,8 @@ export default {
         type: '',
         gacha: '',
       },
-    }
+      isUpdating: false,
+    };
   },
   
   computed: {
@@ -106,12 +108,29 @@ export default {
   },
 
   methods: {
-    /**
-     * [概要] 更新ボタンクリック時に`update-master`イベントを発行する。
-     */
-    handleUpdateMaster() {
-      this.$emit('update-master', this.form);
+    async handleUpdateMaster() {
+      if (!this.form.selectedMasterId || !this.form.name  ) return alert('キャラを選択し名前を入力してください。');
+      this.isUpdating = true;
+      try {
+        const updatedData = {
+          monsterName: this.form.name,
+          indexNumber: this.form.no   ? Number(this.form.no) : 0,
+          element: this.form.element,
+          type: this.form.type,
+          ejectionGacha: this.form.gacha
+        };
+        await databaseService.updateCharacterMaster(this.form.selectedMasterId, updatedData);
+        
+        // NOTE: DB更新成功後、親コンポーネントに通知する
+        alert('マスター情報を更新しました。ページをリロードしてください。');
+        this.$emit('master-updated');
+
+      } catch (e) {
+        alert('更新に失敗: ' + e.message);
+      } finally {
+        this.isUpdating = false;
+      }
     },
   },
-}
+};
 </script>
