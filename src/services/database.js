@@ -1,9 +1,5 @@
-// src/services/database.js
-// #region --- Imports ---
-import { db } from '../firebase-init.js';
-// #endregion
 
-// #region --- Public API ---
+import { db } from '../firebase-init.js';
 
 /**
  * @description アプリケーションの初期化に必要なすべてのデータを並列で取得し、加工せずにそのまま返します。
@@ -30,6 +26,47 @@ const loadInitialDataRaw = (userId) => {
     console.error("Database: Failed to load initial data.", error);
     throw error;
   }
+};
+/**
+ * [概要] 初期データをFirestoreから取得し、アプリケーションで使いやすい形に加工して返す。
+ * @param {string} userId - ログインしているユーザーのID。
+ * @returns {Promise<Object>} 整形済みのデータオブジェクト
+ */
+const loadAndProcessInitialData = async (userId) => {
+  const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await loadInitialDataRaw(userId);
+  
+  // INFO: 取得したデータを並列で加工する
+  const accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id    }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
+  const characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
+  const characterMastersMap = new Map(characterMasters.map (m => [m.id , m]));
+  const itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
+  const itemMastersMap = new Map(itemMasters.map (item => [item.id , item.name ]));
+  const gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
+  const teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
+
+  const ownedCharactersData = new Map();
+  const ownedCountMap = new Map();
+  ownedCharsSnap.forEach(doc => {
+    const data = doc.data();
+    const accountId = doc.ref.parent.parent.id   ;
+    const masterId = data.characterMasterId;
+    const countKey = `${masterId}-${accountId}`;
+    ownedCountMap.set(countKey, (ownedCountMap.get(countKey) || 0) + 1);
+    if (!ownedCharactersData.has(accountId)) ownedCharactersData.set(accountId, []);
+    ownedCharactersData.get(accountId).push({ ...data, id: doc.id });
+  });
+
+  return {
+    accounts,
+    characterMasters,
+    characterMastersMap,
+    itemMasters,
+    itemMastersMap,
+    gachaMasters,
+    teams,
+    ownedCharactersData,
+    ownedCountMap,
+  };
 };
 
 /**
@@ -115,7 +152,7 @@ const deleteTeam = (teamId) => {
 
 
 export const databaseService = {
-  loadInitialDataRaw, // @temp: MODIFIED
+  loadAndProcessInitialData,
   addOwnedCharacter,
   updateCharacterItems,
   moveCharacterItems,

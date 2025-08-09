@@ -84,8 +84,6 @@
 </template>
 
 <script>
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
 import { authService } from './services/auth.js';
 import { databaseService } from './services/database.js';
 import AuthStatus from './components/AuthStatus.vue';
@@ -148,36 +146,18 @@ export default {
       if (!this.user) return;
       console.log("初期データの読み込みを開始...");
       try {
-        const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await databaseService.loadInitialDataRaw(this.user.uid);
+        const processedData = await databaseService.loadAndProcessInitialData(this.user.uid);
         
-        // NOTE: 各種マスターデータを取得・整形・キャッシュ
-        this.accounts = accountsSnap.docs.map (doc => { const data = doc.data       (); return { id: doc.id       , name: data.Name  || `アカウント${data.id    }`, numericId: data.id, indexNumber: data.indexNumber }; }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
-        this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
-        this.characterMastersMap = new Map(this.characterMasters.map (m => [m.id , m]));
-        this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
-        this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id , item.name ]));
-        this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
-        this.teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
-
-        // NOTE: パフォーマンスのために所持キャラデータをMap構造に変換
-        const ownedCharsDataMap = new Map();
-        const ownedCountMap = new Map();
-        ownedCharsSnap.forEach(doc => {
-          const data = doc.data();
-          const accountId = doc.ref.parent.parent.id ;
-          const masterId = data.characterMasterId;
-          const countKey = `${masterId}-${accountId}`;
-          ownedCountMap.set(countKey, (ownedCountMap.get(countKey) || 0) + 1);
-          if (!ownedCharsDataMap.has(accountId)) ownedCharsDataMap.set(accountId, []);
-          ownedCharsDataMap.get(accountId).push({ ...data, id: doc.id });
-        });
-        this.ownedCharactersData = ownedCharsDataMap;
-        this.ownedCountMap = ownedCountMap;
+        // INFO: サービスから受け取った整形済みのデータをまとめてコンポーネントのdataにセットします
+        Object.assign(this, processedData);
         
         if (this.accounts.length > 0) this.selectedAccountId = this.accounts[0].id;
         this.dataLoaded = true;
         console.log("初期データの読み込み完了");
-      } catch (e) { console.error("データ読み込みエラー:", e); alert(`データ読み込みエラー: ${e.message}`); }
+      } catch (e) { 
+        console.error("データ読み込みエラー:", e);
+        alert(`データ読み込みエラー: ${e.message}`); 
+      }
     },
     /**
      * [概要] AddOwnedCharacterTabからの通知を受け、ローカルの状態を更新する。
