@@ -76,13 +76,8 @@ const createInitialTeamFormState = () => ({
 const teamForm = reactive(createInitialTeamFormState());
 
 const handleTeamUpdate = (updatedTeam) => {
-  // ★★★ デバッグログを追加 ★★★
-  console.log('[ManageTeamsTab] "update:team" イベントを受け取りました。データ:', updatedTeam);
-  
   // TeamFormから渡された新しいteamオブジェクトでteamFormを更新する
   Object.assign(teamForm, updatedTeam);
-
-  console.log('[ManageTeamsTab] teamFormを更新しました。現在の状態:', JSON.parse(JSON.stringify(teamForm)));
 };
 
 /**

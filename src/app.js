@@ -486,8 +486,6 @@ new Vue({
       if (master) { Object.assign(this.editMaster, { name: master.monsterName, no: master.indexNumber, element: master.element, type: master.type, gacha: master.ejectionGacha }); }
     },
   },
-  // #endregion
-  // #region --- Methods ---
   methods: {
     handleLogin() { authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。")); },
     handleLogout() { authService.logout(); },

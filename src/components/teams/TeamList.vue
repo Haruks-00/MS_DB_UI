@@ -38,7 +38,7 @@
                   <div class="font-weight-bold text-truncate" :title="getTeamSlotDetails(team, index).characterName">{{ getTeamSlotDetails(team, index).characterName }}</div>
                   <div class="text-truncate" :title="getTeamSlotDetails(team, index).accountName">{{ getTeamSlotDetails(team, index).accountName }}</div>
                   <v-divider class="my-1"></v-divider>
-                  <div v-for="itemIndex in 2" :key="itemIndex" class="text-truncate" :title="getTeamSlotDetails(team, index).items[itemIndex - 1]">{{ getTeamSlotDetails(team, index).items[itemIndex - 1] || '—' }}</div>
+                  <div v-for="itemIndex in 4" :key="itemIndex" class="text-truncate" :title="getTeamSlotDetails(team, index).items[itemIndex - 1]">{{ getTeamSlotDetails(team, index).items[itemIndex - 1] || '—' }}</div>
                 </div>
               </v-col>
             </v-row>

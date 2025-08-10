@@ -8,9 +8,18 @@
  * @param {string | null} [currentAccountId=null] - 現在のアカウントID (charにaccountIdがない場合のフォールバック)
  * @returns {string} フォーマットされた表示名
  */
-export const formatOwnedCharDisplayName = (char, includeItems, characterMastersMap, ownedCharactersData, itemMastersMap, currentAccountId = null) => {
+export const formatOwnedCharDisplayName = (
+  char,
+  includeItems,
+  characterMastersMap,
+  ownedCharactersData,
+  itemMastersMap,
+  currentAccountId = null
+) => {
+  if (!char) return "キャラクター情報なし";
+
   const master = characterMastersMap.get(char.characterMasterId);
-  const charName = master ? master.monsterName : '不明';
+  const charName = master ? master.monsterName : "不明";
 
   // INFO: キャラクターオブジェクトにaccountIdがない場合、引数で渡されたものをフォールバックとして使用
   const targetAccountId = char.accountId || currentAccountId;
@@ -18,13 +27,22 @@ export const formatOwnedCharDisplayName = (char, includeItems, characterMastersM
     return `${charName} (アカウント不明)`;
   }
 
-  const sameMasterChars = (ownedCharactersData.get(targetAccountId) || []).filter(c => c.characterMasterId === char.characterMasterId);
-  const charIndex = sameMasterChars.findIndex(c => c.id        === char.id             );
-  let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
+  const sameMasterChars = (
+    ownedCharactersData.get(targetAccountId) || []
+  ).filter((c) => c.characterMasterId === char.characterMasterId);
+  const charIndex = sameMasterChars.findIndex((c) => c.id === char.id);
+  let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : "？"}体目)`;
 
   if (includeItems) {
-    const itemNames = (char.items || []).map(id => itemMastersMap.get(Number(id))).filter(Boolean).join(', ');
-    text += ` [${itemNames || 'アイテムなし'}]`;
+    const itemNames = (char.items || [])
+      .map((id) => itemMastersMap.get(Number(id)))
+      .filter(Boolean)
+      .join("、");
+
+    // NOTE: itemNamesが空文字列でない場合のみ、角括弧付きで追加します
+    if (itemNames) {
+      text += `[${itemNames}]`;
+    }
   }
   return text;
 };

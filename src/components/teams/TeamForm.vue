@@ -55,48 +55,26 @@
                 label="アカウント"
                 variant="outlined"
                 density="compact"
+                class="mb-2"
               ></v-select>
-              <v-text-field
-                :model-value="slot.characterSearch"
-                @update:model-value="
-                  (value) => updateSlot(index, 'characterSearch', value)
-                "
+              <!-- INFO: ここからがリファクタリング箇所です -->
+              <CharacterSelector
+                :model-value="slot.selectedOwnedId"
+                @update:model-value="(charId) => handleCharClick(index, charId)"
+                :items="getCharactersForSlot(slot)"
                 label="キャラ名で検索"
-                variant="outlined"
-                density="compact"
-                clearable
-              ></v-text-field>
-              <v-card variant="outlined">
-                <v-list
-                  style="height: 150px; overflow-y: auto"
-                  density="compact"
-                >
-                  <v-list-item v-if="!slot.selectedAccountId">
-                    <small>先にアカウントを選択</small>
-                  </v-list-item>
-
-                  <v-list-item
-                    v-for="char in getCharactersForSlot(slot)"
-                    :key="char.id"
-                    :value="char.id"
-                    :active="slot.selectedOwnedId === char.id"
-                    :disabled="isCharSelectedInOtherSlot(char.id, index)"
-                    @click="handleCharClick(index, char.id)"
-                  >
-                    <v-list-item-title>
-                      {{ formatCharForDisplay(char, false) }}
-                    </v-list-item-title>
-                    <template
-                      v-slot:append
-                      v-if="isCharSelectedInOtherSlot(char.id, index)"
-                    >
-                      <v-chip size="x-small" color="warning" variant="tonal"
-                        >選択済</v-chip
-                      >
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </v-card>
+                list-height="150px"
+                variant="filled"
+                :disabled="!slot.selectedAccountId"
+                :disabled-items="getSelectedIdsInOtherSlots(index)"
+                no-data-text="先にアカウントを選択"
+              >
+                <template #item="{ item }">
+                  <v-list-item-title>{{
+                    formatCharForDisplay(item, true)
+                  }}</v-list-item-title>
+                </template>
+              </CharacterSelector>
             </v-card>
           </v-col>
         </v-row>
@@ -120,6 +98,7 @@
 <script setup>
 import { computed } from "vue";
 import { formatOwnedCharDisplayName } from "../../utils/formatters.js";
+import CharacterSelector from "../shared/CharacterSelector.vue"; // INFO: 共通コンポーネントをインポート
 
 const props = defineProps({
   team: { type: Object, required: true },
@@ -154,7 +133,6 @@ const updateSlot = (slotIndex, field, value) => {
   // アカウントが変更されたら、キャラクター選択をリセット
   if (field === "selectedAccountId") {
     newTeam.slots[slotIndex].selectedOwnedId = null;
-    newTeam.slots[slotIndex].characterSearch = "";
   }
 
   emit("update:team", newTeam);
@@ -176,7 +154,7 @@ const isTeamFormValid = computed(() => {
 const getCharactersForSlot = (slot) => {
   if (!slot.selectedAccountId) return [];
   const ownedList = props.ownedCharactersData.get(slot.selectedAccountId) || [];
-  const charList = ownedList
+  return ownedList
     .map((char) => {
       const master = props.characterMastersMap.get(char.characterMasterId);
       return {
@@ -187,21 +165,18 @@ const getCharactersForSlot = (slot) => {
       };
     })
     .sort((a, b) => a.indexNumber - b.indexNumber);
-  const lowerSearch = (slot.characterSearch || "").toLowerCase();
-  return !lowerSearch
-    ? charList
-    : charList.filter((char) =>
-        char.monsterName.toLowerCase().includes(lowerSearch)
-      );
 };
 
-const isCharSelectedInOtherSlot = (ownedId, currentIndex) => {
-  return !ownedId
-    ? false
-    : props.team.slots.some(
-        (slot, index) =>
-          index !== currentIndex && slot.selectedOwnedId === ownedId
-      );
+/**
+ * [概要] 指定されたスロット以外で選択されているキャラクターIDのリストを取得する。
+ * @note INFO: CharacterSelectorの:disabled-itemsプロパティに渡すために新設しました。
+ * @param {number} currentIndex - 現在のスロットのインデックス
+ * @returns {Array<string>} 選択済みのキャラクターIDの配列
+ */
+const getSelectedIdsInOtherSlots = (currentIndex) => {
+  return props.team.slots
+    .filter((slot, index) => index !== currentIndex && slot.selectedOwnedId)
+    .map((slot) => slot.selectedOwnedId);
 };
 
 const formatCharForDisplay = (char, includeItems) => {
@@ -215,6 +190,11 @@ const formatCharForDisplay = (char, includeItems) => {
   );
 };
 
+/**
+ * [概要] CharacterSelectorからの選択イベントをハンドリングする。
+ * @param {number} slotIndex - スロットのインデックス
+ * @param {string | null} charId - 選択されたキャラクターID
+ */
 const handleCharClick = (slotIndex, charId) => {
   updateSlot(slotIndex, "selectedOwnedId", charId);
 };

@@ -5,26 +5,15 @@
       <v-container class="pa-0">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="form.search  "
+            <CharacterSelector
+              v-model="form.selectedMasterId"
+              :items="props.characterMasters"
+              :item-title="
+                (master) => `[${master.indexNumber || '?'}] ${master.monsterName}`
+              "
               label="編集したいキャラクター名で検索"
-              variant="outlined"
-              clearable
-              prepend-inner-icon="mdi-magnify"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-card variant="outlined">
-              <v-list v-model:selected="selectedMasterIdProxy" style="height: 300px; overflow-y: auto;">
-                <v-list-item
-                  v-for="master in editableMasters"
-                  :key="master.id  "
-                  :value="master.id"
-                >
-                  <v-list-item-title>[{{ master.indexNumber || '?' }}] {{ master.monsterName }}</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card>
+              list-height="300px"
+            />
           </v-col>
         </v-row>
         
@@ -36,16 +25,34 @@
                 <v-container>
                   <v-row>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model.number="form.no   " label="図鑑番号" type="number" variant="outlined"></v-text-field>
+                      <v-text-field
+                        v-model.number="form.no   "
+                        label="図鑑番号"
+                        type="number"
+                        variant="outlined"
+                      ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model.trim="form.name   " label="キャラクター名" required variant="outlined"></v-text-field>
+                      <v-text-field
+                        v-model.trim="form.name   "
+                        label="キャラクター名"
+                        required
+                        variant="outlined"
+                      ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model.trim="form.element" label="属性" variant="outlined"></v-text-field>
+                      <v-text-field
+                        v-model.trim="form.element"
+                        label="属性"
+                        variant="outlined"
+                      ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field v-model.trim="form.type" label="分類" variant="outlined"></v-text-field>
+                      <v-text-field
+                        v-model.trim="form.type"
+                        label="分類"
+                        variant="outlined"
+                      ></v-text-field>
                     </v-col>
                     <v-col cols="12">
                       <v-select
@@ -84,8 +91,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue';
-import { databaseService } from '../../services/database.js';
+import { reactive, computed, watch, ref } from "vue";
+import { databaseService } from "../../services/database.js";
+import CharacterSelector from "../shared/CharacterSelector.vue";
 
 const props = defineProps({
   characterMasters: { type: Array, required: true },
@@ -115,39 +123,27 @@ const isUpdating = ref(false);
  * @returns {Map<string, Object>} キャラクターマスターIDをキーとするMap
  */
 const characterMastersMap = computed(() => {
-  return new Map(props.characterMasters.map (m => [m.id , m]));
+  return new Map(props.characterMasters.map ((m) => [m.id , m]));
 });
 
-/**
- * [概要] 検索文字列に基づいて編集可能なマスターリストをフィルタリングする。
- * @returns {Array<Object>} フィルタリングされたキャラクターマスターの配列
- */
-const editableMasters = computed(() => {
-  if (!props.characterMasters.length) return [];
-  const lowerSearch = form.search.toLowerCase();
-  return props.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch));
-});
-
-/**
- * [概要] v-listのv-model(配列)と、フォームのselectedMasterId(文字列)の差異を吸収するプロキシ。
- */
-const selectedMasterIdProxy = computed({
-  get() {
-    return form.selectedMasterId ? [form.selectedMasterId] : [];
-  },
-  set(value) {
-    form.selectedMasterId = value[0] || null;
-  }
-});
+// INFO: フィルタリングとプロキシ用のcomputedは不要になったため削除
+// (editableMasters, selectedMasterIdProxy)
 
 /**
  * [概要] 選択されたマスターIDが変更された際にフォームを更新する。
  * @param {string | null} newId - 新しく選択されたマスターID
  */
-watch(() => form.selectedMasterId, (newId) => {
+watch(
+  () => form.selectedMasterId,
+  (newId) => {
   if (!newId) {
-    // INFO: 選択が解除されたらフォームをリセット
-    Object.assign(form, { name: '', no: '', element: '', type: '', gacha: '' });
+      Object.assign(form, {
+        name: "",
+        no: "",
+        element: "",
+        type: "",
+        gacha: "",
+      });
     return;
   }
   // INFO: .valueは不要 (computedはRefオブジェクトを返すため)
@@ -167,7 +163,8 @@ watch(() => form.selectedMasterId, (newId) => {
  * [概要] マスター情報を更新する。
  */
 const handleUpdateMaster = async () => {
-  if (!form.selectedMasterId || !form.name) return alert('キャラを選択し名前を入力してください。');
+  if (!form.selectedMasterId || !form.name)
+    return alert("キャラを選択し名前を入力してください。");
   
   isUpdating.value = true;
   try {
@@ -180,9 +177,8 @@ const handleUpdateMaster = async () => {
     };
     await databaseService.updateCharacterMaster(form.selectedMasterId, updatedData);
     
-    alert('マスター情報を更新しました。ページをリロードしてください。');
-    emit('master-updated');
-
+    alert("マスター情報を更新しました。ページをリロードしてください。");
+    emit("master-updated");
   } catch (e) {
     alert('更新に失敗: ' + e.message);
   } finally {
