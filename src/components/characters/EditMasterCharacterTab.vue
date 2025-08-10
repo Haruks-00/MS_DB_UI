@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>キャラクターマスター編集</h2>
+    <h2 class="mb-4">キャラクターマスター編集</h2>
     <v-form>
       <v-container class="pa-0">
         <v-row>
@@ -17,7 +17,7 @@
           </v-col>
         </v-row>
         
-        <v-row v-if="form.selectedMasterId">
+        <v-row v-if="form.selectedMasterId" class="mt-4">
           <v-col cols="12">
             <v-card variant="outlined">
               <v-card-title>編集フォーム</v-card-title>

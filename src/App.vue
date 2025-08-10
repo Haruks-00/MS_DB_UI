@@ -16,7 +16,8 @@
     </v-app-bar>
 
     <v-main>
-      <v-container fluid>
+      <!-- INFO: 修正箇所。 fluid を削除し、レスポンシブなパディング pa-md-4 を追加 -->
+      <v-container class="pa-md-4">
         <div v-if="user">
           <account-selector
             :accounts="accounts"
@@ -186,10 +187,16 @@ const resetLoadedData = () => {
 async function loadInitialData() {
   if (dataLoaded.value) return;
   if (!user.value) return;
+  
+  // ▼▼▼ ここから変更 ▼▼▼
+  console.time('Total Load Time'); // 全体時間の計測開始
   console.log("初期データの読み込みを開始...");
+
   try {
+    console.time('Data Processing Time'); // データ処理時間の計測開始
     const processedData = await databaseService.loadAndProcessInitialData(user.value.uid);
-    
+    console.timeEnd('Data Processing Time'); // データ処理時間の計測終了
+
     accounts.value = processedData.accounts;
     characterMasters.value = processedData.characterMasters;
     itemMasters.value = processedData.itemMasters;
@@ -203,12 +210,20 @@ async function loadInitialData() {
     if (accounts.value.length > 0) {
       selectedAccountId.value = accounts.value[0].id;
     }
+    
+    // NOTE: Vueが画面を更新するのを待つために、nextTickを挟むとより正確な描画時間が見えることがある
+    // await nextTick(); // 必要ならこの行を有効化する (import { nextTick } from 'vue'; が必要)
+
     dataLoaded.value = true;
     console.log("初期データの読み込み完了");
+
   } catch (e) { 
     console.error("データ読み込みエラー:", e);
     alert(`データ読み込みエラー: ${e.message}`); 
+  } finally {
+    console.timeEnd('Total Load Time'); // 全体時間の計測終了
   }
+  // ▲▲▲ ここまで変更 ▲▲▲
 }
 
 const handleCharacterAdded = ({ accountId, newCharacter }) => {

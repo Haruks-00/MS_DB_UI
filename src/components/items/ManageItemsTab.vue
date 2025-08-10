@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h2>アイテム管理</h2>
+    <h2 class="mb-4">アイテム管理</h2>
     <v-form>
       <v-card variant="outlined" class="mb-5">
         <v-card-title>所持キャラクターのアイテムを変更</v-card-title>
-        <v-card-text>
+        <v-card-text class="pa-md-4">
           <v-container>
             <v-row>
               <v-col cols="12" md="6">
@@ -65,11 +65,12 @@
 
       <v-card variant="outlined">
         <v-card-title>キャラクター間でアイテムを移動</v-card-title>
-        <v-card-text>
+        <v-card-text class="pa-md-4">
           <v-container>
             <v-row>
               <!-- From Column -->
               <v-col cols="12" md="4">
+                <h6 class="text-subtitle-1 mb-2">移動元</h6>
                 <CharacterSelector
                   v-model="moveForm.from.selectedId"
                   :items="currentOwnedCharacters"
@@ -86,7 +87,7 @@
               </v-col>
               <!-- Items Column -->
               <v-col cols="12" md="4">
-                <p class="font-weight-bold mb-2">移動するアイテムを選択:</p>
+                <h6 class="text-subtitle-1 mb-2">移動するアイテム</h6>
                 <v-card
                   variant="outlined"
                   style="height: 318px; overflow-y: auto"
@@ -112,6 +113,7 @@
               </v-col>
               <!-- To Column -->
               <v-col cols="12" md="4">
+                <h6 class="text-subtitle-1 mb-2">移動先</h6>
                 <CharacterSelector
                   v-model="moveForm.to.selectedId"
                   :items="currentOwnedCharacters"
@@ -127,7 +129,7 @@
                 </CharacterSelector>
               </v-col>
             </v-row>
-            <v-row>
+            <v-row class="mt-2">
               <v-col>
                 <v-btn
                   :loading="isMoving"

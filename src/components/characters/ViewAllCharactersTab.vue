@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>所持状況一覧</h2>
+    <h2 class="mb-4">所持状況一覧</h2>
     
     <!-- INFO: 多数のフィルターをExpansion Panelに格納し、UIを整理します -->
     <v-expansion-panels class="mb-4">
@@ -38,8 +38,7 @@
       <div class="text-subtitle-1">表示件数: {{ filteredMasters.length }} / {{ characterMasters.length }}</div>
     </div>
     
-    <!-- INFO: v-tableは複雑なヘッダー構造を維持したままVuetifyのスタイルを適用できるため最適です -->
-    <v-table fixed-header height="70vh" density="compact">
+    <v-table fixed-header height="70vh" density="compact" class="table-fixed">
         <thead>
           <tr>
             <th rowspan="2">図鑑No.</th>
@@ -65,9 +64,24 @@
             <td v-show="showExtraColumns" :class="'element-' + (master.element || '').toLowerCase()">{{ master.element || '—' }}</td>
             <td v-show="showExtraColumns">{{ master.type || '—' }}</td>
             <td v-show="showExtraColumns">{{ master.ejectionGacha || '—' }}</td>
-            <template v-for="acc in accounts" :key="acc.id">
-              <td :class="getOwnedStatusClass(master.id, acc.id, 1)" v-html="getDisplayCellContent(master.id, acc.id, 0)"></td>
-              <td :class="getOwnedStatusClass(master.id, acc.id, 2)" v-html="getDisplayCellContent(master.id, acc.id, 1)"></td>
+            <template v-for="acc in accounts" :key="acc.id       ">
+              <td :class="getOwnedStatusClass(master.id, acc.id, 1)">
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <!-- NOTE: この div の中身がCSSで制御される -->
+                    <div v-bind="props" class="cell-content" v-html="getDisplayCellContent(master.id, acc.id, 0)"></div>
+                  </template>
+                  <span v-html="getTooltipContent(master.id, acc.id, 0)"></span>
+                </v-tooltip>
+              </td>
+              <td :class="getOwnedStatusClass(master.id, acc.id, 2)">
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <div v-bind="props" class="cell-content" v-html="getDisplayCellContent(master.id, acc.id, 1)"></div>
+                  </template>
+                  <span v-html="getTooltipContent(master.id, acc.id, 1)"></span>
+                </v-tooltip>
+              </td>
             </template>
           </tr>
         </tbody>
@@ -167,8 +181,29 @@ const getOwnedCount = (masterId, accountId) => {
 const getDisplayCellContent = (masterId, accountId, index) => {
   const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(c => c.characterMasterId === masterId);
   if (!ownedList || ownedList.length <= index) return '—';
-  const itemNames = (ownedList[index].items || []).map(id => props.itemMastersMap.get(Number(id))).filter(Boolean);
-  return itemNames.length > 0 ? '✔️<br>' + itemNames.join('<br>') : '✔️';
+  
+  // INFO: 修正箇所。「、」を<br>に戻して改行させる
+  const itemNames = (ownedList[index].items || [])
+    .map(id => props.itemMastersMap.get(Number(id)))
+    .filter(Boolean)
+    .join('<br>'); // 改行区切りに戻す
+
+  return itemNames ? `✔️<br>${itemNames}` : '✔️';
+};
+
+/**
+ * [概要] ツールチップに表示する内容を取得する。
+ */
+const getTooltipContent = (masterId, accountId, index) => {
+  const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(c => c.characterMasterId === masterId);
+  if (!ownedList || ownedList.length <= index) return '未所持';
+  
+  const itemNames = (ownedList[index].items || [])
+    .map(id => props.itemMastersMap.get(Number(id)))
+    .filter(Boolean)
+    .join('<br>');
+
+  return itemNames || 'アイテムなし';
 };
 
 const getOwnedStatusClass = (masterId, accountId, requiredCount) => {
@@ -196,4 +231,25 @@ const resetFilters = () => {
 .v-table .element-木 { background-color: #e8f5e9; }
 .v-table .element-光 { background-color: #fffde7; }
 .v-table .element-闇 { background-color: #f3e5f5; }
+
+.table-fixed tr {
+  /* NOTE: 全ての行の高さを固定します */
+  height: 110px !important; 
+}
+
+.table-fixed td {
+  /* NOTE: セルの縦方向の位置を中央に揃えます */
+  vertical-align: middle;
+}
+
+.table-fixed .cell-content {
+  /* NOTE: max-heightと-webkit-line-clampを5行分に調整 */
+  max-height: 6.0em; /* 1.2em (line-height) * 5 lines */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5; /* 表示する行数を5行に制限 */
+  -webkit-box-orient: vertical;
+}
+/* INFO: ここまでが修正箇所 */
 </style>

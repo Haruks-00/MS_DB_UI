@@ -1,9 +1,12 @@
 <template>
   <div>
-    <h2>キャラクターマスター新規追加</h2>
+    <h2 class="mb-4">キャラクターマスター新規追加</h2>
 
     <!-- INFO: Vuetifyのフォームコンポーネントで全体をラップします -->
     <v-form @submit.prevent="handleSaveMaster">
+      <!-- INFO: v-cardでフォーム全体を囲み、見た目を統一します -->
+      <v-card variant="outlined">
+        <v-card-text class="pa-md-4">
       <v-container>
         <v-row>
           <!-- INFO: 各入力項目をv-text-fieldとv-selectに置き換え -->
@@ -56,23 +59,23 @@
             ></v-select>
           </v-col>
         </v-row>
-
-        <v-row>
-          <v-col cols="12">
-            <!-- INFO: ボタンをv-btnに置き換え、状態を反映させます -->
+          </v-container>
+        </v-card-text>
+        
+        <!-- INFO: v-card-actionsでボタンの配置を整えます -->
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
             <v-btn
               :loading="isSaving"
               :disabled="!masterData.name || isSaving"
               @click="handleSaveMaster"
               color="primary"
               size="large"
-              block
             >
               {{ isSaving ? "追加中..." : "マスターリストに新規追加" }}
             </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
+        </v-card-actions>
+      </v-card>
     </v-form>
   </div>
 </template>

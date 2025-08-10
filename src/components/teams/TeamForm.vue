@@ -25,6 +25,7 @@
           label="編成名"
           variant="outlined"
           placeholder="例: 天魔の孤城 第1の間"
+          class="mb-4"
         ></v-text-field>
         <v-select
           :model-value="team.type"
@@ -34,7 +35,7 @@
           variant="outlined"
         ></v-select>
 
-        <h4 class="mt-4 mb-2">キャラクター編成 (4体)</h4>
+        <h4 class="mt-6 mb-2">キャラクター編成 (4体)</h4>
         <v-row>
           <v-col
             v-for="(slot, index) in team.slots"
@@ -42,8 +43,10 @@
             cols="12"
             md="6"
           >
-            <v-card variant="tonal" class="pa-2">
-              <h5>スロット {{ index + 1 }}</h5>
+            <!-- INFO: パディングを pa-2 から pa-4 に変更して、カード内の余白を広げる -->
+            <v-card elevation="2" class="pa-4">
+              <!-- INFO: 見出しの下に余白を追加 -->
+              <h5 class="mb-4">スロット {{ index + 1 }}</h5>
               <v-select
                 :model-value="slot.selectedAccountId"
                 @update:model-value="
@@ -55,7 +58,7 @@
                 label="アカウント"
                 variant="outlined"
                 density="compact"
-                class="mb-2"
+                class="mb-4"
               ></v-select>
               <!-- INFO: ここからがリファクタリング箇所です -->
               <CharacterSelector
@@ -79,7 +82,7 @@
           </v-col>
         </v-row>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="pa-4">
         <v-spacer></v-spacer>
         <v-btn
           :loading="isSaving"

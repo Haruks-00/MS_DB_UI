@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>所持キャラクター追加</h2>
+     <h2 class="mb-4">所持キャラクター追加</h2>
     <v-form @submit.prevent="handleAddCharacter">
       <v-container class="pa-0">
         <v-row>
@@ -15,7 +15,7 @@
             />
           </v-col>
         </v-row>
-        <v-row>
+        <v-row class="mt-2">
           <v-col cols="12">
             <v-btn
               :loading="isAdding"

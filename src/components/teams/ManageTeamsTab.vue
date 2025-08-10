@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h2>編成管理</h2>
-    <!-- INFO: 2カラムレイアウトをVuetifyのグリッドシステムで構築 -->
+    <!-- INFO: h2に見出し用のクラスを追加して、下部に余白を設ける -->
+    <h2 class="mb-4">編成管理</h2>
     <v-row>
       <v-col cols="12" md="6">
         <!-- INFO: TeamListコンポーネント -->
