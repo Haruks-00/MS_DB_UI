@@ -527,11 +527,11 @@ const getDisplayCellContent = (masterId, accountId, index) => {
   );
   if (!ownedList || ownedList.length <= index) return "—";
 
-  // INFO: 修正箇所。「、」を<br>に戻して改行させる
+  // アイテム名をすべて表示するように修正
   const itemNames = (ownedList[index].items || [])
     .map((id) => props.itemMastersMap.get(Number(id)))
     .filter(Boolean)
-    .join("<br>"); // 改行区切りに戻す
+    .join("<br>"); // 改行区切りで表示
 
   return itemNames ? `✔️<br>${itemNames}` : "✔️";
 };
@@ -659,24 +659,91 @@ const resetFilters = () => {
   background-color: #f3e5f5;
 }
 
+/* テーブルレイアウトの最適化 */
+.table-fixed {
+  table-layout: fixed;
+}
+
+/* キャラ名列の幅を制限 */
+.table-fixed th:nth-child(2),
+.table-fixed td:nth-child(2) {
+  width: 200px; /* キャラ名列の幅を200pxに制限 */
+  max-width: 200px;
+  min-width: 200px;
+}
+
+/* キャラクター名の表示を最適化 */
+.table-fixed td:nth-child(2) .d-flex {
+  width: 100%;
+}
+
+.table-fixed td:nth-child(2) .font-weight-medium {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px; /* アバター分を除いた幅 */
+}
+
+/* 図鑑番号列の幅を制限 */
+.table-fixed th:nth-child(1),
+.table-fixed td:nth-child(1) {
+  width: 80px; /* 図鑑番号列の幅を80pxに制限 */
+  max-width: 80px;
+  min-width: 80px;
+}
+
+/* 属性・分類・排出ガチャ列の幅を制限 */
+.table-fixed th:nth-child(3),
+.table-fixed td:nth-child(3),
+.table-fixed th:nth-child(4),
+.table-fixed td:nth-child(4),
+.table-fixed th:nth-child(5),
+.table-fixed td:nth-child(5) {
+  width: 100px; /* 各列の幅を100pxに制限 */
+  max-width: 100px;
+  min-width: 100px;
+}
+
+/* アイテムセルの幅を調整して折り返しを防ぐ */
+.table-fixed th:nth-child(n + 2),
+.table-fixed td:nth-child(n + 3) {
+  width: 78px; /* アイテムセルの幅を78pxに制限 */
+  max-width: 78px;
+  min-width: 78px;
+}
+
 .table-fixed tr {
-  /* NOTE: 全ての行の高さを固定します */
-  height: 110px !important;
+  /* アイテムの数に応じて高さを自動調整 */
+  height: auto !important;
+  min-height: 110px; /* 最小高さを設定 */
 }
 
 .table-fixed td {
-  /* NOTE: セルの縦方向の位置を中央に揃えます */
-  vertical-align: middle;
+  /* アイテムが多い場合でも見やすく上揃えに変更 */
+  vertical-align: top;
+  padding-top: 16px; /* 上部に適度な余白を追加 */
 }
 
 .table-fixed .cell-content {
-  /* NOTE: max-heightと-webkit-line-clampを5行分に調整 */
-  max-height: 6em; /* 1.2em (line-height) * 5 lines */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 5; /* 表示する行数を5行に制限 */
-  -webkit-box-orient: vertical;
+  /* アイテムをすべて表示するように制限を解除 */
+  max-height: none; /* 高さ制限を解除 */
+  overflow: visible; /* オーバーフローを表示 */
+  text-overflow: clip; /* 省略記号を無効化 */
+  display: block; /* ブロック表示に変更 */
+  -webkit-line-clamp: unset; /* 行数制限を解除 */
+  -webkit-box-orient: unset; /* ボックス方向を解除 */
+  word-break: normal; /* 単語の途中での改行を許可 */
+  white-space: normal; /* アイテム名を改行して表示 */
 }
-/* INFO: ここまでが修正箇所 */
+
+/* アイテム名の改行を有効化 */
+.table-fixed .cell-content br {
+  display: inline; /* 改行を有効化して複数行表示 */
+}
+
+/* アイテムの文字サイズを小さくする */
+.table-fixed .cell-content {
+  font-size: 0.75rem; /* 14px相当 */
+  line-height: 1.2; /* 行間を調整 */
+}
 </style>
