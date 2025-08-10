@@ -1,25 +1,19 @@
 <!-- src/App.vue -->
 <template>
   <v-app>
-    <!-- 洗練されたヘッダーデザイン -->
+    <!-- ミニマルヘッダーデザイン -->
     <v-app-bar
       app
-      color="primary"
-      dark
+      color="white"
       elevation="0"
-      class="premium-header"
-      height="80"
+      class="minimal-header"
+      height="64"
     >
       <div class="d-flex align-center w-100">
         <!-- ロゴ部分 -->
-        <div class="d-flex align-center mr-6">
-          <v-icon
-            icon="mdi-dragon"
-            size="36"
-            class="mr-3 animate-pulse"
-            color="white"
-          />
-          <v-toolbar-title class="text-h4 font-weight-bold gradient-text-white">
+        <div class="d-flex align-center mr-8">
+          <v-icon icon="mdi-dragon" size="28" class="mr-3" color="primary" />
+          <v-toolbar-title class="text-h5 font-weight-medium text-primary">
             キャラクター管理
           </v-toolbar-title>
         </div>
@@ -37,21 +31,21 @@
 
       <!-- タブナビゲーション -->
       <template v-if="user" v-slot:extension>
-        <div class="w-100 premium-tabs-container">
+        <div class="w-100 minimal-tabs-container">
           <v-tabs
             v-model="activeTab"
             align-with-title
-            color="white"
-            class="premium-tabs"
-            height="60"
+            color="primary"
+            class="minimal-tabs"
+            height="48"
           >
             <v-tab
               v-for="tab in tabs"
               :key="tab.id"
               :value="tab.id"
-              class="premium-tab"
+              class="minimal-tab"
             >
-              <v-icon :icon="tab.icon" class="mr-2" />
+              <v-icon :icon="tab.icon" class="mr-2" size="20" />
               {{ tab.name }}
             </v-tab>
           </v-tabs>
@@ -61,21 +55,21 @@
 
     <v-main>
       <!-- メインコンテンツエリア -->
-      <v-container class="pa-md-6 main-container">
-        <div v-if="user" class="animate-fade-in-up">
+      <v-container class="pa-6 main-container">
+        <div v-if="user">
           <!-- アカウントセレクター -->
           <account-selector
             :accounts="accounts"
             v-model="selectedAccountId"
             :visible="isAccountControlVisible"
-            class="mb-6 premium-account-selector"
+            class="mb-6 minimal-account-selector"
           />
 
           <!-- タブコンテンツ -->
           <v-window
             v-if="dataLoaded"
             v-model="activeTab"
-            class="premium-window"
+            class="minimal-window"
           >
             <!-- NOTE: 全てのv-window-itemに一意なkey属性を追加し、Vueがコンポーネントを正しく再描画できるようにします -->
             <v-window-item value="view-all" key="view-all">
@@ -145,39 +139,34 @@
           </v-window>
 
           <!-- ローディング表示 -->
-          <div v-else class="text-center pa-16 premium-loading">
+          <div v-else class="text-center pa-16 minimal-loading">
             <v-progress-circular
               indeterminate
               color="primary"
-              size="80"
-              width="6"
+              size="64"
+              width="4"
               class="mb-6"
             />
-            <p class="text-h6 text-grey-darken-1">
+            <p class="text-body-1 text-grey-darken-1">
               データを読み込んでいます...
             </p>
           </div>
         </div>
 
         <!-- 未認証時の表示 -->
-        <div v-else class="text-center pa-16 premium-welcome">
-          <v-icon
-            icon="mdi-dragon"
-            size="120"
-            color="primary"
-            class="mb-8 animate-pulse"
-          />
-          <h1 class="text-h3 font-weight-bold gradient-text mb-4">
+        <div v-else class="text-center pa-16 minimal-welcome">
+          <v-icon icon="mdi-dragon" size="80" color="primary" class="mb-6" />
+          <h1 class="text-h4 font-weight-medium text-primary mb-4">
             キャラクター管理システム
           </h1>
-          <p class="text-h6 text-grey-darken-1 mb-8">
+          <p class="text-body-1 text-grey-darken-1 mb-8">
             ログインして、あなたのキャラクターを管理しましょう
           </p>
           <v-btn
             color="primary"
-            size="x-large"
-            rounded="xl"
-            class="px-8 py-4"
+            size="large"
+            variant="outlined"
+            class="px-8"
             @click="handleLogin"
           >
             <v-icon icon="mdi-login" class="mr-2" />
@@ -357,91 +346,76 @@ const handleMasterDataChanged = () => {
 </script>
 
 <style scoped>
-/* プレミアムヘッダーのスタイル */
-.premium-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+/* ミニマルヘッダーのスタイル */
+.minimal-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.gradient-text-white {
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* ミニマルタブのスタイル */
+.minimal-tabs-container {
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
 }
 
-/* プレミアムタブのスタイル */
-.premium-tabs-container {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 16px 16px 0 0;
-  margin: 0 16px;
-}
-
-.premium-tabs {
+.minimal-tabs {
   background: transparent !important;
 }
 
-.premium-tab {
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  transition: all 0.3s ease;
-  border-radius: 12px 12px 0 0;
-  margin: 0 4px;
+.minimal-tab {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background-color 0.2s ease;
+  border-radius: 0;
+  margin: 0;
 }
 
-.premium-tab:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+.minimal-tab:hover {
+  background: #f5f5f5;
 }
 
 /* メインコンテナのスタイル */
 .main-container {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: calc(100vh - 140px);
+  background: #fafafa;
+  min-height: calc(100vh - 112px);
 }
 
-/* プレミアムアカウントセレクター */
-.premium-account-selector {
-  animation: fadeInUp 0.8s ease-out;
+/* ミニマルアカウントセレクター */
+.minimal-account-selector {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
-/* プレミアムウィンドウ */
-.premium-window {
-  animation: fadeInUp 1s ease-out;
+/* ミニマルウィンドウ */
+.minimal-window {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
-/* プレミアムローディング */
-.premium-loading {
-  animation: fadeInUp 0.6s ease-out;
+/* ミニマルローディング */
+.minimal-loading {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
-/* プレミアムウェルカム */
-.premium-welcome {
-  animation: fadeInUp 1.2s ease-out;
-}
-
-/* アニメーション */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ミニマルウェルカム */
+.minimal-welcome {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
-  .premium-header {
-    height: 70px;
+  .minimal-header {
+    height: 56px;
   }
 
-  .premium-tabs-container {
-    margin: 0 8px;
+  .minimal-tabs-container {
+    margin: 0;
   }
 
   .main-container {

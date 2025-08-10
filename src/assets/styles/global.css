@@ -1,30 +1,43 @@
-/* グローバルスタイル - 洗練されたUIデザイン */
+/* グローバルスタイル - ミニマル&フラットデザイン */
 
 :root {
-  /* カスタムカラーパレット */
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  --error-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  /* カラーパレット */
+  --primary-color: #1976d2;
+  --primary-light: #42a5f5;
+  --primary-dark: #1565c0;
+  --secondary-color: #424242;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
 
-  /* シャドウシステム */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
-  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  /* グレースケール */
+  --grey-50: #fafafa;
+  --grey-100: #f5f5f5;
+  --grey-200: #eeeeee;
+  --grey-300: #e0e0e0;
+  --grey-400: #bdbdbd;
+  --grey-500: #9e9e9e;
+  --grey-600: #757575;
+  --grey-700: #616161;
+  --grey-800: #424242;
+  --grey-900: #212121;
+
+  /* スペーシング */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
 
   /* ボーダーラディウス */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
   /* トランジション */
   --transition-fast: 0.15s ease;
-  --transition-normal: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  --transition-normal: 0.2s ease;
 }
 
 /* グローバルタイポグラフィ */
@@ -32,293 +45,199 @@ body {
   font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont,
     sans-serif;
   line-height: 1.6;
-  color: #1a202c;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: var(--grey-900);
+  background: var(--grey-50);
   min-height: 100vh;
 }
 
-/* カードの洗練されたスタイル */
+/* カードのミニマルスタイル */
 .v-card {
   border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--grey-200);
+  background: #ffffff;
+  transition: border-color var(--transition-normal);
 }
 
 .v-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  border-color: var(--grey-300);
 }
 
-/* ボタンの洗練されたスタイル */
+/* ボタンのミニマルスタイル */
 .v-btn {
   border-radius: var(--radius-md);
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  transition: all var(--transition-normal);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background-color var(--transition-normal);
   text-transform: none;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .v-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
 }
 
 .v-btn--variant-elevated {
-  background: var(--primary-gradient);
+  background: var(--primary-color);
   border: none;
 }
 
-/* テキストフィールドの洗練されたスタイル */
+/* テキストフィールドのミニマルスタイル */
 .v-text-field .v-field {
   border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
+  transition: border-color var(--transition-normal);
 }
 
 .v-text-field .v-field:hover {
-  box-shadow: var(--shadow-md);
+  border-color: var(--grey-400);
 }
 
 .v-text-field .v-field--focused {
-  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
 }
 
-/* セレクトフィールドの洗練されたスタイル */
+/* セレクトフィールドのミニマルスタイル */
 .v-select .v-field {
   border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
+  transition: border-color var(--transition-normal);
 }
 
 .v-select .v-field:hover {
-  box-shadow: var(--shadow-md);
+  border-color: var(--grey-400);
 }
 
-/* リストアイテムの洗練されたスタイル */
+/* リストアイテムのミニマルスタイル */
 .v-list-item {
   border-radius: var(--radius-sm);
-  margin: 2px 8px;
-  transition: all var(--transition-fast);
+  margin: 2px 0;
+  transition: background-color var(--transition-fast);
 }
 
 .v-list-item:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(102, 126, 234, 0.1) 0%,
-    rgba(118, 75, 162, 0.1) 100%
-  );
-  transform: translateX(4px);
+  background: var(--grey-100);
 }
 
-/* チップの洗練されたスタイル */
+/* チップのミニマルスタイル */
 .v-chip {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   font-weight: 500;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
+  border: 1px solid var(--grey-200);
 }
 
-/* アイコンの洗練されたスタイル */
+/* アイコンのミニマルスタイル */
 .v-icon {
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast);
 }
 
-.v-icon:hover {
-  transform: scale(1.1);
-}
-
-/* アバターの洗練されたスタイル */
+/* アバターのミニマルスタイル */
 .v-avatar {
-  box-shadow: var(--shadow-md);
-  transition: all var(--transition-normal);
+  border: 2px solid var(--grey-200);
+  transition: border-color var(--transition-normal);
 }
 
-.v-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-lg);
-}
-
-/* タブの洗練されたスタイル */
+/* タブのミニマルスタイル */
 .v-tab {
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  transition: all var(--transition-normal);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background-color var(--transition-normal);
 }
 
-.v-tab:hover {
-  transform: translateY(-2px);
-}
-
-/* プログレスバーの洗練されたスタイル */
+/* プログレスバーのミニマルスタイル */
 .v-progress-linear {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-/* アラートの洗練されたスタイル */
+/* アラートのミニマルスタイル */
 .v-alert {
   border-radius: var(--radius-md);
-  backdrop-filter: blur(10px);
+  border: 1px solid var(--grey-200);
 }
 
-/* ダイアログの洗練されたスタイル */
+/* ダイアログのミニマルスタイル */
 .v-dialog .v-card {
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(20px);
 }
 
-/* スナックバーの洗練されたスタイル */
+/* スナックバーのミニマルスタイル */
 .v-snackbar .v-snackbar__wrapper {
   border-radius: var(--radius-md);
-  backdrop-filter: blur(10px);
 }
 
 /* カスタムスクロールバー */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--grey-100);
   border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--grey-300);
   border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-}
-
-/* アニメーション */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  background: var(--grey-400);
 }
 
 /* ユーティリティクラス */
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
+.minimal-card {
+  background: #ffffff;
+  border: 1px solid var(--grey-200);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-normal);
 }
 
-.animate-slide-in-left {
-  animation: slideInLeft 0.6s ease-out;
+.minimal-card:hover {
+  border-color: var(--grey-300);
 }
 
-.animate-pulse {
-  animation: pulse 2s infinite;
-}
-
-.glass-effect {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.gradient-text {
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-text-white {
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* プレミアムボタン */
-.premium-btn {
-  background: var(--primary-gradient);
-  border: none;
+.minimal-button {
+  background: var(--primary-color);
   color: white;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  border-radius: 16px;
-  padding: 12px 24px;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: 500;
+  transition: background-color var(--transition-normal);
 }
 
-.premium-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-xl);
+.minimal-button:hover {
+  background: var(--primary-dark);
 }
 
-/* プレミアムカード */
-.premium-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  transition: all 0.4s ease;
+.minimal-button--outlined {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
 }
 
-.premium-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-2xl);
+.minimal-button--outlined:hover {
+  background: var(--primary-color);
+  color: white;
 }
 
-/* プレミアムアイコン */
-.premium-icon {
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+.minimal-input {
+  border: 1px solid var(--grey-300);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  transition: border-color var(--transition-normal);
 }
 
-.premium-icon:hover {
-  transform: scale(1.15);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+.minimal-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   :root {
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-  }
-
-  .v-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .v-btn:hover {
-    transform: translateY(-1px);
-  }
-
-  .premium-card:hover {
-    transform: translateY(-3px);
+    --spacing-md: 12px;
+    --spacing-lg: 20px;
+    --spacing-xl: 28px;
   }
 }

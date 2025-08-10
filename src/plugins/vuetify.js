@@ -5,7 +5,7 @@ import { createVuetify } from "vuetify";
 
 /**
  * [概要] Vuetifyインスタンスを作成し、エクスポートする
- * @note 洗練されたUIデザインのためのテーマとデフォルト設定
+ * @note ミニマル&フラットデザインのためのテーマとデフォルト設定
  */
 export default createVuetify({
   theme: {
@@ -13,54 +13,54 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          primary: "#667eea",
-          secondary: "#764ba2",
-          accent: "#f093fb",
-          success: "#4facfe",
-          warning: "#43e97b",
-          error: "#fa709a",
-          info: "#00f2fe",
+          primary: "#1976d2",
+          secondary: "#424242",
+          accent: "#42a5f5",
+          success: "#4caf50",
+          warning: "#ff9800",
+          error: "#f44336",
+          info: "#2196f3",
           surface: "#ffffff",
-          background: "#f5f7fa",
-          "on-surface": "#1a202c",
-          "on-background": "#1a202c",
+          background: "#fafafa",
+          "on-surface": "#212121",
+          "on-background": "#212121",
         },
       },
     },
   },
   defaults: {
     VCard: {
-      variant: "elevated",
-      elevation: 4,
-      rounded: "lg",
+      variant: "outlined",
+      elevation: 0,
+      rounded: "md",
     },
     VBtn: {
-      variant: "elevated",
-      rounded: "lg",
-      class: "text-none font-weight-bold",
+      variant: "outlined",
+      rounded: "md",
+      class: "text-none font-weight-medium",
     },
     VTextField: {
       variant: "outlined",
-      density: "comfortable",
-      rounded: "lg",
+      density: "compact",
+      rounded: "md",
     },
     VSelect: {
       variant: "outlined",
-      density: "comfortable",
-      rounded: "lg",
+      density: "compact",
+      rounded: "md",
     },
     VList: {
-      density: "comfortable",
+      density: "compact",
     },
     VListItem: {
-      rounded: "lg",
+      rounded: "sm",
     },
     VChip: {
-      rounded: "lg",
-      variant: "tonal",
+      rounded: "md",
+      variant: "outlined",
     },
     VAvatar: {
-      rounded: "lg",
+      rounded: "md",
     },
     VIcon: {
       size: "20",

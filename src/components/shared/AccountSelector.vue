@@ -1,5 +1,5 @@
 <template>
-  <div id="account-controls" v-show="visible">
+  <div id="account-controls" v-show="visible" class="minimal-account-selector">
     <v-select
       v-model="selectedId"
       :items="accounts"
@@ -10,7 +10,8 @@
       density="compact"
       color="primary"
       prepend-inner-icon="mdi-account-multiple"
-      class="account-selector"
+      class="minimal-select"
+      hide-details
     ></v-select>
   </div>
 </template>
@@ -57,3 +58,44 @@ const selectedId = computed({
   },
 });
 </script>
+
+<style scoped>
+.minimal-account-selector {
+  background: #ffffff;
+  border: 1px solid var(--grey-200);
+  border-radius: 8px;
+  padding: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.minimal-account-selector:hover {
+  border-color: var(--grey-300);
+}
+
+.minimal-select {
+  background: transparent;
+}
+
+.minimal-select :deep(.v-field) {
+  border-radius: 6px;
+  border: 1px solid var(--grey-300);
+  transition: border-color 0.2s ease;
+}
+
+.minimal-select :deep(.v-field:hover) {
+  border-color: var(--grey-400);
+}
+
+.minimal-select :deep(.v-field--focused) {
+  border-color: var(--primary-color);
+}
+
+.minimal-select :deep(.v-field__input) {
+  font-weight: 500;
+}
+
+.minimal-select :deep(.v-label) {
+  color: var(--grey-600);
+  font-weight: 500;
+}
+</style>

@@ -1,28 +1,35 @@
 <template>
   <div class="pa-6">
-    <!-- INFO: より洗練された見出しデザイン -->
+    <!-- INFO: ミニマルな見出しデザイン -->
     <div class="d-flex align-center mb-6">
       <v-icon
         icon="mdi-account-multiple"
-        size="32"
+        size="28"
         color="primary"
         class="mr-3"
       ></v-icon>
-      <h2 class="text-h4 font-weight-bold text-primary">所持状況一覧</h2>
+      <h2 class="text-h5 font-weight-medium text-primary">所持状況一覧</h2>
     </div>
 
-    <!-- INFO: より美しいフィルターセクション -->
-    <v-card elevation="3" rounded="lg" class="mb-6">
-      <v-card-title class="bg-primary text-white pa-4">
-        <v-icon icon="mdi-filter-variant" class="mr-2"></v-icon>
+    <!-- INFO: ミニマルなフィルターセクション -->
+    <v-card class="mb-6 minimal-filter-card">
+      <v-card-title class="minimal-card-title pa-4">
+        <v-icon icon="mdi-filter-variant" class="mr-2" size="20"></v-icon>
         フィルターとオプション
       </v-card-title>
 
       <v-expansion-panels>
         <v-expansion-panel>
-          <v-expansion-panel-title class="pa-4">
-            <v-icon start icon="mdi-filter-variant" color="primary"></v-icon>
-            <span class="text-h6 font-weight-medium">詳細フィルターを開く</span>
+          <v-expansion-panel-title class="pa-4 minimal-panel-title">
+            <v-icon
+              start
+              icon="mdi-filter-variant"
+              color="primary"
+              size="20"
+            ></v-icon>
+            <span class="text-body-1 font-weight-medium"
+              >詳細フィルターを開く</span
+            >
           </v-expansion-panel-title>
           <v-expansion-panel-text class="pa-6">
             <v-container>
@@ -36,6 +43,7 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-account-search"
+                    class="minimal-input"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -48,6 +56,7 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-fire"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -62,6 +71,7 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-sword-cross"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -74,6 +84,7 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-tag"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -88,6 +99,7 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-gift"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -107,18 +119,20 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-account-group"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
 
                 <v-col cols="12">
-                  <v-divider class="my-4"></v-divider>
+                  <v-divider class="my-4 minimal-divider"></v-divider>
                   <div class="d-flex align-center mb-3">
                     <v-icon
                       icon="mdi-account"
                       color="secondary"
                       class="mr-2"
+                      size="20"
                     ></v-icon>
-                    <v-subheader class="text-h6 font-weight-medium"
+                    <v-subheader class="text-body-1 font-weight-medium"
                       >単一アカウントでの絞り込み</v-subheader
                     >
                   </div>
@@ -136,6 +150,7 @@
                     clearable
                     color="secondary"
                     prepend-inner-icon="mdi-account"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="6">
@@ -153,17 +168,19 @@
                     clearable
                     color="secondary"
                     prepend-inner-icon="mdi-check-circle"
+                    class="minimal-select"
                   ></v-select>
                 </v-col>
               </v-row>
             </v-container>
 
-            <v-card-actions class="pa-4 bg-grey-lighten-5">
+            <v-card-actions class="pa-4 minimal-actions">
               <v-btn
                 @click="showExtraColumns = !showExtraColumns"
-                variant="tonal"
+                variant="outlined"
                 color="info"
                 prepend-icon="mdi-eye"
+                class="minimal-button"
               >
                 {{ showExtraColumns ? "詳細を非表示" : "詳細を表示" }}
               </v-btn>
@@ -173,6 +190,7 @@
                 color="secondary"
                 variant="outlined"
                 prepend-icon="mdi-refresh"
+                class="minimal-button"
               >
                 リセット
               </v-btn>
@@ -182,13 +200,18 @@
       </v-expansion-panels>
     </v-card>
 
-    <!-- INFO: より美しい統計情報表示 -->
-    <v-card elevation="2" rounded="lg" class="mb-4">
+    <!-- INFO: ミニマルな統計情報表示 -->
+    <v-card class="mb-4 minimal-stats-card">
       <v-card-text class="pa-4">
         <div class="d-flex justify-space-between align-center">
           <div class="d-flex align-center">
-            <v-icon icon="mdi-chart-bar" color="primary" class="mr-2"></v-icon>
-            <span class="text-h6 font-weight-medium"
+            <v-icon
+              icon="mdi-chart-bar"
+              color="primary"
+              class="mr-2"
+              size="20"
+            ></v-icon>
+            <span class="text-body-1 font-weight-medium"
               >表示件数: {{ filteredMasters.length }} /
               {{ characterMasters.length }}</span
             >
@@ -199,14 +222,14 @@
                 ? 'success'
                 : 'warning'
             "
-            variant="tonal"
-            size="small"
+            variant="outlined"
+            class="minimal-chip"
           >
             {{
-              Math.round(
-                (filteredMasters.length / characterMasters.length) * 100
-              )
-            }}% 表示中
+              filteredMasters.length === characterMasters.length
+                ? "全件表示"
+                : "フィルター適用中"
+            }}
           </v-chip>
         </div>
       </v-card-text>
@@ -596,65 +619,130 @@ const resetFilters = () => {
 </script>
 
 <style scoped>
-/* 全体的なスタイリング */
-.character-row:hover {
-  background-color: rgba(25, 118, 210, 0.05) !important;
+/* ミニマルフィルターカード */
+.minimal-filter-card {
+  border: 1px solid var(--grey-200);
+  border-radius: 8px;
+  background: #ffffff;
 }
 
-/* レスポンシブ対応 */
-@media (max-width: 960px) {
-  .pa-6 {
-    padding: 16px !important;
-  }
-
-  .mb-6 {
-    margin-bottom: 24px !important;
-  }
+.minimal-card-title {
+  background: var(--grey-100);
+  color: var(--grey-800);
+  font-weight: 500;
+  border-bottom: 1px solid var(--grey-200);
 }
 
-/* カスタムスクロールバー */
-.v-table::-webkit-scrollbar {
-  width: 8px;
+.minimal-panel-title {
+  background: var(--grey-50);
+  border-bottom: 1px solid var(--grey-200);
 }
 
-.v-table::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+.minimal-actions {
+  background: var(--grey-50);
+  border-top: 1px solid var(--grey-200);
 }
 
-.v-table::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+.minimal-button {
+  border: 1px solid var(--grey-300);
+  color: var(--grey-700);
+  font-weight: 500;
+  text-transform: none;
+  transition: all 0.2s ease;
 }
 
-.v-table::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.minimal-button:hover {
+  background: var(--grey-100);
+  border-color: var(--grey-400);
 }
-</style>
 
-<style>
-/* INFO: v-table内でカスタムスタイルを適用するため、scopedを外しています */
-.v-table .status-owned {
-  text-align: center;
-  font-weight: bold;
-  background-color: #e8f5e9; /* Light green */
+/* ミニマル統計カード */
+.minimal-stats-card {
+  border: 1px solid var(--grey-200);
+  border-radius: 8px;
+  background: #ffffff;
 }
-.v-table .status-unowned {
-  text-align: center;
-  color: #bdbdbd; /* Lighter grey */
+
+.minimal-chip {
+  border: 1px solid currentColor;
+  font-weight: 500;
 }
+
+/* ミニマル入力フィールド */
+.minimal-input :deep(.v-field) {
+  border-radius: 6px;
+  border: 1px solid var(--grey-300);
+  transition: border-color 0.2s ease;
+}
+
+.minimal-input :deep(.v-field:hover) {
+  border-color: var(--grey-400);
+}
+
+.minimal-input :deep(.v-field--focused) {
+  border-color: var(--primary-color);
+}
+
+/* ミニマルセレクトフィールド */
+.minimal-select :deep(.v-field) {
+  border-radius: 6px;
+  border: 1px solid var(--grey-300);
+  transition: border-color 0.2s ease;
+}
+
+.minimal-select :deep(.v-field:hover) {
+  border-color: var(--grey-400);
+}
+
+.minimal-select :deep(.v-field--focused) {
+  border-color: var(--primary-color);
+}
+
+/* ミニマル区切り線 */
+.minimal-divider {
+  border-color: var(--grey-200);
+}
+
+/* テーブルのミニマルスタイル */
+.v-table {
+  border: 1px solid var(--grey-200);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.v-table th {
+  background: var(--grey-100);
+  color: var(--grey-800);
+  font-weight: 500;
+  border-bottom: 1px solid var(--grey-200);
+}
+
+.v-table td {
+  border-bottom: 1px solid var(--grey-200);
+  padding: 12px 16px;
+}
+
+.v-table tr:hover {
+  background: var(--grey-50);
+}
+
+/* 属性別の背景色（ミニマル版） */
 .v-table .element-火 {
   background-color: #ffebee;
 }
+
 .v-table .element-水 {
   background-color: #e3f2fd;
 }
+
 .v-table .element-木 {
   background-color: #e8f5e9;
 }
+
 .v-table .element-光 {
   background-color: #fffde7;
 }
+
 .v-table .element-闇 {
   background-color: #f3e5f5;
 }
@@ -667,7 +755,7 @@ const resetFilters = () => {
 /* キャラ名列の幅を制限 */
 .table-fixed th:nth-child(2),
 .table-fixed td:nth-child(2) {
-  width: 200px; /* キャラ名列の幅を200pxに制限 */
+  width: 200px;
   max-width: 200px;
   min-width: 200px;
 }
@@ -681,13 +769,13 @@ const resetFilters = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px; /* アバター分を除いた幅 */
+  max-width: 140px;
 }
 
 /* 図鑑番号列の幅を制限 */
 .table-fixed th:nth-child(1),
 .table-fixed td:nth-child(1) {
-  width: 80px; /* 図鑑番号列の幅を80pxに制限 */
+  width: 80px;
   max-width: 80px;
   min-width: 80px;
 }
@@ -699,7 +787,7 @@ const resetFilters = () => {
 .table-fixed td:nth-child(4),
 .table-fixed th:nth-child(5),
 .table-fixed td:nth-child(5) {
-  width: 100px; /* 各列の幅を100pxに制限 */
+  width: 100px;
   max-width: 100px;
   min-width: 100px;
 }
@@ -707,43 +795,40 @@ const resetFilters = () => {
 /* アイテムセルの幅を調整して折り返しを防ぐ */
 .table-fixed th:nth-child(n + 2),
 .table-fixed td:nth-child(n + 3) {
-  width: 78px; /* アイテムセルの幅を78pxに制限 */
+  width: 78px;
   max-width: 78px;
   min-width: 78px;
 }
 
 .table-fixed tr {
-  /* アイテムの数に応じて高さを自動調整 */
   height: auto !important;
-  min-height: 110px; /* 最小高さを設定 */
+  min-height: 110px;
 }
 
 .table-fixed td {
-  /* アイテムが多い場合でも見やすく上揃えに変更 */
   vertical-align: top;
-  padding-top: 16px; /* 上部に適度な余白を追加 */
+  padding-top: 16px;
 }
 
 .table-fixed .cell-content {
-  /* アイテムをすべて表示するように制限を解除 */
-  max-height: none; /* 高さ制限を解除 */
-  overflow: visible; /* オーバーフローを表示 */
-  text-overflow: clip; /* 省略記号を無効化 */
-  display: block; /* ブロック表示に変更 */
-  -webkit-line-clamp: unset; /* 行数制限を解除 */
-  -webkit-box-orient: unset; /* ボックス方向を解除 */
-  word-break: normal; /* 単語の途中での改行を許可 */
-  white-space: normal; /* アイテム名を改行して表示 */
+  max-height: none;
+  overflow: visible;
+  text-overflow: clip;
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  word-break: normal;
+  white-space: normal;
 }
 
 /* アイテム名の改行を有効化 */
 .table-fixed .cell-content br {
-  display: inline; /* 改行を有効化して複数行表示 */
+  display: inline;
 }
 
 /* アイテムの文字サイズを小さくする */
 .table-fixed .cell-content {
-  font-size: 0.75rem; /* 14px相当 */
-  line-height: 1.2; /* 行間を調整 */
+  font-size: 0.75rem;
+  line-height: 1.2;
 }
 </style>
