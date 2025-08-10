@@ -2,7 +2,7 @@ import { lazyLoadDatabase } from "../utils/lazyLoader.js";
 import {
   collection,
   doc,
-  batch,
+  writeBatch,
   query,
   where,
   orderBy,
@@ -152,7 +152,7 @@ const updateCharacterItems = async (accountId, ownedCharacterId, items) => {
  */
 const moveCharacterItems = async (accountId, from, to) => {
   const db = await lazyLoadDatabase();
-  const batchInstance = batch(db);
+  const batchInstance = writeBatch(db);
   const fromRef = doc(db, "accounts", accountId, "owned_characters", from.id);
   const toRef = doc(db, "accounts", accountId, "owned_characters", to.id);
 
