@@ -1,6 +1,6 @@
-import firebase from "firebase/compat/app";
-import "firebase/compat/firestore";
-import "firebase/compat/auth";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,21 +12,22 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+let app = null;
 let db = null;
 let auth = null;
 
 // Firebaseの遅延初期化
 const initializeFirebase = async () => {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  if (!app) {
+    app = initializeApp(firebaseConfig);
   }
 
   if (!db) {
-    db = firebase.firestore();
+    db = getFirestore(app);
   }
 
   if (!auth) {
-    auth = firebase.auth();
+    auth = getAuth(app);
   }
 
   return { db, auth };

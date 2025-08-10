@@ -21,12 +21,13 @@
   "homepage": "https://github.com/Haruks-00/MS_DB_UI#readme",
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
-    "firebase": "^9.6.1",
+    "terser": "^5.43.1",
     "vite": "^5.4.19",
     "vue": "^3.4.31"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "firebase": "^9.6.1",
     "vite-plugin-vuetify": "^2.1.2",
     "vuetify": "^3.9.4"
   }

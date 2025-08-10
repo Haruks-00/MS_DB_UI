@@ -21,8 +21,6 @@ export default defineConfig({
           vue: ["vue"],
           // Vuetify関連を分離
           vuetify: ["vuetify"],
-          // Firebase関連を分離
-          firebase: ["firebase"],
         },
       },
     },
@@ -43,7 +41,14 @@ export default defineConfig({
   // 依存関係の最適化
   optimizeDeps: {
     include: ["vue", "vuetify"],
-    exclude: ["firebase"],
+  },
+  // Firebaseの解決設定
+  resolve: {
+    alias: {
+      "firebase/app": "firebase/app",
+      "firebase/firestore": "firebase/firestore",
+      "firebase/auth": "firebase/auth",
+    },
   },
   // PWA対応
   define: {
