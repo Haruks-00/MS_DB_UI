@@ -8,12 +8,15 @@
       label="管理対象アカウント"
       variant="outlined"
       density="compact"
+      color="primary"
+      prepend-inner-icon="mdi-account-multiple"
+      class="account-selector"
     ></v-select>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed } from "vue";
 
 /**
  * [概要] 親コンポーネントから渡されるプロパティを定義します。
@@ -33,13 +36,13 @@ const props = defineProps({
   visible: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 /**
  * [概要] 親コンポーネントに通知するイベントを定義します。
  */
-const emit = defineEmits(['update:modelValue']); // INFO: Vue 3のv-modelは 'update:modelValue' イベントを使用します。
+const emit = defineEmits(["update:modelValue"]); // INFO: Vue 3のv-modelは 'update:modelValue' イベントを使用します。
 
 /**
  * [概要] v-modelをコンポーネント内で安全に扱うための算出プロパティ。
@@ -50,7 +53,7 @@ const selectedId = computed({
     return props.modelValue;
   },
   set(newValue) {
-    emit('update:modelValue', newValue);
-  }
+    emit("update:modelValue", newValue);
+  },
 });
 </script>

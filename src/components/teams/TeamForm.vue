@@ -1,15 +1,22 @@
 <template>
-  <v-card variant="outlined">
-    <v-card-title>{{ team.id ? "編成編集" : "新規編成作成" }}</v-card-title>
-    <v-card-subtitle>
+  <v-card class="h-100" elevation="3" rounded="lg">
+    <v-card-title class="bg-primary text-white pa-4">
+      <v-icon icon="mdi-account-edit" class="mr-2"></v-icon>
+      {{ team.id ? "編成編集" : "新規編成作成" }}
+    </v-card-title>
+
+    <v-card-subtitle class="pa-4 bg-grey-lighten-5">
       <v-btn
         @click="$emit('reset-form')"
         size="small"
         variant="tonal"
-        class="mt-2"
-        >新規作成フォームを開く</v-btn
+        color="primary"
+        prepend-icon="mdi-plus"
       >
+        新規作成フォームを開く
+      </v-btn>
     </v-card-subtitle>
+
     <template
       v-if="
         accounts.length > 0 &&
@@ -17,72 +24,118 @@
         characterMastersMap.size > 0
       "
     >
-      <v-card-text>
-        <!-- NOTE: v-modelで親コンポーネントのteamFormオブジェクトを直接参照します -->
+      <v-card-text class="pa-6">
+        <!-- INFO: より美しいフォームフィールド -->
         <v-text-field
           :model-value="team.name"
           @update:model-value="(value) => updateTeamProperty('name', value)"
           label="編成名"
           variant="outlined"
           placeholder="例: 天魔の孤城 第1の間"
-          class="mb-4"
+          class="mb-6"
+          color="primary"
+          prepend-inner-icon="mdi-format-title"
         ></v-text-field>
+
         <v-select
           :model-value="team.type"
           @update:model-value="(value) => updateTeamProperty('type', value)"
           :items="teamTypes"
           label="タイプ"
           variant="outlined"
+          class="mb-8"
+          color="primary"
+          prepend-inner-icon="mdi-tag"
         ></v-select>
 
-        <h4 class="mt-6 mb-2">キャラクター編成 (4体)</h4>
-        <v-row>
-          <v-col
-            v-for="(slot, index) in team.slots"
-            :key="index"
-            cols="12"
-            md="6"
-          >
-            <!-- INFO: パディングを pa-2 から pa-4 に変更して、カード内の余白を広げる -->
-            <v-card elevation="2" class="pa-4">
-              <!-- INFO: 見出しの下に余白を追加 -->
-              <h5 class="mb-4">スロット {{ index + 1 }}</h5>
-              <v-select
-                :model-value="slot.selectedAccountId"
-                @update:model-value="
-                  (value) => updateSlot(index, 'selectedAccountId', value)
+        <!-- INFO: より美しいキャラクター編成セクション -->
+        <div class="character-formation-section">
+          <div class="d-flex align-center mb-4">
+            <v-icon
+              icon="mdi-account-multiple"
+              color="primary"
+              class="mr-2"
+            ></v-icon>
+            <h4 class="text-h5 font-weight-bold text-primary">
+              キャラクター編成 (4体)
+            </h4>
+          </div>
+
+          <v-row>
+            <v-col
+              v-for="(slot, index) in team.slots"
+              :key="index"
+              cols="12"
+              md="6"
+            >
+              <!-- INFO: より美しいスロットカード -->
+              <v-card
+                elevation="2"
+                class="pa-4 h-100 character-slot-card"
+                :class="
+                  slot.selectedAccountId
+                    ? 'border-primary border-2'
+                    : 'border-grey-lighten-3 border'
                 "
-                :items="accounts"
-                item-title="name"
-                item-value="id"
-                label="アカウント"
-                variant="outlined"
-                density="compact"
-                class="mb-4"
-              ></v-select>
-              <!-- INFO: ここからがリファクタリング箇所です -->
-              <CharacterSelector
-                :model-value="slot.selectedOwnedId"
-                @update:model-value="(charId) => handleCharClick(index, charId)"
-                :items="getCharactersForSlot(slot)"
-                label="キャラ名で検索"
-                list-height="150px"
-                variant="filled"
-                :disabled="!slot.selectedAccountId"
-                :disabled-items="getSelectedIdsInOtherSlots(index)"
-                no-data-text="先にアカウントを選択"
+                rounded="lg"
               >
-                <template #item="{ item }">
-                  <v-list-item-title>{{
-                    formatCharForDisplay(item, true)
-                  }}</v-list-item-title>
-                </template>
-              </CharacterSelector>
-            </v-card>
-          </v-col>
-        </v-row>
+                <div class="d-flex align-center mb-4">
+                  <v-avatar size="32" color="primary" class="mr-3">
+                    <span class="text-white font-weight-bold">{{
+                      index + 1
+                    }}</span>
+                  </v-avatar>
+                  <h5 class="text-h6 font-weight-bold">
+                    スロット {{ index + 1 }}
+                  </h5>
+                </div>
+
+                <v-select
+                  :model-value="slot.selectedAccountId"
+                  @update:model-value="
+                    (value) => updateSlot(index, 'selectedAccountId', value)
+                  "
+                  :items="accounts"
+                  item-title="name"
+                  item-value="id"
+                  label="アカウント"
+                  variant="outlined"
+                  density="compact"
+                  class="mb-4"
+                  color="primary"
+                  prepend-inner-icon="mdi-account"
+                ></v-select>
+
+                <!-- INFO: より美しいキャラクターセレクター -->
+                <CharacterSelector
+                  :model-value="slot.selectedOwnedId"
+                  @update:model-value="
+                    (charId) => handleCharClick(index, charId)
+                  "
+                  :items="getCharactersForSlot(slot)"
+                  label="キャラ名で検索"
+                  list-height="150px"
+                  variant="filled"
+                  :disabled="!slot.selectedAccountId"
+                  :disabled-items="getSelectedIdsInOtherSlots(index)"
+                  no-data-text="先にアカウントを選択"
+                  color="primary"
+                  prepend-inner-icon="mdi-account-search"
+                >
+                  <template #item="{ item }">
+                    <v-list-item-title>{{
+                      formatCharForDisplay(item, true)
+                    }}</v-list-item-title>
+                  </template>
+                </CharacterSelector>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
       </v-card-text>
-      <v-card-actions class="pa-4">
+
+      <!-- INFO: より美しいアクションボタン -->
+      <v-card-actions class="pa-6 bg-grey-lighten-5">
         <v-spacer></v-spacer>
         <v-btn
           :loading="isSaving"
@@ -90,11 +143,26 @@
           @click="$emit('save-team')"
           color="primary"
           size="large"
+          variant="elevated"
+          prepend-icon="mdi-content-save"
+          class="px-8"
         >
           {{ isSaving ? "保存中..." : team.id ? "編成を更新" : "編成を保存" }}
         </v-btn>
       </v-card-actions>
     </template>
+
+    <!-- INFO: データ未読み込み時の表示 -->
+    <div v-else class="pa-8 text-center">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="48"
+      ></v-progress-circular>
+      <div class="mt-3 text-body-1 text-medium-emphasis">
+        データを読み込んでいます...
+      </div>
+    </div>
   </v-card>
 </template>
 

@@ -1,79 +1,118 @@
 <template>
-  <div>
-    <h2 class="mb-4">キャラクターマスター新規追加</h2>
+  <div class="pa-6">
+    <!-- INFO: より洗練された見出しデザイン -->
+    <div class="d-flex align-center mb-6">
+      <v-icon
+        icon="mdi-account-plus"
+        size="32"
+        color="primary"
+        class="mr-3"
+      ></v-icon>
+      <h2 class="text-h4 font-weight-bold text-primary">
+        キャラクターマスター新規追加
+      </h2>
+    </div>
 
-    <!-- INFO: Vuetifyのフォームコンポーネントで全体をラップします -->
+    <!-- INFO: より美しいフォーム -->
     <v-form @submit.prevent="handleSaveMaster">
-      <!-- INFO: v-cardでフォーム全体を囲み、見た目を統一します -->
-      <v-card variant="outlined">
-        <v-card-text class="pa-md-4">
-      <v-container>
-        <v-row>
-          <!-- INFO: 各入力項目をv-text-fieldとv-selectに置き換え -->
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model.number="masterData.no"
-              label="図鑑番号"
-              type="number"
-              placeholder="例: 1234"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
+      <v-card elevation="3" rounded="lg">
+        <v-card-title class="bg-primary text-white pa-4">
+          <v-icon icon="mdi-account-plus" class="mr-2"></v-icon>
+          新規キャラクター情報
+        </v-card-title>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model.trim="masterData.name"
-              label="キャラクター名"
-              required
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
+        <v-card-text class="pa-6">
+          <v-container>
+            <v-row>
+              <!-- INFO: より美しい図鑑番号フィールド -->
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model.number="masterData.no"
+                  label="図鑑番号"
+                  type="number"
+                  placeholder="例: 1234"
+                  variant="outlined"
+                  color="primary"
+                  prepend-inner-icon="mdi-numeric"
+                  class="mb-4"
+                ></v-text-field>
+              </v-col>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model.trim="masterData.element"
-              label="属性"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
+              <!-- INFO: より美しいキャラクター名フィールド -->
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model.trim="masterData.name"
+                  label="キャラクター名"
+                  required
+                  variant="outlined"
+                  color="primary"
+                  prepend-inner-icon="mdi-account"
+                  class="mb-4"
+                ></v-text-field>
+              </v-col>
 
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model.trim="masterData.type"
-              label="分類"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
+              <!-- INFO: より美しい属性フィールド -->
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="masterData.element"
+                  :items="['火', '水', '木', '光', '闇']"
+                  label="属性"
+                  variant="outlined"
+                  color="primary"
+                  prepend-inner-icon="mdi-fire"
+                  clearable
+                  class="mb-4"
+                ></v-select>
+              </v-col>
 
-          <v-col cols="12">
-            <!-- INFO: gachaMastersから表示用の名前と値を取得します -->
-            <v-select
-              v-model="masterData.gacha"
-              :items="gachaMasters"
-              item-title="name"
-              item-value="name"
-              label="排出ガチャ (限定の場合)"
-              placeholder="(限定ではない/その他)"
-              clearable
-              variant="outlined"
-            ></v-select>
-          </v-col>
-        </v-row>
+              <!-- INFO: より美しい分類フィールド -->
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="masterData.type"
+                  :items="['恒常', '限定', 'コラボ', 'α']"
+                  label="分類"
+                  variant="outlined"
+                  color="primary"
+                  prepend-inner-icon="mdi-tag"
+                  class="mb-4"
+                ></v-select>
+              </v-col>
+
+              <!-- INFO: より美しいガチャフィールド -->
+              <v-col cols="12">
+                <v-select
+                  v-model="masterData.gacha"
+                  :items="gachaMasters"
+                  item-title="name"
+                  item-value="name"
+                  label="排出ガチャ (限定の場合)"
+                  placeholder="(限定ではない/その他)"
+                  clearable
+                  variant="outlined"
+                  color="primary"
+                  prepend-inner-icon="mdi-gift"
+                  class="mb-4"
+                ></v-select>
+              </v-col>
+            </v-row>
           </v-container>
         </v-card-text>
-        
-        <!-- INFO: v-card-actionsでボタンの配置を整えます -->
-        <v-card-actions class="pa-4">
+
+        <!-- INFO: より美しいアクションボタン -->
+        <v-card-actions class="pa-6 bg-grey-lighten-5">
           <v-spacer></v-spacer>
-            <v-btn
-              :loading="isSaving"
-              :disabled="!masterData.name || isSaving"
-              @click="handleSaveMaster"
-              color="primary"
-              size="large"
-            >
-              {{ isSaving ? "追加中..." : "マスターリストに新規追加" }}
-            </v-btn>
+          <v-btn
+            :loading="isSaving"
+            :disabled="!masterData.name || isSaving"
+            @click="handleSaveMaster"
+            color="primary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-content-save"
+            class="px-8"
+          >
+            {{ isSaving ? "追加中..." : "マスターリストに新規追加" }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-form>

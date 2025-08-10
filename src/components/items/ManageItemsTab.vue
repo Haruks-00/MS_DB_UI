@@ -1,82 +1,146 @@
 <template>
-  <div>
-    <h2 class="mb-4">アイテム管理</h2>
+  <div class="pa-6">
+    <!-- INFO: より洗練された見出しデザイン -->
+    <div class="d-flex align-center mb-6">
+      <v-icon
+        icon="mdi-sword-cross"
+        size="32"
+        color="primary"
+        class="mr-3"
+      ></v-icon>
+      <h2 class="text-h4 font-weight-bold text-primary">アイテム管理</h2>
+    </div>
+
     <v-form>
-      <v-card variant="outlined" class="mb-5">
-        <v-card-title>所持キャラクターのアイテムを変更</v-card-title>
-        <v-card-text class="pa-md-4">
+      <!-- INFO: より美しいアイテム更新セクション -->
+      <v-card elevation="3" rounded="lg" class="mb-6">
+        <v-card-title class="bg-primary text-white pa-4">
+          <v-icon icon="mdi-update" class="mr-2"></v-icon>
+          所持キャラクターのアイテムを変更
+        </v-card-title>
+        <v-card-text class="pa-6">
           <v-container>
             <v-row>
               <v-col cols="12" md="6">
-                <!-- NOTE: 検索フィールドとリストがCharacterSelectorに置き換わりました -->
-                <CharacterSelector
-                  v-model="updateForm.selectedOwnedId"
-                  :items="currentOwnedCharacters"
-                  label="変更対象のキャラクターを検索"
-                  list-height="300px"
-                >
-                  <template #item="{ item }">
-                    <v-list-item-title>{{
-                      formatCharForDisplay(item, true)
-                    }}</v-list-item-title>
-                  </template>
-                </CharacterSelector>
+                <!-- INFO: より美しいキャラクターセレクター -->
+                <div class="mb-4">
+                  <div class="d-flex align-center mb-3">
+                    <v-icon
+                      icon="mdi-account-search"
+                      color="primary"
+                      class="mr-2"
+                    ></v-icon>
+                    <h6 class="text-h6 font-weight-medium">対象キャラクター</h6>
+                  </div>
+                  <CharacterSelector
+                    v-model="updateForm.selectedOwnedId"
+                    :items="currentOwnedCharacters"
+                    label="変更対象のキャラクターを検索"
+                    list-height="300px"
+                    color="primary"
+                    prepend-inner-icon="mdi-account-search"
+                  >
+                    <template #item="{ item }">
+                      <v-list-item-title>{{
+                        formatCharForDisplay(item, true)
+                      }}</v-list-item-title>
+                    </template>
+                  </CharacterSelector>
+                </div>
               </v-col>
               <v-col cols="12" md="6">
-                <!-- INFO: 3つのselectを、単一のv-select(multiple)に統合し、UIを改善します -->
-                <v-select
-                  v-model="updateForm.items"
-                  :items="itemMasters"
-                  item-title="name"
-                  item-value="id"
-                  label="アイテム (最大3つまで)"
-                  multiple
-                  chips
-                  clearable
-                  variant="outlined"
-                  :disabled="!updateForm.selectedOwnedId"
-                ></v-select>
-                <v-btn
-                  :loading="isUpdating"
-                  :disabled="
-                    !updateForm.selectedOwnedId ||
-                    isUpdating ||
-                    updateForm.items.length > 3
-                  "
-                  @click="handleUpdateItems"
-                  color="primary"
-                  block
-                  size="large"
-                >
-                  アイテムを更新
-                </v-btn>
-                <v-alert
-                  v-if="updateForm.items.length > 3"
-                  type="error"
-                  dense
-                  class="mt-2"
-                  >アイテムは3つまでしか選択できません。</v-alert
-                >
+                <!-- INFO: より美しいアイテム選択 -->
+                <div class="mb-4">
+                  <div class="d-flex align-center mb-3">
+                    <v-icon
+                      icon="mdi-sword-cross"
+                      color="primary"
+                      class="mr-2"
+                    ></v-icon>
+                    <h6 class="text-h6 font-weight-medium">アイテム選択</h6>
+                  </div>
+                  <v-select
+                    v-model="updateForm.items"
+                    :items="itemMasters"
+                    item-title="name"
+                    item-value="id"
+                    label="アイテム (最大3つまで)"
+                    multiple
+                    chips
+                    clearable
+                    variant="outlined"
+                    :disabled="!updateForm.selectedOwnedId"
+                    color="primary"
+                    prepend-inner-icon="mdi-sword-cross"
+                  ></v-select>
+
+                  <!-- INFO: より美しい更新ボタン -->
+                  <v-btn
+                    :loading="isUpdating"
+                    :disabled="
+                      !updateForm.selectedOwnedId ||
+                      isUpdating ||
+                      updateForm.items.length > 3
+                    "
+                    @click="handleUpdateItems"
+                    color="primary"
+                    block
+                    size="large"
+                    variant="elevated"
+                    prepend-icon="mdi-update"
+                    class="mt-4"
+                  >
+                    {{ isUpdating ? "更新中..." : "アイテムを更新" }}
+                  </v-btn>
+
+                  <!-- INFO: より美しいエラー表示 -->
+                  <v-alert
+                    v-if="updateForm.items.length > 3"
+                    type="error"
+                    variant="tonal"
+                    class="mt-3"
+                    prepend-icon="mdi-alert-circle"
+                  >
+                    アイテムは3つまでしか選択できません。
+                  </v-alert>
+                </div>
               </v-col>
             </v-row>
           </v-container>
         </v-card-text>
       </v-card>
 
-      <v-card variant="outlined">
-        <v-card-title>キャラクター間でアイテムを移動</v-card-title>
-        <v-card-text class="pa-md-4">
+      <!-- INFO: より美しいアイテム移動セクション -->
+      <v-card elevation="3" rounded="lg">
+        <v-card-title class="bg-secondary text-white pa-4">
+          <v-icon icon="mdi-swap-horizontal" class="mr-2"></v-icon>
+          キャラクター間でアイテムを移動
+        </v-card-title>
+        <v-card-text class="pa-6">
           <v-container>
             <v-row>
-              <!-- From Column -->
+              <!-- INFO: より美しい移動元セクション -->
               <v-col cols="12" md="4">
-                <h6 class="text-subtitle-1 mb-2">移動元</h6>
+                <div class="text-center mb-4">
+                  <v-avatar size="48" color="secondary" class="mb-2">
+                    <v-icon
+                      icon="mdi-arrow-left"
+                      size="24"
+                      color="white"
+                    ></v-icon>
+                  </v-avatar>
+                  <h6 class="text-h6 font-weight-bold text-secondary">
+                    移動元
+                  </h6>
+                </div>
                 <CharacterSelector
                   v-model="moveForm.from.selectedId"
                   :items="currentOwnedCharacters"
                   label="移動元キャラクターを検索"
                   list-height="250px"
                   :disabled-items="[moveForm.to.selectedId].filter(Boolean)"
+                  color="secondary"
+                  prepend-inner-icon="mdi-account-arrow-left"
                 >
                   <template #item="{ item }">
                     <v-list-item-title>{{
@@ -85,41 +149,101 @@
                   </template>
                 </CharacterSelector>
               </v-col>
-              <!-- Items Column -->
+
+              <!-- INFO: より美しいアイテム選択セクション -->
               <v-col cols="12" md="4">
-                <h6 class="text-subtitle-1 mb-2">移動するアイテム</h6>
+                <div class="text-center mb-4">
+                  <v-avatar size="48" color="info" class="mb-2">
+                    <v-icon
+                      icon="mdi-sword-cross"
+                      size="24"
+                      color="white"
+                    ></v-icon>
+                  </v-avatar>
+                  <h6 class="text-h6 font-weight-bold text-info">
+                    移動するアイテム
+                  </h6>
+                </div>
                 <v-card
-                  variant="outlined"
+                  elevation="2"
+                  rounded="lg"
                   style="height: 318px; overflow-y: auto"
+                  class="border-info border"
                 >
-                  <v-card-text>
-                    <div v-if="!moveForm.from.selectedId">
-                      <small>移動元キャラクターを選択してください。</small>
+                  <v-card-text class="pa-4">
+                    <div
+                      v-if="!moveForm.from.selectedId"
+                      class="text-center pa-4"
+                    >
+                      <v-icon
+                        icon="mdi-information"
+                        size="48"
+                        color="grey-lighten-1"
+                      ></v-icon>
+                      <div class="mt-2 text-body-2 text-medium-emphasis">
+                        移動元キャラクターを選択してください。
+                      </div>
                     </div>
-                    <div v-else-if="!movableItems.length">
-                      <small>移動できるアイテムがありません。</small>
+                    <div
+                      v-else-if="!movableItems.length"
+                      class="text-center pa-4"
+                    >
+                      <v-icon
+                        icon="mdi-inbox-outline"
+                        size="48"
+                        color="grey-lighten-1"
+                      ></v-icon>
+                      <div class="mt-2 text-body-2 text-medium-emphasis">
+                        移動できるアイテムがありません。
+                      </div>
                     </div>
-                    <v-checkbox
-                      v-for="item in movableItems"
-                      :key="item.id"
-                      v-model="moveForm.selectedItemIds"
-                      :label="item.name"
-                      :value="item.id"
-                      dense
-                      hide-details
-                    ></v-checkbox>
+                    <div v-else>
+                      <div class="mb-3">
+                        <v-chip
+                          color="info"
+                          variant="tonal"
+                          size="small"
+                          class="mb-2"
+                        >
+                          {{ movableItems.length }}個のアイテム
+                        </v-chip>
+                      </div>
+                      <v-checkbox
+                        v-for="item in movableItems"
+                        :key="item.id"
+                        v-model="moveForm.selectedItemIds"
+                        :label="item.name"
+                        :value="item.id"
+                        density="compact"
+                        hide-details
+                        color="info"
+                        class="mb-2"
+                      ></v-checkbox>
+                    </div>
                   </v-card-text>
                 </v-card>
               </v-col>
-              <!-- To Column -->
+
+              <!-- INFO: より美しい移動先セクション -->
               <v-col cols="12" md="4">
-                <h6 class="text-subtitle-1 mb-2">移動先</h6>
+                <div class="text-center mb-4">
+                  <v-avatar size="48" color="success" class="mb-2">
+                    <v-icon
+                      icon="mdi-arrow-right"
+                      size="24"
+                      color="white"
+                    ></v-icon>
+                  </v-avatar>
+                  <h6 class="text-h6 font-weight-bold text-success">移動先</h6>
+                </div>
                 <CharacterSelector
                   v-model="moveForm.to.selectedId"
                   :items="currentOwnedCharacters"
                   label="移動先キャラクターを検索"
                   list-height="250px"
                   :disabled-items="[moveForm.from.selectedId].filter(Boolean)"
+                  color="success"
+                  prepend-inner-icon="mdi-account-arrow-right"
                 >
                   <template #item="{ item }">
                     <v-list-item-title>{{
@@ -129,23 +253,29 @@
                 </CharacterSelector>
               </v-col>
             </v-row>
-            <v-row class="mt-2">
+
+            <!-- INFO: より美しい移動ボタン -->
+            <v-row class="mt-6">
               <v-col>
-                <v-btn
-                  :loading="isMoving"
-                  :disabled="
-                    !moveForm.from.selectedId ||
-                    !moveForm.to.selectedId ||
-                    moveForm.selectedItemIds.length === 0 ||
-                    isMoving
-                  "
-                  @click="handleMoveItems"
-                  color="secondary"
-                  block
-                  size="large"
-                >
-                  選択したアイテムを移動
-                </v-btn>
+                <div class="d-flex justify-center">
+                  <v-btn
+                    :loading="isMoving"
+                    :disabled="
+                      !moveForm.from.selectedId ||
+                      !moveForm.to.selectedId ||
+                      moveForm.selectedItemIds.length === 0 ||
+                      isMoving
+                    "
+                    @click="handleMoveItems"
+                    color="success"
+                    size="large"
+                    variant="elevated"
+                    prepend-icon="mdi-swap-horizontal"
+                    class="px-8"
+                  >
+                    {{ isMoving ? "移動中..." : "選択したアイテムを移動" }}
+                  </v-btn>
+                </div>
               </v-col>
             </v-row>
           </v-container>

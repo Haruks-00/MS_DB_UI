@@ -1,37 +1,75 @@
 <template>
-  <div>
-     <h2 class="mb-4">所持キャラクター追加</h2>
+  <div class="pa-6">
+    <!-- INFO: より洗練された見出しデザイン -->
+    <div class="d-flex align-center mb-6">
+      <v-icon
+        icon="mdi-account-plus"
+        size="32"
+        color="primary"
+        class="mr-3"
+      ></v-icon>
+      <h2 class="text-h4 font-weight-bold text-primary">
+        所持キャラクター追加
+      </h2>
+    </div>
+
+    <!-- INFO: より美しいフォーム -->
     <v-form @submit.prevent="handleAddCharacter">
-      <v-container class="pa-0">
-        <v-row>
-          <v-col cols="12">
-            <CharacterSelector
-              v-model="selectedMasterId"
-              :items="addableCharacters"
-              :item-title="formatCharacterForSelection"
-              label="追加するキャラクター名で検索"
-              list-height="400px"
-              no-data-text="追加できるキャラクターがいません"
-            />
-          </v-col>
-        </v-row>
-        <v-row class="mt-2">
-          <v-col cols="12">
-            <v-btn
-              :loading="isAdding"
-              :disabled="!selectedMasterId || isAdding"
-              @click="handleAddCharacter"
-              color="primary"
-              size="large"
-              block
-            >
-              {{
-                isAdding ? "追加中..." : "このキャラクターを所持リストに追加"
-              }}
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
+      <v-card elevation="3" rounded="lg">
+        <v-card-title class="bg-primary text-white pa-4">
+          <v-icon icon="mdi-account-search" class="mr-2"></v-icon>
+          キャラクター選択
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <v-container class="pa-0">
+            <v-row>
+              <v-col cols="12">
+                <!-- INFO: より美しいキャラクターセレクター -->
+                <div class="mb-4">
+                  <div class="d-flex align-center mb-3">
+                    <v-icon
+                      icon="mdi-account-search"
+                      color="primary"
+                      class="mr-2"
+                    ></v-icon>
+                    <h6 class="text-h6 font-weight-medium">
+                      追加するキャラクター
+                    </h6>
+                  </div>
+                  <CharacterSelector
+                    v-model="selectedMasterId"
+                    :items="addableCharacters"
+                    :item-title="formatCharacterForSelection"
+                    label="追加するキャラクター名で検索"
+                    list-height="400px"
+                    no-data-text="追加できるキャラクターがいません"
+                    color="primary"
+                    prepend-inner-icon="mdi-account-search"
+                  />
+                </div>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+
+        <!-- INFO: より美しいアクションボタン -->
+        <v-card-actions class="pa-6 bg-grey-lighten-5">
+          <v-spacer></v-spacer>
+          <v-btn
+            :loading="isAdding"
+            :disabled="!selectedMasterId || isAdding"
+            @click="handleAddCharacter"
+            color="primary"
+            size="large"
+            variant="elevated"
+            prepend-icon="mdi-account-plus"
+            class="px-8"
+          >
+            {{ isAdding ? "追加中..." : "このキャラクターを所持リストに追加" }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </v-form>
   </div>
 </template>
@@ -68,7 +106,7 @@ const isAdding = ref(false);
 const addableCharacters = computed(() => {
   if (!props.selectedAccountId) return [];
   return props.characterMasters.filter((master) => {
-    return getOwnedCountForMaster(master.id  ) < 2;
+    return getOwnedCountForMaster(master.id) < 2;
   });
 });
 
