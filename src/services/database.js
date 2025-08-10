@@ -1,4 +1,17 @@
 import { lazyLoadDatabase } from "../utils/lazyLoader.js";
+import {
+  collection,
+  doc,
+  batch,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  collectionGroup,
+} from "../firebase-init.js";
 
 /**
  * @description アプリケーションの初期化に必要なすべてのデータを並列で取得し、加工せずにそのまま返します。
@@ -15,16 +28,18 @@ const loadInitialDataRaw = async (userId) => {
     const db = await lazyLoadDatabase();
     // @temp: MODIFIED - Promise.allで生のSnapshotをそのまま返すように変更
     return Promise.all([
-      db.collection("accounts").get(),
-      db.collection("character_masters").get(),
-      db.collection("itemMasters").get(),
-      db.collectionGroup("owned_characters").get(),
-      db.collection("gachaMasters").get(),
-      db
-        .collection("teams")
-        .where("userId", "==", userId)
-        .orderBy("createdAt", "desc")
-        .get(),
+      getDocs(collection(db, "accounts")),
+      getDocs(collection(db, "character_masters")),
+      getDocs(collection(db, "itemMasters")),
+      getDocs(collectionGroup(db, "owned_characters")),
+      getDocs(collection(db, "gachaMasters")),
+      getDocs(
+        query(
+          collection(db, "teams"),
+          where("userId", "==", userId),
+          orderBy("createdAt", "desc")
+        )
+      ),
     ]);
   } catch (error) {
     console.error("Database: Failed to load initial data.", error);
@@ -107,11 +122,10 @@ const loadAndProcessInitialData = async (userId) => {
  */
 const addOwnedCharacter = async (accountId, characterData) => {
   const db = await lazyLoadDatabase();
-  return db
-    .collection("accounts")
-    .doc(accountId)
-    .collection("owned_characters")
-    .add(characterData);
+  return addDoc(
+    collection(db, "accounts", accountId, "owned_characters"),
+    characterData
+  );
 };
 
 /**
@@ -123,12 +137,10 @@ const addOwnedCharacter = async (accountId, characterData) => {
  */
 const updateCharacterItems = async (accountId, ownedCharacterId, items) => {
   const db = await lazyLoadDatabase();
-  return db
-    .collection("accounts")
-    .doc(accountId)
-    .collection("owned_characters")
-    .doc(ownedCharacterId)
-    .update({ items });
+  return updateDoc(
+    doc(db, "accounts", accountId, "owned_characters", ownedCharacterId),
+    { items }
+  );
 };
 
 /**
@@ -140,22 +152,14 @@ const updateCharacterItems = async (accountId, ownedCharacterId, items) => {
  */
 const moveCharacterItems = async (accountId, from, to) => {
   const db = await lazyLoadDatabase();
-  const batch = db.batch();
-  const fromRef = db
-    .collection("accounts")
-    .doc(accountId)
-    .collection("owned_characters")
-    .doc(from.id);
-  const toRef = db
-    .collection("accounts")
-    .doc(accountId)
-    .collection("owned_characters")
-    .doc(to.id);
+  const batchInstance = batch(db);
+  const fromRef = doc(db, "accounts", accountId, "owned_characters", from.id);
+  const toRef = doc(db, "accounts", accountId, "owned_characters", to.id);
 
-  batch.update(fromRef, { items: from.items });
-  batch.update(toRef, { items: to.items });
+  batchInstance.update(fromRef, { items: from.items });
+  batchInstance.update(toRef, { items: to.items });
 
-  return batch.commit();
+  return batchInstance.commit();
 };
 
 /**
@@ -165,7 +169,7 @@ const moveCharacterItems = async (accountId, from, to) => {
  */
 const addCharacterMaster = async (masterData) => {
   const db = await lazyLoadDatabase();
-  return db.collection("character_masters").add(masterData);
+  return addDoc(collection(db, "character_masters"), masterData);
 };
 
 /**
@@ -176,7 +180,7 @@ const addCharacterMaster = async (masterData) => {
  */
 const updateCharacterMaster = async (masterId, masterData) => {
   const db = await lazyLoadDatabase();
-  return db.collection("character_masters").doc(masterId).update(masterData);
+  return updateDoc(doc(db, "character_masters", masterId), masterData);
 };
 
 /**
@@ -188,9 +192,9 @@ const updateCharacterMaster = async (masterId, masterData) => {
 const saveTeam = async (teamId, teamData) => {
   const db = await lazyLoadDatabase();
   if (teamId) {
-    return db.collection("teams").doc(teamId).update(teamData);
+    return updateDoc(doc(db, "teams", teamId), teamData);
   } else {
-    return db.collection("teams").add(teamData);
+    return addDoc(collection(db, "teams"), teamData);
   }
 };
 
@@ -201,7 +205,7 @@ const saveTeam = async (teamId, teamData) => {
  */
 const deleteTeam = async (teamId) => {
   const db = await lazyLoadDatabase();
-  return db.collection("teams").doc(teamId).delete();
+  return deleteDoc(doc(db, "teams", teamId));
 };
 
 export const databaseService = {

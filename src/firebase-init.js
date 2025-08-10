@@ -1,5 +1,18 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  doc,
+  batch,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  collectionGroup,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -41,4 +54,18 @@ const getFirebaseInstances = () => {
   return initializeFirebase();
 };
 
-export { getFirebaseInstances, initializeFirebase };
+export {
+  getFirebaseInstances,
+  initializeFirebase,
+  collection,
+  doc,
+  batch,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  collectionGroup,
+};
