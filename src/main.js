@@ -1,10 +1,11 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import './firebase-init.js'; 
-import vuetify from './plugins/vuetify'
+import { createApp } from "vue";
+import App from "./App.vue";
+import "./firebase-init.js";
+import vuetify from "./plugins/vuetify";
+import "./assets/styles/global.css";
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(vuetify)
+app.use(vuetify);
 
-app.mount('#app')
+app.mount("#app");

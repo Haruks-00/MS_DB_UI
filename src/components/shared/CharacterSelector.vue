@@ -8,7 +8,7 @@
     :prepend-inner-icon="prependInnerIcon"
     :disabled="disabled"
     hide-details
-    class="mb-4 character-selector-search"
+    class="mb-4 character-selector-search premium-search"
     :density="density"
     :color="primaryColor"
     :bg-color="searchBgColor"
@@ -21,6 +21,7 @@
         :color="isSearchFocused ? primaryColor : 'grey'"
         :icon="prependInnerIcon"
         size="20"
+        class="search-icon"
       />
     </template>
   </v-text-field>
@@ -30,23 +31,17 @@
     :variant="listCardVariant"
     :height="listHeight"
     :disabled="disabled"
-    class="character-selector-card"
+    class="character-selector-card premium-card"
     :elevation="cardElevation"
     :border="cardBorder"
     style="display: flex; flex-direction: column"
   >
     <!-- ヘッダー部分 -->
-    <v-card-title class="d-flex align-center justify-space-between pa-4 pb-2">
-      <span class="text-subtitle-2 font-weight-medium">
-        {{ items.length }}件中 {{ filteredItems.length }}件表示
-      </span>
-      <v-chip
-        v-if="modelValue"
-        size="small"
-        color="success"
-        variant="tonal"
-        class="ml-2"
-      >
+    <v-card-title
+      class="d-flex align-center justify-end pa-4 pb-3 premium-card-header"
+      v-if="modelValue"
+    >
+      <v-chip size="small" color="success" variant="tonal" class="premium-chip">
         選択中
       </v-chip>
     </v-card-title>
@@ -55,15 +50,23 @@
     <v-list
       :model-value="[modelValue]"
       @update:selected="handleSelection"
-      class="character-selector-list"
+      class="character-selector-list premium-list"
       :density="listDensity"
-      style="overflow-y: auto; max-height: calc(100% - 80px)"
+      style="overflow-y: auto; max-height: calc(100% - 60px)"
     >
       <!-- データなしの場合 -->
-      <v-list-item v-if="filteredItems.length === 0" class="no-data-item">
-        <v-list-item-title class="text-center text-grey-darken-1 py-8">
-          <v-icon icon="mdi-information-outline" size="48" class="mb-2" />
-          <div>{{ noDataText }}</div>
+      <v-list-item
+        v-if="filteredItems.length === 0"
+        class="no-data-item premium-no-data"
+      >
+        <v-list-item-title class="text-center text-grey-darken-1 py-12">
+          <v-icon
+            icon="mdi-information-outline"
+            size="64"
+            class="mb-4 no-data-icon"
+            color="grey-lighten-1"
+          />
+          <div class="text-h6">{{ noDataText }}</div>
         </v-list-item-title>
       </v-list-item>
 
@@ -73,7 +76,7 @@
         :key="item.id"
         :value="item.id"
         :disabled="disabledItems.includes(item.id)"
-        class="character-item"
+        class="character-item premium-item"
         :class="{
           'character-item--selected': modelValue === item.id,
           'character-item--disabled': disabledItems.includes(item.id),
@@ -87,7 +90,7 @@
               <!-- アバター/アイコン -->
               <v-avatar
                 size="40"
-                class="mr-3"
+                class="mr-4 premium-avatar"
                 :color="getAvatarColor(item)"
                 :class="{ 'selected-avatar': modelValue === item.id }"
               >
@@ -95,20 +98,21 @@
                   :icon="getAvatarIcon(item)"
                   :color="modelValue === item.id ? 'white' : 'primary'"
                   size="20"
+                  class="avatar-icon"
                 />
               </v-avatar>
 
               <!-- テキスト情報 -->
-              <div class="flex-grow-1">
+              <div class="flex-grow-1 premium-text-content">
                 <v-list-item-title
-                  class="font-weight-medium"
+                  class="font-weight-bold text-h6"
                   :class="{ 'text-primary': modelValue === item.id }"
                 >
                   {{ getTitle(item) }}
                 </v-list-item-title>
                 <v-list-item-subtitle
                   v-if="item.subtitle"
-                  class="text-caption text-grey-darken-1"
+                  class="text-body-2 text-grey-darken-1 mt-1"
                 >
                   {{ item.subtitle }}
                 </v-list-item-subtitle>
@@ -123,10 +127,10 @@
             <!-- 選択済み表示 -->
             <v-chip
               v-if="disabledItems.includes(item.id)"
-              size="x-small"
+              size="small"
               color="warning"
               variant="tonal"
-              class="mr-2"
+              class="mr-3 premium-status-chip"
             >
               選択済
             </v-chip>
@@ -136,8 +140,8 @@
               v-if="modelValue === item.id"
               icon="mdi-check-circle"
               color="success"
-              size="20"
-              class="selection-indicator"
+              size="24"
+              class="selection-indicator premium-check"
             />
           </div>
         </template>
@@ -167,7 +171,7 @@ const props = defineProps({
   listCardVariant: { type: String, default: "elevated" },
   noDataText: { type: String, default: "該当するキャラクターがいません" },
   density: { type: String, default: "comfortable" },
-  listDensity: { type: String, default: "comfortable" },
+  listDensity: { type: String, default: "compact" },
   primaryColor: { type: String, default: "primary" },
   searchBgColor: { type: String, default: "grey-lighten-5" },
   cardElevation: { type: [Number, String], default: 2 },
@@ -245,6 +249,215 @@ const handleSelection = (selectedArray) => {
 </script>
 
 <style scoped>
+/* プレミアム検索フィールド */
+.premium-search {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+}
+
+.premium-search:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.search-icon {
+  transition: all 0.3s ease;
+}
+
+.search-icon:hover {
+  transform: scale(1.1);
+}
+
+/* プレミアムカード */
+.premium-card {
+  transition: all 0.4s ease;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+}
+
+.premium-card-header {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.premium-chip {
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* プレミアムリスト */
+.premium-list {
+  border-radius: 0 0 20px 20px;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.5) transparent;
+}
+
+.premium-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.premium-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.premium-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* プレミアムアイテム */
+.premium-item {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  margin: 4px 12px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.premium-item:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+  transform: translateX(8px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.premium-item--selected {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.15) 0%,
+    rgba(118, 75, 162, 0.15) 100%
+  );
+  border-left: 6px solid #667eea;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.premium-item--disabled {
+  opacity: 0.6;
+  background: rgba(158, 158, 158, 0.1);
+}
+
+.premium-item--disabled:hover {
+  transform: none;
+  background: rgba(158, 158, 158, 0.1);
+}
+
+/* プレミアムアバター */
+.premium-avatar {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.premium-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.selected-avatar {
+  transform: scale(1.15);
+  border: 2px solid #667eea;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.avatar-icon {
+  transition: all 0.3s ease;
+}
+
+/* プレミアムテキストコンテンツ */
+.premium-text-content {
+  transition: all 0.3s ease;
+}
+
+/* プレミアムステータスチップ */
+.premium-status-chip {
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* プレミアムチェック */
+.premium-check {
+  animation: fadeInScale 0.4s ease;
+  filter: drop-shadow(0 4px 8px rgba(76, 175, 80, 0.3));
+}
+
+/* プレミアムノーデータ */
+.premium-no-data {
+  min-height: 160px;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.05) 0%,
+    rgba(118, 75, 162, 0.05) 100%
+  );
+}
+
+.no-data-icon {
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.no-data-icon:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+/* アニメーション */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+  .premium-card {
+    margin: 0 -8px;
+    border-radius: 16px;
+  }
+
+  .premium-item {
+    margin: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .premium-item:hover {
+    transform: translateX(4px) scale(1.01);
+  }
+
+  .premium-avatar {
+    size: 36px;
+  }
+}
+
+/* レガシースタイル（後方互換性のため） */
 .character-selector-search {
   transition: all 0.3s ease;
 }
@@ -290,8 +503,8 @@ const handleSelection = (selectedArray) => {
 .character-item {
   transition: all 0.2s ease;
   border-radius: 8px;
-  margin: 2px 8px;
-  min-height: 64px;
+  margin: 1px 6px;
+  min-height: 48px;
   display: flex;
   align-items: center;
 }
@@ -327,31 +540,5 @@ const handleSelection = (selectedArray) => {
 
 .no-data-item {
   min-height: 120px;
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 600px) {
-  .character-selector-card {
-    margin: 0 -8px;
-  }
-
-  .character-item {
-    margin: 1px 4px;
-  }
-
-  .character-item:hover {
-    transform: translateX(2px);
-  }
 }
 </style>

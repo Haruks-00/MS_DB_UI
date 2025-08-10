@@ -1,0 +1,324 @@
+/* グローバルスタイル - 洗練されたUIデザイン */
+
+:root {
+  /* カスタムカラーパレット */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --error-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+
+  /* シャドウシステム */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+
+  /* ボーダーラディウス */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* トランジション */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* グローバルタイポグラフィ */
+body {
+  font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  line-height: 1.6;
+  color: #1a202c;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+/* カードの洗練されたスタイル */
+.v-card {
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ボタンの洗練されたスタイル */
+.v-btn {
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all var(--transition-normal);
+  text-transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.v-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.v-btn--variant-elevated {
+  background: var(--primary-gradient);
+  border: none;
+}
+
+/* テキストフィールドの洗練されたスタイル */
+.v-text-field .v-field {
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.v-text-field .v-field:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.v-text-field .v-field--focused {
+  box-shadow: var(--shadow-lg);
+}
+
+/* セレクトフィールドの洗練されたスタイル */
+.v-select .v-field {
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.v-select .v-field:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* リストアイテムの洗練されたスタイル */
+.v-list-item {
+  border-radius: var(--radius-sm);
+  margin: 2px 8px;
+  transition: all var(--transition-fast);
+}
+
+.v-list-item:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(118, 75, 162, 0.1) 100%
+  );
+  transform: translateX(4px);
+}
+
+/* チップの洗練されたスタイル */
+.v-chip {
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+/* アイコンの洗練されたスタイル */
+.v-icon {
+  transition: all var(--transition-fast);
+}
+
+.v-icon:hover {
+  transform: scale(1.1);
+}
+
+/* アバターの洗練されたスタイル */
+.v-avatar {
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.v-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+/* タブの洗練されたスタイル */
+.v-tab {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all var(--transition-normal);
+}
+
+.v-tab:hover {
+  transform: translateY(-2px);
+}
+
+/* プログレスバーの洗練されたスタイル */
+.v-progress-linear {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* アラートの洗練されたスタイル */
+.v-alert {
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+}
+
+/* ダイアログの洗練されたスタイル */
+.v-dialog .v-card {
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+}
+
+/* スナックバーの洗練されたスタイル */
+.v-snackbar .v-snackbar__wrapper {
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+}
+
+/* カスタムスクロールバー */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* アニメーション */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ユーティリティクラス */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.gradient-text {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-white {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* プレミアムボタン */
+.premium-btn {
+  background: var(--primary-gradient);
+  border: none;
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  border-radius: 16px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.premium-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* プレミアムカード */
+.premium-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  transition: all 0.4s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-2xl);
+}
+
+/* プレミアムアイコン */
+.premium-icon {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.premium-icon:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  :root {
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  .v-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .v-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .premium-card:hover {
+    transform: translateY(-3px);
+  }
+}

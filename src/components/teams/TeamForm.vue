@@ -78,6 +78,7 @@
                     : 'border-grey-lighten-3 border'
                 "
                 rounded="lg"
+                style="min-height: 400px"
               >
                 <div class="d-flex align-center mb-4">
                   <v-avatar size="32" color="primary" class="mr-3">
@@ -101,7 +102,7 @@
                   label="アカウント"
                   variant="outlined"
                   density="compact"
-                  class="mb-4"
+                  class="mb-3"
                   color="primary"
                   prepend-inner-icon="mdi-account"
                 ></v-select>
@@ -113,13 +114,17 @@
                     (charId) => handleCharClick(index, charId)
                   "
                   :items="getCharactersForSlot(slot)"
-                  label="キャラ名で検索"
-                  list-height="150px"
+                  label="キャラクターを選択"
+                  list-height="280px"
                   variant="filled"
                   :disabled="!slot.selectedAccountId"
                   :disabled-items="getSelectedIdsInOtherSlots(index)"
                   no-data-text="先にアカウントを選択"
-                  color="primary"
+                  :density="'comfortable'"
+                  :list-density="'comfortable'"
+                  :primary-color="'primary'"
+                  :search-bg-color="'grey-lighten-5'"
+                  :card-elevation="2"
                   prepend-inner-icon="mdi-account-search"
                 >
                   <template #item="{ item }">
