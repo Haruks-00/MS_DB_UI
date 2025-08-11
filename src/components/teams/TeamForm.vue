@@ -215,7 +215,7 @@ const updateSlot = (slotIndex, field, value) => {
 };
 
 // INFO: タイプはフォーム内で定義して良い情報です
-const teamTypes = ["禁忌", "天魔", "庭園", "轟絶", "黎絶"];
+const teamTypes = ['禁忌', '天魔(試練)', '天魔(庭園)','星墓', '轟絶', '黎絶'];
 
 const isTeamFormValid = computed(() => {
   return (

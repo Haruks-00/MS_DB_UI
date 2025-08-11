@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import firebase from "firebase/compat/app";
+import firebase from "firebase/compat/app"; // INFO: serverTimestampのために必要
 import { databaseService } from "../../services/database.js";
 import TeamList from "./TeamList.vue";
 import TeamForm from "./TeamForm.vue";

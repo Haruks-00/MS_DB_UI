@@ -397,7 +397,7 @@ new Vue({
     itemMove: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [], isMoving: false },
     master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
     editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
-    teamTypes: ['禁忌', '天魔', '庭園', '轟絶', '黎絶'], teamFilters: { type: '' },
+    teamTypes: ['禁忌', '天魔(試練)', '天魔(庭園)','星墓', '轟絶', '黎絶'], teamFilters: { type: '' },
     teamForm: { id: null, name: '', type: '', isSaving: false, slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })) },
   },
   // #endregion

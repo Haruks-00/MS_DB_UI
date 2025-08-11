@@ -138,7 +138,7 @@ const props = defineProps({
 
 const emit = defineEmits(["select-team", "delete-team"]);
 
-const teamTypes = ["禁忌", "天魔", "庭園", "轟絶", "黎絶"];
+const teamTypes = ['禁忌', '天魔(試練)', '天魔(庭園)','星墓', '轟絶', '黎絶'];
 const teamFilters = reactive({ type: "" });
 
 const filteredTeams = computed(() => {
@@ -155,8 +155,9 @@ const filteredTeams = computed(() => {
 const getTypeColor = (type) => {
   const colorMap = {
     禁忌: "deep-purple",
-    天魔: "red-darken-2",
-    庭園: "green-darken-2",
+    '天魔(試練)': "red-darken-2",
+    '天魔(庭園)': "green-darken-2",
+    星墓: "blue-darken-2",
     轟絶: "orange-darken-2",
     黎絶: "blue-darken-2",
   };
