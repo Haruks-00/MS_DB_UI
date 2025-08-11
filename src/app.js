@@ -1,7 +1,8 @@
 // src/app.js
 // #region --- Imports ---
-import { authService } from './services/auth.js';
-import { databaseService } from './services/database.js';
+import { authService } from "./services/auth.js";
+import { databaseService } from "./services/database.js";
+import { serverTimestamp } from "firebase/firestore";
 // #endregion
 
 // #region --- Vue Template ---
@@ -383,308 +384,776 @@ const appTemplate = `
 
 // #region --- Vue Instance ---
 new Vue({
-  el: '#app',
+  el: "#app",
   template: appTemplate,
   // #region --- Data ---
   data: {
-    user: null, isAuthReady: false, dataLoaded: false,
-    accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [],
-    itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(),
-    activeTab: 'view-all', showExtraColumns: false, selectedAccountId: null,
-    filters: { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' },
-    addChar: { search: '', selectedMasterId: null, isAdding: false },
-    itemManage: { search: '', selectedOwnedId: null, items: ["", "", ""], isUpdating: false },
-    itemMove: { from: { search: '', selectedId: null }, to: { search: '', selectedId: null }, selectedItemIds: [], isMoving: false },
-    master: { no: '', name: '', element: '', type: '恒常', gacha: '', isSaving: false },
-    editMaster: { search: '', selectedMasterId: null, no: '', name: '', element: '', type: '', gacha: '', isUpdating: false },
-    teamTypes: ['禁忌', '天魔(試練)', '天魔(庭園)','星墓', '轟絶', '黎絶'], teamFilters: { type: '' },
-    teamForm: { id: null, name: '', type: '', isSaving: false, slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })) },
+    user: null,
+    isAuthReady: false,
+    dataLoaded: false,
+    accounts: [],
+    characterMasters: [],
+    itemMasters: [],
+    gachaMasters: [],
+    teams: [],
+    itemMastersMap: new Map(),
+    ownedCountMap: new Map(),
+    ownedCharactersData: new Map(),
+    characterMastersMap: new Map(),
+    activeTab: "view-all",
+    showExtraColumns: false,
+    selectedAccountId: null,
+    filters: {
+      charSearch: "",
+      element: "",
+      itemSearch: "",
+      type: "",
+      gachaSearch: "",
+      totalOwnership: "",
+      account: "",
+      ownership: "",
+    },
+    addChar: { search: "", selectedMasterId: null, isAdding: false },
+    itemManage: {
+      search: "",
+      selectedOwnedId: null,
+      items: ["", "", ""],
+      isUpdating: false,
+    },
+    itemMove: {
+      from: { search: "", selectedId: null },
+      to: { search: "", selectedId: null },
+      selectedItemIds: [],
+      isMoving: false,
+    },
+    master: {
+      no: "",
+      name: "",
+      element: "",
+      type: "恒常",
+      gacha: "",
+      isSaving: false,
+    },
+    editMaster: {
+      search: "",
+      selectedMasterId: null,
+      no: "",
+      name: "",
+      element: "",
+      type: "",
+      gacha: "",
+      isUpdating: false,
+    },
+    teamTypes: ["禁忌", "天魔(試練)", "天魔(庭園)", "星墓", "轟絶", "黎絶"],
+    teamFilters: { type: "" },
+    teamForm: {
+      id: null,
+      name: "",
+      type: "",
+      isSaving: false,
+      slots: Array(4)
+        .fill()
+        .map(() => ({
+          selectedAccountId: "",
+          selectedOwnedId: "",
+          characterSearch: "",
+        })),
+    },
   },
   // #endregion
   // #region --- Lifecycle Hooks ---
   created() {
-    authService.onAuthStateChanged(user => {
+    authService.onAuthStateChanged((user) => {
       this.user = user;
       this.isAuthReady = true;
-      if (user) { this.loadInitialData(); } else { this.resetLoadedData(); }
+      if (user) {
+        this.loadInitialData();
+      } else {
+        this.resetLoadedData();
+      }
     });
   },
   // #endregion
   // #region --- Computed Properties ---
   computed: {
-    isAccountControlVisible() { return this.activeTab === 'add-owned' || this.activeTab === 'manage-items'; },
-    characterTypes() { return Array.from(new Set(this.characterMasters.map  (m => m.type).filter(Boolean))).sort(); },
+    isAccountControlVisible() {
+      return (
+        this.activeTab === "add-owned" || this.activeTab === "manage-items"
+      );
+    },
+    characterTypes() {
+      return Array.from(
+        new Set(this.characterMasters.map((m) => m.type).filter(Boolean))
+      ).sort();
+    },
     filteredMasters() {
       if (!this.dataLoaded) return [];
-      const { charSearch, element, itemSearch, type, gachaSearch, totalOwnership, account, ownership } = this.filters;
+      const {
+        charSearch,
+        element,
+        itemSearch,
+        type,
+        gachaSearch,
+        totalOwnership,
+        account,
+        ownership,
+      } = this.filters;
       const lowerCharSearch = charSearch.toLowerCase();
       const searchItemId = itemSearch ? Number(itemSearch) : null;
-      return this.characterMasters.filter(master => {
-        if (lowerCharSearch && !master.monsterName.toLowerCase().includes(lowerCharSearch) && !(master.indexNumber+'').includes(lowerCharSearch)) return false;
+      return this.characterMasters.filter((master) => {
+        if (
+          lowerCharSearch &&
+          !master.monsterName.toLowerCase().includes(lowerCharSearch) &&
+          !(master.indexNumber + "").includes(lowerCharSearch)
+        )
+          return false;
         if (element && master.element !== element) return false;
-        if (type) { if (type === '恒常_or_限定') { if (master.type !== '恒常' && master.type !== '限定') return false; } else { if (master.type !== type) return false; } }
-        if (gachaSearch && (master.ejectionGacha || '') !== gachaSearch) return false;
+        if (type) {
+          if (type === "恒常_or_限定") {
+            if (master.type !== "恒常" && master.type !== "限定") return false;
+          } else {
+            if (master.type !== type) return false;
+          }
+        }
+        if (gachaSearch && (master.ejectionGacha || "") !== gachaSearch)
+          return false;
         if (searchItemId) {
           let hasItem = false;
           const targetAccount = account || null;
           if (targetAccount) {
-            hasItem = (this.ownedCharactersData.get(targetAccount) || []).some(char => char.characterMasterId === master.id && char.items?.some(itemId => Number(itemId) === searchItemId));
+            hasItem = (this.ownedCharactersData.get(targetAccount) || []).some(
+              (char) =>
+                char.characterMasterId === master.id &&
+                char.items?.some((itemId) => Number(itemId) === searchItemId)
+            );
           } else {
             for (const ownedChars of this.ownedCharactersData.values()) {
-              if (ownedChars.some(char => char.characterMasterId === master.id && char.items?.some(itemId => Number(itemId) === searchItemId))) { hasItem = true; break; }
+              if (
+                ownedChars.some(
+                  (char) =>
+                    char.characterMasterId === master.id &&
+                    char.items?.some(
+                      (itemId) => Number(itemId) === searchItemId
+                    )
+                )
+              ) {
+                hasItem = true;
+                break;
+              }
             }
           }
           if (!hasItem) return false;
         }
-        const totalOwnedCount = this.accounts.reduce((sum, acc) => sum + this.getOwnedCount(master.id, acc.id), 0);
-        if (totalOwnership === 'all_unowned' && totalOwnedCount > 0) return false;
-        if (totalOwnership === 'four_or_more' && totalOwnedCount < 4) return false;
-        if (totalOwnership === 'one_in_each' && !this.accounts.every(acc => this.getOwnedCount(master.id, acc.id) >= 1)) return false;
+        const totalOwnedCount = this.accounts.reduce(
+          (sum, acc) => sum + this.getOwnedCount(master.id, acc.id),
+          0
+        );
+        if (totalOwnership === "all_unowned" && totalOwnedCount > 0)
+          return false;
+        if (totalOwnership === "four_or_more" && totalOwnedCount < 4)
+          return false;
+        if (
+          totalOwnership === "one_in_each" &&
+          !this.accounts.every(
+            (acc) => this.getOwnedCount(master.id, acc.id) >= 1
+          )
+        )
+          return false;
         if (account && ownership) {
           const countInAccount = this.getOwnedCount(master.id, account);
-          if (ownership === 'owned' && countInAccount === 0) return false;
-          if (ownership === 'unowned' && countInAccount > 0) return false;
-          if (ownership === 'one' && countInAccount !== 1) return false;
-          if (ownership === 'two' && countInAccount !== 2) return false;
+          if (ownership === "owned" && countInAccount === 0) return false;
+          if (ownership === "unowned" && countInAccount > 0) return false;
+          if (ownership === "one" && countInAccount !== 1) return false;
+          if (ownership === "two" && countInAccount !== 2) return false;
         }
         return true;
       });
     },
-    addableCharacters() { if (!this.selectedAccountId) return []; const lowerSearch = this.addChar.search .toLowerCase(); return this.characterMasters.filter(master => this.getOwnedCount(master.id, this.selectedAccountId) < 2 && (!lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch))); },
+    addableCharacters() {
+      if (!this.selectedAccountId) return [];
+      const lowerSearch = this.addChar.search.toLowerCase();
+      return this.characterMasters.filter(
+        (master) =>
+          this.getOwnedCount(master.id, this.selectedAccountId) < 2 &&
+          (!lowerSearch ||
+            master.monsterName.toLowerCase().includes(lowerSearch))
+      );
+    },
     currentOwnedCharacters() {
       if (!this.selectedAccountId || !this.dataLoaded) return [];
-      const ownedList = this.ownedCharactersData.get(this.selectedAccountId) || [];
-      return ownedList.map  (char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明' };
-      }).sort((a, b) => a.indexNumber - b.indexNumber);
+      const ownedList =
+        this.ownedCharactersData.get(this.selectedAccountId) || [];
+      return ownedList
+        .map((char) => {
+          const master = this.characterMastersMap.get(char.characterMasterId);
+          return {
+            ...char,
+            indexNumber: master?.indexNumber || 999999,
+            monsterName: master?.monsterName || "不明",
+          };
+        })
+        .sort((a, b) => a.indexNumber - b.indexNumber);
     },
-    itemManageableCharacters() { const lowerSearch = this.itemManage.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => !lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)); },
-    itemMoveFromCharacters() { const lowerSearch = this.itemMove.from.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.itemMove.to  .selectedId); },
-    itemMoveToCharacters() { const lowerSearch = this.itemMove.to.search .toLowerCase(); return this.currentOwnedCharacters.filter(char => (!lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)) && char.id !== this.itemMove.from.selectedId); },
-    movableItems() { if (!this.itemMove.from.selectedId) return []; const fromChar = this.currentOwnedCharacters.find(c => c.id === this.itemMove.from.selectedId); if (!fromChar || !fromChar.items) return []; return fromChar.items.map (itemId => ({ id: Number(itemId), name: this.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})` })); },
-    editableMasters() { if (!this.characterMasters.length) return []; const lowerSearch = this.editMaster.search .toLowerCase(); return this.characterMasters.filter(master => !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)); },
-    filteredTeams() { return !this.teamFilters.type ? this.teams : this.teams.filter(team => team.type === this.teamFilters.type); },
-    isTeamFormValid() { return this.teamForm.name   && this.teamForm.type && this.teamForm.slots.every(slot => slot.selectedAccountId && slot.selectedOwnedId); },
+    itemManageableCharacters() {
+      const lowerSearch = this.itemManage.search.toLowerCase();
+      return this.currentOwnedCharacters.filter(
+        (char) =>
+          !lowerSearch || char.monsterName.toLowerCase().includes(lowerSearch)
+      );
+    },
+    itemMoveFromCharacters() {
+      const lowerSearch = this.itemMove.from.search.toLowerCase();
+      return this.currentOwnedCharacters.filter(
+        (char) =>
+          (!lowerSearch ||
+            char.monsterName.toLowerCase().includes(lowerSearch)) &&
+          char.id !== this.itemMove.to.selectedId
+      );
+    },
+    itemMoveToCharacters() {
+      const lowerSearch = this.itemMove.to.search.toLowerCase();
+      return this.currentOwnedCharacters.filter(
+        (char) =>
+          (!lowerSearch ||
+            char.monsterName.toLowerCase().includes(lowerSearch)) &&
+          char.id !== this.itemMove.from.selectedId
+      );
+    },
+    movableItems() {
+      if (!this.itemMove.from.selectedId) return [];
+      const fromChar = this.currentOwnedCharacters.find(
+        (c) => c.id === this.itemMove.from.selectedId
+      );
+      if (!fromChar || !fromChar.items) return [];
+      return fromChar.items.map((itemId) => ({
+        id: Number(itemId),
+        name: this.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})`,
+      }));
+    },
+    editableMasters() {
+      if (!this.characterMasters.length) return [];
+      const lowerSearch = this.editMaster.search.toLowerCase();
+      return this.characterMasters.filter(
+        (master) =>
+          !lowerSearch || master.monsterName.toLowerCase().includes(lowerSearch)
+      );
+    },
+    filteredTeams() {
+      return !this.teamFilters.type
+        ? this.teams
+        : this.teams.filter((team) => team.type === this.teamFilters.type);
+    },
+    isTeamFormValid() {
+      return (
+        this.teamForm.name &&
+        this.teamForm.type &&
+        this.teamForm.slots.every(
+          (slot) => slot.selectedAccountId && slot.selectedOwnedId
+        )
+      );
+    },
   },
   // #endregion
   // #region --- Watchers ---
   watch: {
-    'itemManage.selectedOwnedId'(newId) {
-      if (!newId) { this.itemManage.items = ["", "", ""]; return; }
-      const character = this.currentOwnedCharacters.find(c => c.id === newId);
+    "itemManage.selectedOwnedId"(newId) {
+      if (!newId) {
+        this.itemManage.items = ["", "", ""];
+        return;
+      }
+      const character = this.currentOwnedCharacters.find((c) => c.id === newId);
       if (character && character.items) {
-        const itemIds = character.items.map (String);
-        this.itemManage.items = [ itemIds[0] || "", itemIds[1] || "", itemIds[2] || "" ];
-      } else { this.itemManage.items = ["", "", ""]; }
+        const itemIds = character.items.map(String);
+        this.itemManage.items = [
+          itemIds[0] || "",
+          itemIds[1] || "",
+          itemIds[2] || "",
+        ];
+      } else {
+        this.itemManage.items = ["", "", ""];
+      }
     },
-    'itemMove.from.selectedId'() { this.itemMove.selectedItemIds = []; },
-    selectedAccountId() { this.addChar.selectedMasterId = null; this.itemManage.selectedOwnedId = null; this.itemMove.from.selectedId = null; this.itemMove.to.selectedId = null; },
-    'editMaster.selectedMasterId'(newId) {
-      if (!newId) { Object.assign(this.editMaster, { name: '', no: '', element: '', type: '', gacha: '' }); return; }
+    "itemMove.from.selectedId"() {
+      this.itemMove.selectedItemIds = [];
+    },
+    selectedAccountId() {
+      this.addChar.selectedMasterId = null;
+      this.itemManage.selectedOwnedId = null;
+      this.itemMove.from.selectedId = null;
+      this.itemMove.to.selectedId = null;
+    },
+    "editMaster.selectedMasterId"(newId) {
+      if (!newId) {
+        Object.assign(this.editMaster, {
+          name: "",
+          no: "",
+          element: "",
+          type: "",
+          gacha: "",
+        });
+        return;
+      }
       const master = this.characterMastersMap.get(newId);
-      if (master) { Object.assign(this.editMaster, { name: master.monsterName, no: master.indexNumber, element: master.element, type: master.type, gacha: master.ejectionGacha }); }
+      if (master) {
+        Object.assign(this.editMaster, {
+          name: master.monsterName,
+          no: master.indexNumber,
+          element: master.element,
+          type: master.type,
+          gacha: master.ejectionGacha,
+        });
+      }
     },
   },
   methods: {
-    handleLogin() { authService.loginWithGoogle().catch(() => alert("ログインに失敗しました。")); },
-    handleLogout() { authService.logout(); },
-    resetLoadedData() { Object.assign(this, { dataLoaded: false, accounts: [], characterMasters: [], itemMasters: [], gachaMasters: [], teams: [], itemMastersMap: new Map(), ownedCountMap: new Map(), ownedCharactersData: new Map(), characterMastersMap: new Map(), selectedAccountId: null }); },
+    handleLogin() {
+      authService
+        .loginWithGoogle()
+        .catch(() => alert("ログインに失敗しました。"));
+    },
+    handleLogout() {
+      authService.logout();
+    },
+    resetLoadedData() {
+      Object.assign(this, {
+        dataLoaded: false,
+        accounts: [],
+        characterMasters: [],
+        itemMasters: [],
+        gachaMasters: [],
+        teams: [],
+        itemMastersMap: new Map(),
+        ownedCountMap: new Map(),
+        ownedCharactersData: new Map(),
+        characterMastersMap: new Map(),
+        selectedAccountId: null,
+      });
+    },
     async loadInitialData() {
       if (this.dataLoaded) return;
       if (!this.user) return;
       console.log("初期データの読み込みを開始...");
       try {
-        const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap, gachaMastersSnap, teamsSnap] = await databaseService.loadInitialDataRaw(this.user.uid);
-        
-        this.accounts = accountsSnap.docs.map(doc => {
+        const [
+          accountsSnap,
+          mastersSnap,
+          itemsSnap,
+          ownedCharsSnap,
+          gachaMastersSnap,
+          teamsSnap,
+        ] = await databaseService.loadInitialDataRaw(this.user.uid);
+
+        this.accounts = accountsSnap.docs
+          .map((doc) => {
             const data = doc.data();
             return {
               id: doc.id,
               name: data.Name || `アカウント${data.id}`,
               numericId: data.id,
-              indexNumber: data.indexNumber
+              indexNumber: data.indexNumber,
             };
-          }).sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
-        this.characterMasters = mastersSnap.docs.map (doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999));
-        this.characterMastersMap = new Map(this.characterMasters.map(m => [m.id, m]));
-        this.itemMasters = itemsSnap.docs.map (doc => ({...doc.data(), id: Number(doc.data().id) })).sort((a, b) => a.id - b.id  );
-        this.itemMastersMap = new Map(this.itemMasters.map (item => [item.id, item.name]));
-        this.gachaMasters = gachaMastersSnap.docs.map (doc => doc.data()).sort((a,b) => a.id - b.id);
-        
+          })
+          .sort((a, b) => (a.numericId || 999) - (b.numericId || 999));
+        this.characterMasters = mastersSnap.docs
+          .map((doc) => ({ ...doc.data(), id: doc.id }))
+          .sort(
+            (a, b) => (a.indexNumber || 999999) - (b.indexNumber || 999999)
+          );
+        this.characterMastersMap = new Map(
+          this.characterMasters.map((m) => [m.id, m])
+        );
+        this.itemMasters = itemsSnap.docs
+          .map((doc) => ({ ...doc.data(), id: Number(doc.data().id) }))
+          .sort((a, b) => a.id - b.id);
+        this.itemMastersMap = new Map(
+          this.itemMasters.map((item) => [item.id, item.name])
+        );
+        this.gachaMasters = gachaMastersSnap.docs
+          .map((doc) => doc.data())
+          .sort((a, b) => a.id - b.id);
+
         const ownedCharsDataMap = new Map();
         const ownedCountMap = new Map();
-        ownedCharsSnap.forEach(doc => {
+        ownedCharsSnap.forEach((doc) => {
           const data = doc.data();
-          const accountId = doc.ref.parent.parent.id ;
+          const accountId = doc.ref.parent.parent.id;
           const masterId = data.characterMasterId;
           const countKey = `${masterId}-${accountId}`;
           ownedCountMap.set(countKey, (ownedCountMap.get(countKey) || 0) + 1);
-          if (!ownedCharsDataMap.has(accountId)) ownedCharsDataMap.set(accountId, []);
+          if (!ownedCharsDataMap.has(accountId))
+            ownedCharsDataMap.set(accountId, []);
           ownedCharsDataMap.get(accountId).push({ ...data, id: doc.id });
         });
         this.ownedCharactersData = ownedCharsDataMap;
         this.ownedCountMap = ownedCountMap;
-        
-        this.teams = teamsSnap.docs.map (doc => ({ ...doc.data(), id: doc.id }));
-        
-        if (this.accounts.length > 0) this.selectedAccountId = this.accounts[0].id;
+
+        this.teams = teamsSnap.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+
+        if (this.accounts.length > 0)
+          this.selectedAccountId = this.accounts[0].id;
         this.dataLoaded = true;
         console.log("初期データの読み込み完了");
-      } catch (e) { console.error("データ読み込みエラー:", e); alert(`データ読み込みエラー: ${e.message}`); }
+      } catch (e) {
+        console.error("データ読み込みエラー:", e);
+        alert(`データ読み込みエラー: ${e.message}`);
+      }
     },
-    getOwnedCount(masterId, accountId) { return this.ownedCountMap.get(`${masterId}-${accountId}`) || 0; },
+    getOwnedCount(masterId, accountId) {
+      return this.ownedCountMap.get(`${masterId}-${accountId}`) || 0;
+    },
     getDisplayCellContent(masterId, accountId, index) {
-      const ownedList = (this.ownedCharactersData.get(accountId) || []).filter(c => c.characterMasterId === masterId);
-      if (!ownedList || ownedList.length <= index) return '—';
-      const itemNames = (ownedList[index].items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean);
-      return itemNames.length > 0 ? '✔️<br>' + itemNames.join('<br>') : '✔️';
+      const ownedList = (this.ownedCharactersData.get(accountId) || []).filter(
+        (c) => c.characterMasterId === masterId
+      );
+      if (!ownedList || ownedList.length <= index) return "—";
+      const itemNames = (ownedList[index].items || [])
+        .map((id) => this.itemMastersMap.get(Number(id)))
+        .filter(Boolean);
+      return itemNames.length > 0 ? "✔️<br>" + itemNames.join("<br>") : "✔️";
     },
-    getOwnedStatusClass(masterId, accountId, requiredCount) { return this.getOwnedCount(masterId, accountId) >= requiredCount ? 'status-owned' : 'status-unowned'; },
-    resetFilters() { this.filters = { charSearch: '', element: '', itemSearch: '', type: '', gachaSearch: '', totalOwnership: '', account: '', ownership: '' }; },
+    getOwnedStatusClass(masterId, accountId, requiredCount) {
+      return this.getOwnedCount(masterId, accountId) >= requiredCount
+        ? "status-owned"
+        : "status-unowned";
+    },
+    resetFilters() {
+      this.filters = {
+        charSearch: "",
+        element: "",
+        itemSearch: "",
+        type: "",
+        gachaSearch: "",
+        totalOwnership: "",
+        account: "",
+        ownership: "",
+      };
+    },
     formatOwnedCharDisplayName(char, includeItems = false) {
       const master = this.characterMastersMap.get(char.characterMasterId);
-      const charName = master ? master.monsterName : '不明';
+      const charName = master ? master.monsterName : "不明";
       const targetAccountId = char.accountId || this.selectedAccountId;
       if (!targetAccountId) return `${charName} (アカウント不明)`;
-      const sameMasterChars = (this.ownedCharactersData.get(targetAccountId) || []).filter(c => c.characterMasterId === char.characterMasterId);
-      const charIndex = sameMasterChars.findIndex(c => c.id === char.id);
-      let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : '？'}体目)`;
-      if (includeItems) { text += ` [${(char.items || []).map(id => this.itemMastersMap.get(Number(id))).filter(Boolean).join(', ') || 'アイテムなし'}]`; }
+      const sameMasterChars = (
+        this.ownedCharactersData.get(targetAccountId) || []
+      ).filter((c) => c.characterMasterId === char.characterMasterId);
+      const charIndex = sameMasterChars.findIndex((c) => c.id === char.id);
+      let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : "？"}体目)`;
+      if (includeItems) {
+        text += ` [${
+          (char.items || [])
+            .map((id) => this.itemMastersMap.get(Number(id)))
+            .filter(Boolean)
+            .join(", ") || "アイテムなし"
+        }]`;
+      }
       return text;
     },
     async addOwnedCharacter() {
-      if (!this.addChar.selectedMasterId || !this.selectedAccountId) return alert('追加するキャラとアカウントを選択してください。');
-      if (this.getOwnedCount(this.addChar.selectedMasterId, this.selectedAccountId) >= 2) return alert('このキャラは既に2体所持しています。');
+      if (!this.addChar.selectedMasterId || !this.selectedAccountId)
+        return alert("追加するキャラとアカウントを選択してください。");
+      if (
+        this.getOwnedCount(
+          this.addChar.selectedMasterId,
+          this.selectedAccountId
+        ) >= 2
+      )
+        return alert("このキャラは既に2体所持しています。");
       this.addChar.isAdding = true;
       try {
-        const master = this.characterMastersMap.get(this.addChar.selectedMasterId);
-        if (!master) throw new Error('キャラのマスター情報が見つかりません。');
-        const newOwnedCharData = { characterMasterId: this.addChar.selectedMasterId, monsterName: master.monsterName, items: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-        const docRef = await databaseService.addOwnedCharacter(this.selectedAccountId, newOwnedCharData);
-        
-        const newLocalChar = { ...newOwnedCharData, id: docRef.id , createdAt: { toDate: () => new Date() }};
-        if (!this.ownedCharactersData.has(this.selectedAccountId)) this.ownedCharactersData.set(this.selectedAccountId, []);
+        const master = this.characterMastersMap.get(
+          this.addChar.selectedMasterId
+        );
+        if (!master) throw new Error("キャラのマスター情報が見つかりません。");
+        const newOwnedCharData = {
+          characterMasterId: this.addChar.selectedMasterId,
+          monsterName: master.monsterName,
+          items: [],
+          createdAt: serverTimestamp(),
+        };
+        const docRef = await databaseService.addOwnedCharacter(
+          this.selectedAccountId,
+          newOwnedCharData
+        );
+
+        const newLocalChar = {
+          ...newOwnedCharData,
+          id: docRef.id,
+          createdAt: { toDate: () => new Date() },
+        };
+        if (!this.ownedCharactersData.has(this.selectedAccountId))
+          this.ownedCharactersData.set(this.selectedAccountId, []);
         this.ownedCharactersData.get(this.selectedAccountId).push(newLocalChar);
         const countKey = `${this.addChar.selectedMasterId}-${this.selectedAccountId}`;
-        this.ownedCountMap.set(countKey, (this.ownedCountMap.get(countKey) || 0) + 1);
-        
+        this.ownedCountMap.set(
+          countKey,
+          (this.ownedCountMap.get(countKey) || 0) + 1
+        );
+
         alert(`「${master.monsterName}」を所持リストに追加しました。`);
         this.addChar.selectedMasterId = null;
-      } catch (error) { console.error('キャラ追加失敗:', error); alert('エラー: ' + error.message); } 
-      finally { this.addChar.isAdding = false; }
+      } catch (error) {
+        console.error("キャラ追加失敗:", error);
+        alert("エラー: " + error.message);
+      } finally {
+        this.addChar.isAdding = false;
+      }
     },
     async updateItems() {
       if (!this.itemManage.selectedOwnedId) return;
       this.itemManage.isUpdating = true;
       try {
         const newItems = this.itemManage.items.filter(Boolean).map(Number);
-        await databaseService.updateCharacterItems(this.selectedAccountId, this.itemManage.selectedOwnedId, newItems);
-        const charToUpdate = this.currentOwnedCharacters.find(c => c.id === this.itemManage.selectedOwnedId);
+        await databaseService.updateCharacterItems(
+          this.selectedAccountId,
+          this.itemManage.selectedOwnedId,
+          newItems
+        );
+        const charToUpdate = this.currentOwnedCharacters.find(
+          (c) => c.id === this.itemManage.selectedOwnedId
+        );
         if (charToUpdate) charToUpdate.items = newItems;
-        alert('アイテムを更新しました。');
-      } catch(e) { alert('エラー: ' + e.message); } 
-      finally { this.itemManage.isUpdating = false; }
+        alert("アイテムを更新しました。");
+      } catch (e) {
+        alert("エラー: " + e.message);
+      } finally {
+        this.itemManage.isUpdating = false;
+      }
     },
     async moveItems() {
       this.itemMove.isMoving = true;
       const { from, to, selectedItemIds } = this.itemMove;
       try {
-        if (from.selectedId === to.selectedId || !from.selectedId || !to.selectedId) throw new Error('有効な移動元と移動先を選択してください。');
-        if (selectedItemIds.length === 0) throw new Error('移動するアイテムを選択してください。');
+        if (
+          from.selectedId === to.selectedId ||
+          !from.selectedId ||
+          !to.selectedId
+        )
+          throw new Error("有効な移動元と移動先を選択してください。");
+        if (selectedItemIds.length === 0)
+          throw new Error("移動するアイテムを選択してください。");
 
-        const fromChar = this.currentOwnedCharacters.find(c => c.id === from.selectedId);
-        const toChar = this.currentOwnedCharacters.find(c => c.id === to.selectedId);
-        const numericIds = selectedItemIds.map (Number);
+        const fromChar = this.currentOwnedCharacters.find(
+          (c) => c.id === from.selectedId
+        );
+        const toChar = this.currentOwnedCharacters.find(
+          (c) => c.id === to.selectedId
+        );
+        const numericIds = selectedItemIds.map(Number);
 
-        if ((toChar.items?.length || 0) + numericIds.length > 3) throw new Error(`移動先のアイテム所持数が上限を超えます。`);
-        
-        const newFromItems = (fromChar.items || []).map(Number).filter(id => !numericIds.includes(id));
+        if ((toChar.items?.length || 0) + numericIds.length > 3)
+          throw new Error(`移動先のアイテム所持数が上限を超えます。`);
+
+        const newFromItems = (fromChar.items || [])
+          .map(Number)
+          .filter((id) => !numericIds.includes(id));
         const newToItems = [...(toChar.items || []).map(Number), ...numericIds];
-        
-        await databaseService.moveCharacterItems(this.selectedAccountId, { id: from.selectedId, items: newFromItems }, { id: to.selectedId, items: newToItems });
-        
+
+        await databaseService.moveCharacterItems(
+          this.selectedAccountId,
+          { id: from.selectedId, items: newFromItems },
+          { id: to.selectedId, items: newToItems }
+        );
+
         fromChar.items = newFromItems;
         toChar.items = newToItems;
         this.itemMove.selectedItemIds = [];
-        alert('アイテムを移動しました。');
-      } catch (e) { alert(`エラー: ${e.message}`); } 
-      finally { this.itemMove.isMoving = false; }
+        alert("アイテムを移動しました。");
+      } catch (e) {
+        alert(`エラー: ${e.message}`);
+      } finally {
+        this.itemMove.isMoving = false;
+      }
     },
     async saveMaster() {
-      if (!this.master.name  ) return alert('キャラクター名は必須です。');
+      if (!this.master.name) return alert("キャラクター名は必須です。");
       this.master.isSaving = true;
       try {
-        const newData = { indexNumber: this.master.no   ? Number(this.master.no) : 0, monsterName: this.master.name, element: this.master.element || '', type: this.master.type || '恒常', ejectionGacha: this.master.gacha || '' };
+        const newData = {
+          indexNumber: this.master.no ? Number(this.master.no) : 0,
+          monsterName: this.master.name,
+          element: this.master.element || "",
+          type: this.master.type || "恒常",
+          ejectionGacha: this.master.gacha || "",
+        };
         await databaseService.addCharacterMaster(newData);
-        alert('マスターを追加しました。ページをリロードして反映してください。');
+        alert("マスターを追加しました。ページをリロードして反映してください。");
         location.reload();
-      } catch(e) { alert('エラー: ' + e.message); } 
-      finally { this.master.isSaving = false; }
+      } catch (e) {
+        alert("エラー: " + e.message);
+      } finally {
+        this.master.isSaving = false;
+      }
     },
     async updateMaster() {
-      if (!this.editMaster.selectedMasterId || !this.editMaster.name  ) return alert('キャラを選択し名前を入力してください。');
+      if (!this.editMaster.selectedMasterId || !this.editMaster.name)
+        return alert("キャラを選択し名前を入力してください。");
       this.editMaster.isUpdating = true;
       try {
-        const updatedData = { monsterName: this.editMaster.name, indexNumber: this.editMaster.no   ? Number(this.editMaster.no) : 0, element: this.editMaster.element, type: this.editMaster.type, ejectionGacha: this.editMaster.gacha };
-        await databaseService.updateCharacterMaster(this.editMaster.selectedMasterId, updatedData);
-        alert('マスター情報を更新しました。ページをリロードしてください。');
+        const updatedData = {
+          monsterName: this.editMaster.name,
+          indexNumber: this.editMaster.no ? Number(this.editMaster.no) : 0,
+          element: this.editMaster.element,
+          type: this.editMaster.type,
+          ejectionGacha: this.editMaster.gacha,
+        };
+        await databaseService.updateCharacterMaster(
+          this.editMaster.selectedMasterId,
+          updatedData
+        );
+        alert("マスター情報を更新しました。ページをリロードしてください。");
         location.reload();
-      } catch (e) { alert('更新に失敗: ' + e.message); } 
-      finally { this.editMaster.isUpdating = false; }
+      } catch (e) {
+        alert("更新に失敗: " + e.message);
+      } finally {
+        this.editMaster.isUpdating = false;
+      }
     },
     getCharactersForSlot(slot) {
       if (!slot.selectedAccountId) return [];
-      const ownedList = this.ownedCharactersData.get(slot.selectedAccountId) || [];
-      const charList = ownedList.map(char => {
-        const master = this.characterMastersMap.get(char.characterMasterId);
-        return { ...char, accountId: slot.selectedAccountId, indexNumber: master?.indexNumber || 999999, monsterName: master?.monsterName || '不明'};
-      }).sort((a,b) => a.indexNumber - b.indexNumber);
+      const ownedList =
+        this.ownedCharactersData.get(slot.selectedAccountId) || [];
+      const charList = ownedList
+        .map((char) => {
+          const master = this.characterMastersMap.get(char.characterMasterId);
+          return {
+            ...char,
+            accountId: slot.selectedAccountId,
+            indexNumber: master?.indexNumber || 999999,
+            monsterName: master?.monsterName || "不明",
+          };
+        })
+        .sort((a, b) => a.indexNumber - b.indexNumber);
       const lowerSearch = slot.characterSearch.toLowerCase();
-      return !lowerSearch ? charList : charList.filter(char => char.monsterName.toLowerCase().includes(lowerSearch));
+      return !lowerSearch
+        ? charList
+        : charList.filter((char) =>
+            char.monsterName.toLowerCase().includes(lowerSearch)
+          );
     },
-    isCharSelectedInOtherSlot(ownedId, currentIndex) { return !ownedId ? false : this.teamForm.slots.some((slot, index) => index !== currentIndex && slot.selectedOwnedId === ownedId); },
+    isCharSelectedInOtherSlot(ownedId, currentIndex) {
+      return !ownedId
+        ? false
+        : this.teamForm.slots.some(
+            (slot, index) =>
+              index !== currentIndex && slot.selectedOwnedId === ownedId
+          );
+    },
     getTeamSlotDetails(team, slotIndex) {
-      const emptySlot = { characterName: '—', accountName: '—', items: [] };
-      if (!team.characters || !this.dataLoaded || slotIndex >= team.characters.length) return emptySlot;
+      const emptySlot = { characterName: "—", accountName: "—", items: [] };
+      if (
+        !team.characters ||
+        !this.dataLoaded ||
+        slotIndex >= team.characters.length
+      )
+        return emptySlot;
       const charSlot = team.characters[slotIndex];
-      const account = this.accounts.find(acc => acc.id === charSlot.accountId);
-      const ownedChar = (this.ownedCharactersData.get(charSlot.accountId) || []).find(c => c.id === charSlot.ownedCharacterId);
-      if (!ownedChar) return { characterName: 'キャラ不明', accountName: account?.name || '不明', items: [] };
+      const account = this.accounts.find(
+        (acc) => acc.id === charSlot.accountId
+      );
+      const ownedChar = (
+        this.ownedCharactersData.get(charSlot.accountId) || []
+      ).find((c) => c.id === charSlot.ownedCharacterId);
+      if (!ownedChar)
+        return {
+          characterName: "キャラ不明",
+          accountName: account?.name || "不明",
+          items: [],
+        };
       const master = this.characterMastersMap.get(ownedChar.characterMasterId);
-      return { characterName: master?.monsterName || '不明', accountName: account?.name || '不明', items: (ownedChar.items || []).map(id => this.itemMastersMap.get(Number(id)) || `不明ID:${id}`).filter(Boolean) };
+      return {
+        characterName: master?.monsterName || "不明",
+        accountName: account?.name || "不明",
+        items: (ownedChar.items || [])
+          .map((id) => this.itemMastersMap.get(Number(id)) || `不明ID:${id}`)
+          .filter(Boolean),
+      };
     },
-    selectTeam(team) { this.teamForm = { ...this.teamForm, id: team.id, name: team.name, type: team.type, slots: team.characters.map (char => ({ selectedAccountId: char.accountId, selectedOwnedId: char.ownedCharacterId, characterSearch: '' })) }; },
-    resetTeamForm() { this.teamForm = { id: null, name: '', type: '', isSaving: false, slots: Array(4).fill().map(() => ({ selectedAccountId: '', selectedOwnedId: '', characterSearch: '' })) }; },
+    selectTeam(team) {
+      this.teamForm = {
+        ...this.teamForm,
+        id: team.id,
+        name: team.name,
+        type: team.type,
+        slots: team.characters.map((char) => ({
+          selectedAccountId: char.accountId,
+          selectedOwnedId: char.ownedCharacterId,
+          characterSearch: "",
+        })),
+      };
+    },
+    resetTeamForm() {
+      this.teamForm = {
+        id: null,
+        name: "",
+        type: "",
+        isSaving: false,
+        slots: Array(4)
+          .fill()
+          .map(() => ({
+            selectedAccountId: "",
+            selectedOwnedId: "",
+            characterSearch: "",
+          })),
+      };
+    },
     async handleSaveTeam() {
-      if (!this.isTeamFormValid) return alert('編成名、タイプ、4体のキャラを全て選択してください。');
+      if (!this.isTeamFormValid)
+        return alert("編成名、タイプ、4体のキャラを全て選択してください。");
       this.teamForm.isSaving = true;
-      const teamData = { userId: this.user.uid, name: this.teamForm.name, type: this.teamForm.type, characters: this.teamForm.slots.map (s => ({ accountId: s.selectedAccountId, ownedCharacterId: s.selectedOwnedId })) };
+      const teamData = {
+        userId: this.user.uid,
+        name: this.teamForm.name,
+        type: this.teamForm.type,
+        characters: this.teamForm.slots.map((s) => ({
+          accountId: s.selectedAccountId,
+          ownedCharacterId: s.selectedOwnedId,
+        })),
+      };
       try {
-        const id = this.teamForm.id  ;
-        Object.assign(teamData, id ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() } : { createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        const id = this.teamForm.id;
+        Object.assign(
+          teamData,
+          id
+            ? { updatedAt: serverTimestamp() }
+            : { createdAt: serverTimestamp() }
+        );
         const result = await databaseService.saveTeam(id, teamData);
         if (id) {
-          const index = this.teams.findIndex(t => t.id === id);
-          if (index > -1) this.$set(this.teams, index, { ...this.teams[index], ...teamData });
-          alert('編成を更新しました。');
+          const index = this.teams.findIndex((t) => t.id === id);
+          if (index > -1)
+            this.$set(this.teams, index, { ...this.teams[index], ...teamData });
+          alert("編成を更新しました。");
         } else {
-          const newTeam = { ...teamData, id: result.id , createdAt: { toDate: () => new Date() } };
+          const newTeam = {
+            ...teamData,
+            id: result.id,
+            createdAt: { toDate: () => new Date() },
+          };
           this.teams.unshift(newTeam);
           this.selectTeam(newTeam);
-          alert('編成を保存しました。');
+          alert("編成を保存しました。");
         }
-      } catch (error) { console.error('編成保存失敗:', error); alert('エラー: ' + error.message); } 
-      finally { this.teamForm.isSaving = false; }
+      } catch (error) {
+        console.error("編成保存失敗:", error);
+        alert("エラー: " + error.message);
+      } finally {
+        this.teamForm.isSaving = false;
+      }
     },
     async deleteTeam(teamId) {
-      if (!confirm('この編成を本当に削除しますか？')) return;
+      if (!confirm("この編成を本当に削除しますか？")) return;
       try {
         await databaseService.deleteTeam(teamId);
-        this.teams = this.teams.filter(t => t.id !== teamId);
+        this.teams = this.teams.filter((t) => t.id !== teamId);
         if (this.teamForm.id === teamId) this.resetTeamForm();
-        alert('編成を削除しました。');
-      } catch (error) { console.error('編成削除失敗:', error); alert('エラー: ' + error.message); }
+        alert("編成を削除しました。");
+      } catch (error) {
+        console.error("編成削除失敗:", error);
+        alert("エラー: " + error.message);
+      }
     },
   },
   // #endregion

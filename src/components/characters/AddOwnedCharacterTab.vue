@@ -76,7 +76,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import firebase from "firebase/compat/app"; // INFO: serverTimestampのために必要
+import { serverTimestamp } from "firebase/firestore";
 import { databaseService } from "../../services/database.js";
 import CharacterSelector from "../shared/CharacterSelector.vue"; // INFO: 共通コンポーネントをインポート
 
@@ -162,7 +162,7 @@ const handleAddCharacter = async () => {
       characterMasterId: selectedMasterId.value,
       monsterName: master.monsterName,
       items: [],
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
     };
 
     const docRef = await databaseService.addOwnedCharacter(

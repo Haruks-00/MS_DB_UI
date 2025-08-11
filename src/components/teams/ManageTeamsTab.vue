@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import firebase from "firebase/compat/app"; // INFO: serverTimestampのために必要
+import { serverTimestamp } from "firebase/firestore";
 import { databaseService } from "../../services/database.js";
 import TeamList from "./TeamList.vue";
 import TeamForm from "./TeamForm.vue";
@@ -151,9 +151,7 @@ const handleSaveTeam = async () => {
     const id = teamForm.id;
     Object.assign(
       teamData,
-      id
-        ? { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
-        : { createdAt: firebase.firestore.FieldValue.serverTimestamp() }
+      id ? { updatedAt: serverTimestamp() } : { createdAt: serverTimestamp() }
     );
     const result = await databaseService.saveTeam(id, teamData);
 
