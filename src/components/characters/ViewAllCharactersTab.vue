@@ -243,179 +243,108 @@
       </v-card-title>
 
       <v-card-text class="pa-0">
-        <v-table
-          fixed-header
+        <v-data-table-virtual
+          :items="filteredMasters"
+          :headers="headers"
+          :loading="!dataLoaded"
           height="70vh"
           density="compact"
+          fixed-header
           class="table-fixed"
+          :fixed-columns="true"
         >
-          <thead>
-            <tr>
-              <th rowspan="2" class="text-center pa-4">図鑑No.</th>
-              <th rowspan="2" class="text-center pa-4">キャラ名</th>
-              <th
-                rowspan="2"
-                v-show="showExtraColumns"
-                class="text-center pa-4"
+          <!-- キャラ名列のカスタムスロット -->
+          <template v-slot:item.monsterName="{ item }">
+            <div class="d-flex align-center">
+              <v-avatar
+                size="32"
+                :color="getElementColor(item.element)"
+                class="mr-3"
               >
-                属性
-              </th>
-              <th
-                rowspan="2"
-                v-show="showExtraColumns"
-                class="text-center pa-4"
-              >
-                分類
-              </th>
-              <th
-                rowspan="2"
-                v-show="showExtraColumns"
-                class="text-center pa-4"
-              >
-                排出ガチャ
-              </th>
-              <th
-                v-for="acc in accounts"
-                :key="acc.id"
-                colspan="2"
-                class="text-center pa-4 bg-grey-lighten-4"
-              >
-                <div class="d-flex align-center justify-center">
-                  <v-avatar size="24" color="primary" class="mr-2">
-                    <span class="text-caption text-white font-weight-bold">{{
-                      acc.name.charAt(0)
-                    }}</span>
-                  </v-avatar>
-                  {{ acc.name }}
-                </div>
-              </th>
-            </tr>
-            <tr>
-              <template v-for="acc in accounts" :key="acc.id">
-                <th class="text-center pa-2 bg-grey-lighten-4">1</th>
-                <th class="text-center pa-2 bg-grey-lighten-4">2</th>
-              </template>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="!dataLoaded">
-              <td :colspan="5 + accounts.length * 2" class="text-center pa-8">
-                <div class="d-flex flex-column align-center">
-                  <v-progress-circular
-                    indeterminate
-                    color="primary"
-                    size="48"
-                  ></v-progress-circular>
-                  <div class="mt-3 text-body-1 text-medium-emphasis">
-                    データを読み込んでいます...
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr v-else-if="filteredMasters.length === 0">
-              <td :colspan="5 + accounts.length * 2" class="text-center pa-8">
-                <div class="d-flex flex-column align-center">
-                  <v-icon
-                    icon="mdi-inbox-outline"
-                    size="64"
-                    color="grey-lighten-1"
-                  ></v-icon>
-                  <div class="mt-3 text-body-1 text-medium-emphasis">
-                    該当するキャラクターがいません
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr
-              v-for="master in filteredMasters"
-              :key="master.id"
-              class="character-row"
-            >
-              <td class="text-center pa-4 font-weight-bold">
-                {{ master.indexNumber || "—" }}
-              </td>
-              <td class="pa-4">
-                <div class="d-flex align-center">
-                  <v-avatar
-                    size="32"
-                    :color="getElementColor(master.element)"
-                    class="mr-3"
-                  >
-                    <span class="text-caption text-white font-weight-bold">{{
-                      master.element || "?"
-                    }}</span>
-                  </v-avatar>
-                  <span class="font-weight-medium">{{
-                    master.monsterName || "—"
-                  }}</span>
-                </div>
-              </td>
-              <td
-                v-show="showExtraColumns"
-                :class="'element-' + (master.element || '').toLowerCase()"
-                class="text-center pa-4"
-              >
-                <v-chip
-                  :color="getElementColor(master.element)"
-                  variant="tonal"
-                  size="small"
-                >
-                  {{ master.element || "—" }}
-                </v-chip>
-              </td>
-              <td v-show="showExtraColumns" class="text-center pa-4">
-                <v-chip
-                  :color="getTypeColor(master.type)"
-                  variant="tonal"
-                  size="small"
-                >
-                  {{ master.type || "—" }}
-                </v-chip>
-              </td>
-              <td v-show="showExtraColumns" class="text-center pa-4">
-                <span class="text-caption">{{
-                  master.ejectionGacha || "—"
+                <span class="text-caption text-white font-weight-bold">{{
+                  item.element || "?"
                 }}</span>
-              </td>
-              <template v-for="acc in accounts" :key="acc.id">
-                <td
-                  :class="getOwnedStatusClass(master.id, acc.id, 1)"
-                  class="text-center pa-2"
-                >
-                  <v-tooltip location="bottom">
-                    <template v-slot:activator="{ props }">
-                      <div
-                        v-bind="props"
-                        class="cell-content"
-                        v-html="getDisplayCellContent(master.id, acc.id, 0)"
-                      ></div>
-                    </template>
-                    <span
-                      v-html="getTooltipContent(master.id, acc.id, 0)"
-                    ></span>
-                  </v-tooltip>
-                </td>
-                <td
-                  :class="getOwnedStatusClass(master.id, acc.id, 2)"
-                  class="text-center pa-2"
-                >
-                  <v-tooltip location="bottom">
-                    <template v-slot:activator="{ props }">
-                      <div
-                        v-bind="props"
-                        class="cell-content"
-                        v-html="getDisplayCellContent(master.id, acc.id, 1)"
-                      ></div>
-                    </template>
-                    <span
-                      v-html="getTooltipContent(master.id, acc.id, 1)"
-                    ></span>
-                  </v-tooltip>
-                </td>
-              </template>
-            </tr>
-          </tbody>
-        </v-table>
+              </v-avatar>
+              <span class="font-weight-medium">{{
+                item.monsterName || "—"
+              }}</span>
+            </div>
+          </template>
+
+          <!-- 属性列のカスタムスロット -->
+          <template v-slot:item.element="{ item }">
+            <v-chip
+              :color="getElementColor(item.element)"
+              variant="tonal"
+              size="small"
+            >
+              {{ item.element || "—" }}
+            </v-chip>
+          </template>
+
+          <!-- 分類列のカスタムスロット -->
+          <template v-slot:item.type="{ item }">
+            <v-chip
+              :color="getTypeColor(item.type)"
+              variant="tonal"
+              size="small"
+            >
+              {{ item.type || "—" }}
+            </v-chip>
+          </template>
+
+          <!-- 排出ガチャ列のカスタムスロット -->
+          <template v-slot:item.ejectionGacha="{ item }">
+            <span class="text-caption">{{
+              item.ejectionGacha || "—"
+            }}</span>
+          </template>
+
+          <!-- アカウント別所持状況の動的スロット -->
+          <template 
+            v-for="acc in accounts" 
+            :key="acc.id" 
+            v-slot:[`item.account_${acc.id}_1`]="{ item }"
+          >
+            <div
+              :class="[getOwnedStatusClass(item.id, acc.id, 1), 'account-cell']"
+              class="text-center"
+            >
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props }">
+                  <div
+                    v-bind="props"
+                    class="cell-content"
+                    v-html="getDisplayCellContent(item.id, acc.id, 0)"
+                  ></div>
+                </template>
+                <span v-html="getTooltipContent(item.id, acc.id, 0)"></span>
+              </v-tooltip>
+            </div>
+          </template>
+
+          <template 
+            v-for="acc in accounts" 
+            :key="acc.id" 
+            v-slot:[`item.account_${acc.id}_2`]="{ item }"
+          >
+            <div
+              :class="[getOwnedStatusClass(item.id, acc.id, 2), 'account-cell']"
+              class="text-center"
+            >
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props }">
+                  <div
+                    v-bind="props"
+                    class="cell-content"
+                    v-html="getDisplayCellContent(item.id, acc.id, 1)"
+                  ></div>
+                </template>
+                <span v-html="getTooltipContent(item.id, acc.id, 1)"></span>
+              </v-tooltip>
+            </div>
+          </template>
+        </v-data-table-virtual>
       </v-card-text>
     </v-card>
   </div>
@@ -454,6 +383,33 @@ const characterTypes = computed(() => {
   return Array.from(
     new Set(props.characterMasters.map((m) => m.type).filter(Boolean))
   ).sort();
+});
+
+const headers = computed(() => {
+  const basicHeaders = [
+    { title: 'No.', key: 'indexNumber', align: 'center', sortable: true, width: 80 },
+    { title: 'キャラ名', key: 'monsterName', align: 'start', sortable: true, width: 200 }
+  ];
+
+  if (showExtraColumns.value) {
+    basicHeaders.push(
+      { title: '属性', key: 'element', align: 'center', sortable: true, width: 100 },
+      { title: '分類', key: 'type', align: 'center', sortable: true, width: 100 },
+      { title: '排出ガチャ', key: 'ejectionGacha', align: 'center', sortable: true, width: 100 }
+    );
+  }
+
+  // アカウント別の列を動的に追加
+  props.accounts.forEach(acc => {
+    // アカウント名から数字部分を抽出（例：「アカウント1」→「1」）
+    const accountNumber = acc.indexNumber || acc.name.match(/\d+/)?.[0] || acc.id;
+    basicHeaders.push(
+      { title: `${accountNumber}-1`, key: `account_${acc.id}_1`, align: 'center', sortable: false, width: 78 },
+      { title: `${accountNumber}-2`, key: `account_${acc.id}_2`, align: 'center', sortable: false, width: 78 }
+    );
+  });
+
+  return basicHeaders;
 });
 
 const filteredMasters = computed(() => {
@@ -749,27 +705,61 @@ const resetFilters = () => {
 
 /* テーブルレイアウトの最適化 */
 .table-fixed {
-  table-layout: fixed;
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
-/* キャラ名列の幅を制限 */
+/* すべてのテーブル関連要素に固定レイアウト適用 */
+.table-fixed table,
+.table-fixed .v-data-table-virtual table,
+.table-fixed .v-data-table__wrapper table,
+.table-fixed .v-table table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* Vuetifyの内部テーブル要素も強制固定 */
+.v-data-table-virtual table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* キャラ名列の幅を完全固定 */
 .table-fixed th:nth-child(2),
 .table-fixed td:nth-child(2) {
-  width: 200px;
-  max-width: 200px;
-  min-width: 200px;
+  width: 200px !important;
+  max-width: 200px !important;
+  min-width: 200px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 /* キャラクター名の表示を最適化 */
 .table-fixed td:nth-child(2) .d-flex {
-  width: 100%;
+  width: 200px !important;
+  max-width: 200px !important;
+  min-width: 200px !important;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .table-fixed td:nth-child(2) .font-weight-medium {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 140px !important;
+  width: 140px;
+  flex-shrink: 1;
+  flex-grow: 0;
+}
+
+/* アバターサイズも固定 */
+.table-fixed td:nth-child(2) .v-avatar {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  flex-shrink: 0;
+  margin-right: 12px;
 }
 
 /* 図鑑番号列の幅を制限 */
@@ -793,11 +783,12 @@ const resetFilters = () => {
 }
 
 /* アイテムセルの幅を調整して折り返しを防ぐ */
-.table-fixed th:nth-child(n + 2),
-.table-fixed td:nth-child(n + 3) {
-  width: 78px;
-  max-width: 78px;
-  min-width: 78px;
+.table-fixed th:nth-child(n + 6),
+.table-fixed td:nth-child(n + 6) {
+  width: 78px !important;
+  max-width: 78px !important;
+  min-width: 78px !important;
+  table-layout: fixed;
 }
 
 .table-fixed tr {
@@ -821,14 +812,203 @@ const resetFilters = () => {
   white-space: normal;
 }
 
-/* アイテム名の改行を有効化 */
-.table-fixed .cell-content br {
-  display: inline;
-}
-
-/* アイテムの文字サイズを小さくする */
+/* セルコンテンツの統一スタイル */
 .table-fixed .cell-content {
   font-size: 0.75rem;
-  line-height: 1.2;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 70px !important;
+  min-width: 70px;
+  max-width: 70px;
+  display: block;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+/* セルの高さを統一（1列目以外） */
+.table-fixed tr {
+  height: 110px !important;
+  min-height: 110px;
+}
+
+.table-fixed td {
+  vertical-align: top;
+  padding: 16px 8px;
+  height: 110px;
+}
+
+/* 1列目（図鑑No.）は他の列より低く */
+.table-fixed td:nth-child(1) {
+  height: 60px !important;
+  min-height: 60px;
+  vertical-align: middle;
+}
+
+/* セルコンテンツの位置調整 */
+.table-fixed .cell-content {
+  display: flex;
+  align-items: flex-start;
+  min-height: 78px;
+  justify-content: center;
+  width: 100%;
+}
+
+/* アイテムなしの場合の表示調整 */
+.table-fixed td:has(.cell-content:contains("—")) {
+  text-align: center;
+}
+
+/* 所持状況セルの統一スタイル */
+.table-fixed .status-owned,
+.table-fixed .status-unowned {
+  height: 110px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* アカウント別セルの統一スタイル */
+.account-cell {
+  height: 110px !important;
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  padding: 16px 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* 「—」表示の場合も同じ幅を確保 */
+.account-cell .cell-content {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 78px;
+}
+
+/* 「—」文字のみの場合の特別スタイル */
+.account-cell .cell-content:contains("—"),
+.account-cell .cell-content[innerHTML="—"] {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #999;
+}
+
+/* v-data-table-virtualのデフォルトヘッダーを薄くする */
+.table-fixed .v-data-table__th {
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  line-height: 1.3 !important;
+  font-weight: 500 !important;
+}
+
+/* ヘッダーを固定 */
+.table-fixed thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+}
+
+/* ヘッダーの統一スタイル（薄くする） */
+.table-fixed thead th {
+  background: var(--grey-100) !important;
+  border-bottom: 1px solid var(--grey-300) !important;
+  height: 6px !important;
+  min-height: 6px !important;
+  max-height: 6px !important;
+  padding: 2px 4px !important;
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+  vertical-align: middle;
+}
+
+/* v-data-table-virtualのヘッダーセルも薄くする */
+.table-fixed .v-data-table__th {
+  height: 6px !important;
+  min-height: 6px !important;
+  max-height: 6px !important;
+  padding: 2px 4px !important;
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+}
+
+/* 列幅の完全固定 */
+.table-fixed th,
+.table-fixed td {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 各列の幅を明示的に設定 */
+.table-fixed th:nth-child(1), .table-fixed td:nth-child(1) { width: 80px !important; }
+.table-fixed th:nth-child(2), .table-fixed td:nth-child(2) { width: 200px !important; }
+.table-fixed th:nth-child(3), .table-fixed td:nth-child(3) { width: 100px !important; }
+.table-fixed th:nth-child(4), .table-fixed td:nth-child(4) { width: 100px !important; }
+.table-fixed th:nth-child(5), .table-fixed td:nth-child(5) { width: 100px !important; }
+
+/* アカウント列（6列目以降）は78pxで統一 */
+.table-fixed th:nth-child(n+6), .table-fixed td:nth-child(n+6) { 
+  width: 78px !important;
+  min-width: 78px !important;
+  max-width: 78px !important;
+}
+
+/* Vuetifyの動的幅変更を無効化 */
+.table-fixed .v-data-table__th,
+.table-fixed .v-data-table__td {
+  width: unset !important;
+  min-width: unset !important;
+  max-width: unset !important;
+}
+
+/* より具体的な幅設定で上書き */
+.table-fixed .v-data-table__th:nth-child(1), 
+.table-fixed .v-data-table__td:nth-child(1) { 
+  width: 80px !important; 
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.table-fixed .v-data-table__th:nth-child(2), 
+.table-fixed .v-data-table__td:nth-child(2) { 
+  width: 200px !important; 
+  min-width: 200px !important;
+  max-width: 200px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* キャラクター名列のコンテンツエリアも固定 */
+.table-fixed .v-data-table__td:nth-child(2) > * {
+  width: 200px !important;
+  max-width: 200px !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.table-fixed .v-data-table__th:nth-child(n+6), 
+.table-fixed .v-data-table__td:nth-child(n+6) { 
+  width: 78px !important; 
+  min-width: 78px !important;
+  max-width: 78px !important;
 }
 </style>

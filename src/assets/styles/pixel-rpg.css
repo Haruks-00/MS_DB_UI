@@ -1,0 +1,676 @@
+/* RPGライクなピクセルデザイン（8-bit/16-bit風）スタイルシート */
+
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap");
+
+:root {
+  /* ピクセルRPGカラーパレット */
+  --pixel-primary: #4a90e2; /* 青 - メインカラー */
+  --pixel-secondary: #f39c12; /* オレンジ - アクセント */
+  --pixel-success: #27ae60; /* 緑 - 成功 */
+  --pixel-warning: #e74c3c; /* 赤 - 警告 */
+  --pixel-info: #9b59b6; /* 紫 - 情報 */
+  --pixel-dark: #2c3e50; /* ダークブルー */
+  --pixel-darker: #1a252f; /* より暗い青 */
+  --pixel-light: #ecf0f1; /* ライトグレー */
+  --pixel-lighter: #ffffff; /* 白 */
+  --pixel-gold: #f1c40f; /* ゴールド */
+  --pixel-silver: #bdc3c7; /* シルバー */
+  --pixel-bronze: #e67e22; /* ブロンズ */
+
+  /* ピクセル境界線 */
+  --pixel-border: 2px;
+  --pixel-border-radius: 0px; /* ピクセルアートは角丸なし */
+
+  /* ピクセルシャドウ */
+  --pixel-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+  --pixel-shadow-hover: 6px 6px 0px rgba(0, 0, 0, 0.9);
+  --pixel-shadow-inset: inset 2px 2px 0px rgba(0, 0, 0, 0.3);
+
+  /* ピクセルアニメーション */
+  --pixel-transition: 0.1s steps(1);
+  --pixel-blink: 0.5s steps(1) infinite;
+}
+
+/* ピクセルフォント設定 */
+.pixel-font {
+  font-family: "Press Start 2P", "VT323", monospace;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-font-small {
+  font-family: "VT323", monospace;
+  font-size: 1.1em;
+  line-height: 1.4;
+}
+
+/* ピクセル背景 - 静かで目に優しい */
+.pixel-bg {
+  background: radial-gradient(
+      circle at 25% 25%,
+      var(--pixel-darker) 2px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 75% 75%, var(--pixel-dark) 2px, transparent 2px);
+  background-size: 40px 40px;
+  background-color: var(--pixel-darker);
+}
+
+/* 代替背景オプション - より静か */
+.pixel-bg-quiet {
+  background: linear-gradient(
+    90deg,
+    var(--pixel-darker) 0%,
+    var(--pixel-dark) 50%,
+    var(--pixel-darker) 100%
+  );
+  background-size: 100px 100%;
+}
+
+/* 代替背景オプション - シンプル */
+.pixel-bg-simple {
+  background: var(--pixel-darker);
+  background-image: linear-gradient(
+      45deg,
+      var(--pixel-dark) 1px,
+      transparent 1px
+    ),
+    linear-gradient(-45deg, var(--pixel-dark) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ピクセルカード */
+.pixel-card {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  box-shadow: var(--pixel-shadow);
+  padding: 16px;
+  transition: var(--pixel-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--pixel-primary),
+    var(--pixel-secondary),
+    var(--pixel-success),
+    var(--pixel-warning),
+    var(--pixel-info)
+  );
+}
+
+.pixel-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-hover);
+}
+
+.pixel-card:active {
+  transform: translate(0px, 0px);
+  box-shadow: var(--pixel-shadow-inset);
+}
+
+/* ピクセルボタン */
+.pixel-btn {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-darker);
+  border-radius: var(--pixel-border-radius);
+  padding: 12px 24px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: var(--pixel-shadow);
+  transition: var(--pixel-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.pixel-btn:hover::before {
+  left: 100%;
+}
+
+.pixel-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-hover);
+  background: var(--pixel-secondary);
+}
+
+.pixel-btn:active {
+  transform: translate(0px, 0px);
+  box-shadow: var(--pixel-shadow-inset);
+}
+
+.pixel-btn:disabled {
+  background: var(--pixel-light);
+  color: var(--pixel-dark);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--pixel-shadow-inset);
+}
+
+/* ボタンバリエーション */
+.pixel-btn-success {
+  background: var(--pixel-success);
+}
+
+.pixel-btn-warning {
+  background: var(--pixel-warning);
+}
+
+.pixel-btn-info {
+  background: var(--pixel-info);
+}
+
+.pixel-btn-gold {
+  background: var(--pixel-gold);
+  color: var(--pixel-darker);
+}
+
+/* ピクセル入力フィールド */
+.pixel-input {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  padding: 12px 16px;
+  font-family: "VT323", monospace;
+  font-size: 1.1em;
+  color: var(--pixel-darker);
+  box-shadow: var(--pixel-shadow-inset);
+  transition: var(--pixel-transition);
+}
+
+.pixel-input:focus {
+  outline: none;
+  border-color: var(--pixel-primary);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+}
+
+.pixel-input::placeholder {
+  color: var(--pixel-light);
+  font-style: italic;
+}
+
+/* ピクセルセレクト */
+.pixel-select {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  padding: 12px 16px;
+  font-family: "VT323", monospace;
+  font-size: 1.1em;
+  color: var(--pixel-darker);
+  cursor: pointer;
+  box-shadow: var(--pixel-shadow-inset);
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.pixel-select-small {
+  padding: 6px 10px;
+  font-size: 0.9em;
+  min-height: auto;
+}
+
+/* ピクセルタブ */
+.pixel-tab {
+  background: var(--pixel-light);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-bottom: none;
+  border-radius: var(--pixel-border-radius) var(--pixel-border-radius) 0 0;
+  padding: 12px 24px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.7em;
+  color: var(--pixel-darker);
+  cursor: pointer;
+  transition: var(--pixel-transition);
+  position: relative;
+  margin-right: 4px;
+}
+
+.pixel-tab:hover {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+}
+
+.pixel-tab.active {
+  background: var(--pixel-lighter);
+  color: var(--pixel-darker);
+  border-bottom: var(--pixel-border) solid var(--pixel-lighter);
+  z-index: 1;
+}
+
+/* ピクセルリスト */
+.pixel-list {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  overflow: hidden;
+}
+
+.pixel-list-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--pixel-light);
+  transition: var(--pixel-transition);
+  cursor: pointer;
+}
+
+.pixel-list-item:hover {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+}
+
+.pixel-list-item:last-child {
+  border-bottom: none;
+}
+
+/* ピクセルチップ */
+.pixel-chip {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-darker);
+  border-radius: var(--pixel-border-radius);
+  padding: 6px 12px;
+  font-family: "VT323", monospace;
+  font-size: 1em;
+  display: inline-block;
+  margin: 2px;
+  box-shadow: var(--pixel-shadow-inset);
+}
+
+/* ピクセルプログレスバー */
+.pixel-progress {
+  background: var(--pixel-light);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.pixel-progress-bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--pixel-success),
+    var(--pixel-primary),
+    var(--pixel-secondary)
+  );
+  transition: width 0.3s steps(5);
+  position: relative;
+}
+
+.pixel-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.1) 4px,
+    rgba(255, 255, 255, 0.1) 8px
+  );
+}
+
+/* ピクセルアラート */
+.pixel-alert {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: var(--pixel-shadow);
+  position: relative;
+}
+
+.pixel-alert::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: var(--pixel-primary);
+}
+
+.pixel-alert-success::before {
+  background: var(--pixel-success);
+}
+
+.pixel-alert-warning::before {
+  background: var(--pixel-warning);
+}
+
+.pixel-alert-info::before {
+  background: var(--pixel-info);
+}
+
+/* ピクセルアイコン */
+.pixel-icon {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.8));
+}
+
+/* ピクセルアニメーション */
+@keyframes pixel-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pixel-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pixel-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.pixel-blink {
+  animation: pixel-blink var(--pixel-blink);
+}
+
+.pixel-pulse {
+  animation: pixel-pulse 2s infinite;
+}
+
+.pixel-shake {
+  animation: pixel-shake 0.5s infinite;
+}
+
+/* ピクセルヘッダー */
+.pixel-header {
+  background: var(--pixel-darker);
+  border-bottom: var(--pixel-border) solid var(--pixel-primary);
+  box-shadow: var(--pixel-shadow);
+}
+
+.pixel-header-title {
+  font-family: "Press Start 2P", monospace;
+  color: var(--pixel-gold);
+  text-shadow: 2px 2px 0px var(--pixel-darker);
+  animation: pixel-pulse 3s infinite;
+}
+
+/* ピクセルナビゲーション */
+.pixel-nav {
+  background: var(--pixel-dark);
+  border-bottom: var(--pixel-border) solid var(--pixel-primary);
+}
+
+.pixel-nav-tab {
+  background: var(--pixel-dark);
+  color: var(--pixel-light);
+  border: var(--pixel-border) solid transparent;
+  border-bottom: none;
+  padding: 12px 24px;
+  font-family: "VT323", monospace;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: var(--pixel-transition);
+  position: relative;
+}
+
+.pixel-nav-tab:hover {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+}
+
+.pixel-nav-tab.active {
+  background: var(--pixel-lighter);
+  color: var(--pixel-darker);
+  border-color: var(--pixel-primary);
+}
+
+/* ピクセルコンテナ */
+.pixel-container {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  padding: 24px;
+  margin: 16px 0;
+  box-shadow: var(--pixel-shadow);
+}
+
+/* ピクセルグリッド */
+.pixel-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* ピクセルフォーム */
+.pixel-form {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  padding: 24px;
+  box-shadow: var(--pixel-shadow);
+}
+
+.pixel-form-group {
+  margin-bottom: 20px;
+}
+
+.pixel-form-label {
+  display: block;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.7em;
+  color: var(--pixel-darker);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ピクセルテーブル */
+.pixel-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  overflow: hidden;
+  box-shadow: var(--pixel-shadow);
+}
+
+.pixel-table th,
+.pixel-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--pixel-light);
+  font-family: "VT323", monospace;
+}
+
+.pixel-table th {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pixel-table tr:hover {
+  background: var(--pixel-light);
+}
+
+/* ピクセルモーダル */
+.pixel-modal {
+  background: var(--pixel-lighter);
+  border: var(--pixel-border) solid var(--pixel-dark);
+  border-radius: var(--pixel-border-radius);
+  box-shadow: var(--pixel-shadow-hover);
+  overflow: hidden;
+}
+
+.pixel-modal-header {
+  background: var(--pixel-primary);
+  color: var(--pixel-lighter);
+  padding: 16px 24px;
+  border-bottom: var(--pixel-border) solid var(--pixel-darker);
+}
+
+.pixel-modal-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pixel-modal-body {
+  padding: 24px;
+}
+
+.pixel-modal-footer {
+  padding: 16px 24px;
+  border-top: var(--pixel-border) solid var(--pixel-light);
+  background: var(--pixel-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ピクセルステータスバー */
+.pixel-status-bar {
+  background: var(--pixel-darker);
+  color: var(--pixel-lighter);
+  padding: 8px 16px;
+  font-family: "VT323", monospace;
+  font-size: 1em;
+  border-top: var(--pixel-border) solid var(--pixel-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ピクセルツールチップ */
+.pixel-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.pixel-tooltip .pixel-tooltip-text {
+  visibility: hidden;
+  background: var(--pixel-darker);
+  color: var(--pixel-lighter);
+  text-align: center;
+  padding: 8px 12px;
+  border: var(--pixel-border) solid var(--pixel-primary);
+  border-radius: var(--pixel-border-radius);
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "VT323", monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  box-shadow: var(--pixel-shadow);
+}
+
+.pixel-tooltip:hover .pixel-tooltip-text {
+  visibility: visible;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .pixel-btn {
+    font-size: 0.6em;
+    padding: 10px 20px;
+  }
+
+  .pixel-tab {
+    font-size: 0.6em;
+    padding: 10px 20px;
+  }
+
+  .pixel-header-title {
+    font-size: 1.2em;
+  }
+
+  .pixel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ピクセルスクロールバー */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pixel-light);
+  border: var(--pixel-border) solid var(--pixel-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-primary);
+  border: var(--pixel-border) solid var(--pixel-darker);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-secondary);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--pixel-dark);
+  border: var(--pixel-border) solid var(--pixel-darker);
+}
