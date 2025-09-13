@@ -1,3 +1,12 @@
 node_modules
 
 .env.local
+
+# Claude Code ローカル設定
+.claude/settings.local.json
+
+# Firebase デバッグログ
+functions/firebase-debug.log
+
+# 一時ファイル
+temp/
