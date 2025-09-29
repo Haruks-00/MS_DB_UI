@@ -107,6 +107,7 @@
                     v-model="filters.totalOwnership"
                     :items="[
                       { value: 'all_unowned', title: '全アカウントで未所持' },
+                      { value: 'three_or_more', title: '合計3体以上' },
                       { value: 'four_or_more', title: '合計4体以上' },
                       {
                         value: 'one_in_each',
@@ -119,6 +120,22 @@
                     clearable
                     color="primary"
                     prepend-inner-icon="mdi-account-group"
+                    class="minimal-select"
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="filters.columnFilter"
+                    :items="[
+                      { value: 'has_one_item_character', title: 'アイテム1つ所持キャラが居る列' },
+                      { value: 'has_two_item_character', title: 'アイテム2つ所持キャラが居る列' },
+                    ]"
+                    label="列単位での絞り込み"
+                    variant="outlined"
+                    density="compact"
+                    clearable
+                    color="primary"
+                    prepend-inner-icon="mdi-view-column"
                     class="minimal-select"
                   ></v-select>
                 </v-col>
@@ -375,6 +392,7 @@ const createInitialFiltersState = () => ({
   totalOwnership: "",
   account: "",
   ownership: "",
+  columnFilter: "",
 });
 
 const filters = reactive(createInitialFiltersState());
@@ -424,6 +442,7 @@ const filteredMasters = computed(() => {
     totalOwnership,
     account,
     ownership,
+    columnFilter,
   } = filters;
   const lowerCharSearch = charSearch.toLowerCase();
   const searchItemId = itemSearch ? Number(itemSearch) : null;
@@ -477,6 +496,7 @@ const filteredMasters = computed(() => {
       0
     );
     if (totalOwnership === "all_unowned" && totalOwnedCount > 0) return false;
+    if (totalOwnership === "three_or_more" && totalOwnedCount < 3) return false;
     if (totalOwnership === "four_or_more" && totalOwnedCount < 4) return false;
     if (
       totalOwnership === "one_in_each" &&
@@ -490,6 +510,33 @@ const filteredMasters = computed(() => {
       if (ownership === "unowned" && countInAccount > 0) return false;
       if (ownership === "one" && countInAccount !== 1) return false;
       if (ownership === "two" && countInAccount !== 2) return false;
+    }
+
+    // 列フィルタ処理: アイテム1つ所持、アイテム2つ所持キャラが居る列の絞り込み
+    if (columnFilter === 'has_one_item_character') {
+      let hasOneItemCharacter = false;
+      for (const acc of props.accounts) {
+        const accountChars = props.ownedCharactersData.get(acc.id) || [];
+        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
+        if (masterChars.some(char => char.items && char.items.length === 1)) {
+          hasOneItemCharacter = true;
+          break;
+        }
+      }
+      if (!hasOneItemCharacter) return false;
+    }
+
+    if (columnFilter === 'has_two_item_character') {
+      let hasTwoItemCharacter = false;
+      for (const acc of props.accounts) {
+        const accountChars = props.ownedCharactersData.get(acc.id) || [];
+        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
+        if (masterChars.some(char => char.items && char.items.length === 2)) {
+          hasTwoItemCharacter = true;
+          break;
+        }
+      }
+      if (!hasTwoItemCharacter) return false;
     }
 
     return true;

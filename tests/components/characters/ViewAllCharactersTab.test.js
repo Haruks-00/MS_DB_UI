@@ -196,7 +196,7 @@ describe('ViewAllCharactersTab', () => {
 
   it('ローディング状態が正しく表示される', () => {
     const loadingProps = { ...mockProps, dataLoaded: false }
-    
+
     wrapper = mount(ViewAllCharactersTab, {
       props: loadingProps,
       global: {
@@ -206,5 +206,181 @@ describe('ViewAllCharactersTab', () => {
 
     const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
     expect(dataTable.props('loading')).toBe(true)
+  })
+
+  describe('新機能のフィルタ機能', () => {
+    it('合計3体以上所持のフィルタが動作する', async () => {
+      // テストデータ: キャラ1は合計1体、キャラ2は合計3体、キャラ3は合計4体
+      const testProps = {
+        ...mockProps,
+        characterMasters: [
+          {
+            id: 1,
+            indexNumber: 1,
+            monsterName: 'テストキャラ1',
+            element: '火',
+            type: '恒常'
+          },
+          {
+            id: 2,
+            indexNumber: 2,
+            monsterName: 'テストキャラ2',
+            element: '水',
+            type: '限定'
+          },
+          {
+            id: 3,
+            indexNumber: 3,
+            monsterName: 'テストキャラ3',
+            element: '木',
+            type: '恒常'
+          }
+        ],
+        ownedCountMap: new Map([
+          ['1-1', 1], ['1-2', 0], // キャラ1: 合計1体
+          ['2-1', 1], ['2-2', 2], // キャラ2: 合計3体
+          ['3-1', 2], ['3-2', 2]  // キャラ3: 合計4体
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: {
+          plugins: [vuetify]
+        }
+      })
+
+      // v-expansion-panelを展開
+      const expansionPanel = wrapper.findComponent({ name: 'VExpansionPanel' })
+      await expansionPanel.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // 「合計3体以上」のフィルタを選択
+      const totalOwnershipSelect = wrapper.findAll('select').find(select =>
+        select.element.closest('.v-select').querySelector('label')?.textContent.includes('全体の所持状況')
+      )
+      expect(totalOwnershipSelect).toBeDefined()
+
+      // 「合計3体以上」オプションを設定
+      wrapper.vm.filters.totalOwnership = 'three_or_more'
+      await wrapper.vm.$nextTick()
+
+      const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
+      const items = dataTable.props('items')
+
+      // 合計3体以上のキャラ（キャラ2とキャラ3）のみが表示される
+      expect(items.length).toBe(2)
+      expect(items.map(item => item.monsterName)).toEqual(['テストキャラ2', 'テストキャラ3'])
+    })
+
+    it('アイテム1つ所持キャラが居る列の絞り込み機能が動作する', async () => {
+      // テストデータ: アカウント1にアイテム1つ所持キャラ、アカウント2にアイテム2つ所持キャラ
+      const testProps = {
+        ...mockProps,
+        characterMasters: [
+          {
+            id: 1,
+            indexNumber: 1,
+            monsterName: 'テストキャラ1',
+            element: '火',
+            type: '恒常'
+          },
+          {
+            id: 2,
+            indexNumber: 2,
+            monsterName: 'テストキャラ2',
+            element: '水',
+            type: '限定'
+          }
+        ],
+        ownedCharactersData: new Map([
+          [1, [
+            { characterMasterId: 1, items: [1] },      // アイテム1つ
+            { characterMasterId: 2, items: [1, 2] }    // アイテム2つ
+          ]],
+          [2, [
+            { characterMasterId: 1, items: [1, 2] },   // アイテム2つ
+            { characterMasterId: 2, items: [1] }       // アイテム1つ
+          ]]
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: {
+          plugins: [vuetify]
+        }
+      })
+
+      // v-expansion-panelを展開
+      const expansionPanel = wrapper.findComponent({ name: 'VExpansionPanel' })
+      await expansionPanel.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // 「アイテム1つ所持キャラが居る列」フィルタを設定
+      wrapper.vm.filters.columnFilter = 'has_one_item_character'
+      await wrapper.vm.$nextTick()
+
+      const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
+      const items = dataTable.props('items')
+
+      // 両方のキャラが表示される（両方ともいずれかのアカウントでアイテム1つ所持がある）
+      expect(items.length).toBe(2)
+    })
+
+    it('アイテム2つ所持キャラが居る列の絞り込み機能が動作する', async () => {
+      // テストデータ: アカウント1にアイテム2つ所持キャラ、アカウント2にアイテム1つ所持キャラ
+      const testProps = {
+        ...mockProps,
+        characterMasters: [
+          {
+            id: 1,
+            indexNumber: 1,
+            monsterName: 'テストキャラ1',
+            element: '火',
+            type: '恒常'
+          },
+          {
+            id: 2,
+            indexNumber: 2,
+            monsterName: 'テストキャラ2',
+            element: '水',
+            type: '限定'
+          }
+        ],
+        ownedCharactersData: new Map([
+          [1, [
+            { characterMasterId: 1, items: [1, 2] },   // アイテム2つ
+            { characterMasterId: 2, items: [1] }       // アイテム1つ
+          ]],
+          [2, [
+            { characterMasterId: 1, items: [1] },      // アイテム1つ
+            { characterMasterId: 2, items: [1, 2] }    // アイテム2つ
+          ]]
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: {
+          plugins: [vuetify]
+        }
+      })
+
+      // v-expansion-panelを展開
+      const expansionPanel = wrapper.findComponent({ name: 'VExpansionPanel' })
+      await expansionPanel.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // 「アイテム2つ所持キャラが居る列」フィルタを設定
+      wrapper.vm.filters.columnFilter = 'has_two_item_character'
+      await wrapper.vm.$nextTick()
+
+      const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
+      const items = dataTable.props('items')
+
+      // 両方のキャラが表示される（両方ともいずれかのアカウントでアイテム2つ所持がある）
+      expect(items.length).toBe(2)
+    })
   })
 })
