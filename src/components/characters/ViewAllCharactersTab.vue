@@ -57,6 +57,7 @@
                     color="primary"
                     prepend-inner-icon="mdi-fire"
                     class="minimal-select"
+                    multiple
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -72,6 +73,7 @@
                     color="primary"
                     prepend-inner-icon="mdi-sword-cross"
                     class="minimal-select"
+                    multiple
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -85,6 +87,7 @@
                     color="primary"
                     prepend-inner-icon="mdi-tag"
                     class="minimal-select"
+                    multiple
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
@@ -100,20 +103,25 @@
                     color="primary"
                     prepend-inner-icon="mdi-gift"
                     class="minimal-select"
+                    multiple
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="4">
                   <v-select
                     v-model="filters.totalOwnership"
                     :items="[
-                      { value: 'all_unowned', title: '全アカウントで未所持' },
-                      { value: 'three_or_more', title: '合計3体以上' },
-                      { value: 'four_or_more', title: '合計4体以上' },
+                      { value: 'all_unowned', title: '未所持' },
+                      { value: 'one_total', title: '合計1体' },
+                      { value: 'two_total', title: '合計2体' },
+                      { value: 'three_total', title: '合計3体' },
+                      { value: 'four_total', title: '合計4体' },
+                      { value: 'five_or_more', title: '合計それ以上（5体以上）' },
                       {
                         value: 'one_in_each',
                         title: '各アカウントで1体以上所持',
                       },
                     ]"
+                    multiple
                     label="全体の所持状況"
                     variant="outlined"
                     density="compact"
@@ -132,6 +140,7 @@
                       { value: 'has_two_item_character', title: 'アイテム2つ所持キャラが居る列' },
                       { value: 'has_three_item_character', title: 'アイテム3つ所持キャラが居る列' },
                     ]"
+                    multiple
                     label="列単位での絞り込み"
                     variant="outlined"
                     density="compact"
@@ -387,14 +396,14 @@ const showExtraColumns = ref(false);
 
 const createInitialFiltersState = () => ({
   charSearch: "",
-  element: "",
-  itemSearch: "",
-  type: "",
-  gachaSearch: "",
-  totalOwnership: "",
+  element: [],
+  itemSearch: [],
+  type: [],
+  gachaSearch: [],
+  totalOwnership: [],
   account: "",
   ownership: "",
-  columnFilter: "",
+  columnFilter: [],
 });
 
 const filters = reactive(createInitialFiltersState());
@@ -407,7 +416,7 @@ const characterTypes = computed(() => {
 
 const headers = computed(() => {
   const basicHeaders = [
-    { title: 'No.', key: 'indexNumber', align: 'center', sortable: true, width: 80 },
+    { title: '図鑑No.', key: 'indexNumber', align: 'center', sortable: true, width: 80 },
     { title: 'キャラ名', key: 'monsterName', align: 'start', sortable: true, width: 200 }
   ];
 
@@ -447,7 +456,7 @@ const filteredMasters = computed(() => {
     columnFilter,
   } = filters;
   const lowerCharSearch = charSearch.toLowerCase();
-  const searchItemId = itemSearch ? Number(itemSearch) : null;
+  const searchItemIds = itemSearch.map(id => Number(id));
 
   return props.characterMasters.filter((master) => {
     if (
@@ -456,35 +465,56 @@ const filteredMasters = computed(() => {
       !(master.indexNumber + "").includes(lowerCharSearch)
     )
       return false;
-    if (element && master.element !== element) return false;
-    if (type) {
-      if (type === "恒常_or_限定") {
-        if (master.type !== "恒常" && master.type !== "限定") return false;
-      } else {
-        if (master.type !== type) return false;
+    if (element.length > 0 && !element.includes(master.element)) return false;
+    if (type.length > 0) {
+      let typeMatch = false;
+      for (const selectedType of type) {
+        if (selectedType === "恒常_or_限定") {
+          if (master.type === "恒常" || master.type === "限定") {
+            typeMatch = true;
+            break;
+          }
+        } else {
+          if (master.type === selectedType) {
+            typeMatch = true;
+            break;
+          }
+        }
       }
+      if (!typeMatch) return false;
     }
-    if (gachaSearch && (master.ejectionGacha || "") !== gachaSearch)
+    if (gachaSearch.length > 0 && !gachaSearch.includes(master.ejectionGacha || ""))
       return false;
 
-    if (searchItemId) {
+    if (searchItemIds.length > 0) {
       let hasItem = false;
       const targetAccount = account || null;
-      if (targetAccount) {
-        hasItem = (props.ownedCharactersData.get(targetAccount) || []).some(
-          (char) =>
-            char.characterMasterId === master.id &&
-            char.items?.some((itemId) => Number(itemId) === searchItemId)
-        );
-      } else {
-        for (const ownedChars of props.ownedCharactersData.values()) {
-          if (
-            ownedChars.some(
-              (char) =>
-                char.characterMasterId === master.id &&
-                char.items?.some((itemId) => Number(itemId) === searchItemId)
-            )
-          ) {
+
+      for (const searchItemId of searchItemIds) {
+        if (targetAccount) {
+          if ((props.ownedCharactersData.get(targetAccount) || []).some(
+            (char) =>
+              char.characterMasterId === master.id &&
+              char.items?.some((itemId) => Number(itemId) === searchItemId)
+          )) {
+            hasItem = true;
+            break;
+          }
+        } else {
+          let foundInAnyAccount = false;
+          for (const ownedChars of props.ownedCharactersData.values()) {
+            if (
+              ownedChars.some(
+                (char) =>
+                  char.characterMasterId === master.id &&
+                  char.items?.some((itemId) => Number(itemId) === searchItemId)
+              )
+            ) {
+              foundInAnyAccount = true;
+              break;
+            }
+          }
+          if (foundInAnyAccount) {
             hasItem = true;
             break;
           }
@@ -493,18 +523,49 @@ const filteredMasters = computed(() => {
       if (!hasItem) return false;
     }
 
-    const totalOwnedCount = props.accounts.reduce(
-      (sum, acc) => sum + getOwnedCount(master.id, acc.id),
-      0
-    );
-    if (totalOwnership === "all_unowned" && totalOwnedCount > 0) return false;
-    if (totalOwnership === "three_or_more" && totalOwnedCount < 3) return false;
-    if (totalOwnership === "four_or_more" && totalOwnedCount < 4) return false;
-    if (
-      totalOwnership === "one_in_each" &&
-      !props.accounts.every((acc) => getOwnedCount(master.id, acc.id) >= 1)
-    )
-      return false;
+    // 全体の所持状況フィルタ（複数選択対応）
+    if (totalOwnership && totalOwnership.length > 0) {
+      const totalOwnedCount = props.accounts.reduce(
+        (sum, acc) => sum + getOwnedCount(master.id, acc.id),
+        0
+      );
+
+      let matchesAnyCondition = false;
+      for (const condition of totalOwnership) {
+        if (condition === "all_unowned" && totalOwnedCount === 0) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (condition === "one_total" && totalOwnedCount === 1) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (condition === "two_total" && totalOwnedCount === 2) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (condition === "three_total" && totalOwnedCount === 3) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (condition === "four_total" && totalOwnedCount === 4) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (condition === "five_or_more" && totalOwnedCount >= 5) {
+          matchesAnyCondition = true;
+          break;
+        }
+        if (
+          condition === "one_in_each" &&
+          props.accounts.every((acc) => getOwnedCount(master.id, acc.id) >= 1)
+        ) {
+          matchesAnyCondition = true;
+          break;
+        }
+      }
+      if (!matchesAnyCondition) return false;
+    }
 
     if (account && ownership) {
       const countInAccount = getOwnedCount(master.id, account);
@@ -514,57 +575,46 @@ const filteredMasters = computed(() => {
       if (ownership === "two" && countInAccount !== 2) return false;
     }
 
-    // 列フィルタ処理: アイテム0つ、1つ、2つ、3つ所持キャラが居る列の絞り込み
-    if (columnFilter === 'has_zero_item_character') {
-      let hasZeroItemCharacter = false;
-      for (const acc of props.accounts) {
-        const accountChars = props.ownedCharactersData.get(acc.id) || [];
-        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
-        if (masterChars.some(char => !char.items || char.items.length === 0)) {
-          hasZeroItemCharacter = true;
-          break;
-        }
-      }
-      if (!hasZeroItemCharacter) return false;
-    }
+    // 列フィルタ処理: アイテム0つ、1つ、2つ、3つ所持キャラが居る列の絞り込み（複数選択対応）
+    if (columnFilter && columnFilter.length > 0) {
+      let matchesAnyColumnCondition = false;
 
-    if (columnFilter === 'has_one_item_character') {
-      let hasOneItemCharacter = false;
-      for (const acc of props.accounts) {
-        const accountChars = props.ownedCharactersData.get(acc.id) || [];
-        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
-        if (masterChars.some(char => char.items && char.items.length === 1)) {
-          hasOneItemCharacter = true;
-          break;
-        }
-      }
-      if (!hasOneItemCharacter) return false;
-    }
+      for (const condition of columnFilter) {
+        let hasMatchingCharacter = false;
 
-    if (columnFilter === 'has_two_item_character') {
-      let hasTwoItemCharacter = false;
-      for (const acc of props.accounts) {
-        const accountChars = props.ownedCharactersData.get(acc.id) || [];
-        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
-        if (masterChars.some(char => char.items && char.items.length === 2)) {
-          hasTwoItemCharacter = true;
-          break;
-        }
-      }
-      if (!hasTwoItemCharacter) return false;
-    }
+        for (const acc of props.accounts) {
+          const accountChars = props.ownedCharactersData.get(acc.id) || [];
+          const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
 
-    if (columnFilter === 'has_three_item_character') {
-      let hasThreeItemCharacter = false;
-      for (const acc of props.accounts) {
-        const accountChars = props.ownedCharactersData.get(acc.id) || [];
-        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
-        if (masterChars.some(char => char.items && char.items.length === 3)) {
-          hasThreeItemCharacter = true;
+          if (condition === 'has_zero_item_character' &&
+              masterChars.some(char => !char.items || char.items.length === 0)) {
+            hasMatchingCharacter = true;
+            break;
+          }
+          if (condition === 'has_one_item_character' &&
+              masterChars.some(char => char.items && char.items.length === 1)) {
+            hasMatchingCharacter = true;
+            break;
+          }
+          if (condition === 'has_two_item_character' &&
+              masterChars.some(char => char.items && char.items.length === 2)) {
+            hasMatchingCharacter = true;
+            break;
+          }
+          if (condition === 'has_three_item_character' &&
+              masterChars.some(char => char.items && char.items.length === 3)) {
+            hasMatchingCharacter = true;
+            break;
+          }
+        }
+
+        if (hasMatchingCharacter) {
+          matchesAnyColumnCondition = true;
           break;
         }
       }
-      if (!hasThreeItemCharacter) return false;
+
+      if (!matchesAnyColumnCondition) return false;
     }
 
     return true;
