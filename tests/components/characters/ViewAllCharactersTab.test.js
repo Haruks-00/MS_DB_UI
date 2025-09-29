@@ -382,5 +382,115 @@ describe('ViewAllCharactersTab', () => {
       // 両方のキャラが表示される（両方ともいずれかのアカウントでアイテム2つ所持がある）
       expect(items.length).toBe(2)
     })
+
+    it('アイテム0つ所持キャラが居る列の絞り込み機能が動作する', async () => {
+      // テストデータ: アカウント1にアイテム0つ所持キャラ、アカウント2にアイテム1つ所持キャラ
+      const testProps = {
+        ...mockProps,
+        characterMasters: [
+          {
+            id: 1,
+            indexNumber: 1,
+            monsterName: 'テストキャラ1',
+            element: '火',
+            type: '恒常'
+          },
+          {
+            id: 2,
+            indexNumber: 2,
+            monsterName: 'テストキャラ2',
+            element: '水',
+            type: '限定'
+          }
+        ],
+        ownedCharactersData: new Map([
+          [1, [
+            { characterMasterId: 1, items: [] },        // アイテム0つ
+            { characterMasterId: 2, items: [1] }        // アイテム1つ
+          ]],
+          [2, [
+            { characterMasterId: 1, items: [1] },       // アイテム1つ
+            { characterMasterId: 2, items: [] }         // アイテム0つ
+          ]]
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: {
+          plugins: [vuetify]
+        }
+      })
+
+      // v-expansion-panelを展開
+      const expansionPanel = wrapper.findComponent({ name: 'VExpansionPanel' })
+      await expansionPanel.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // 「アイテム0つ所持キャラが居る列」フィルタを設定
+      wrapper.vm.filters.columnFilter = 'has_zero_item_character'
+      await wrapper.vm.$nextTick()
+
+      const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
+      const items = dataTable.props('items')
+
+      // 両方のキャラが表示される（両方ともいずれかのアカウントでアイテム0つ所持がある）
+      expect(items.length).toBe(2)
+    })
+
+    it('アイテム3つ所持キャラが居る列の絞り込み機能が動作する', async () => {
+      // テストデータ: アカウント1にアイテム3つ所持キャラ、アカウント2にアイテム1つ所持キャラ
+      const testProps = {
+        ...mockProps,
+        characterMasters: [
+          {
+            id: 1,
+            indexNumber: 1,
+            monsterName: 'テストキャラ1',
+            element: '火',
+            type: '恒常'
+          },
+          {
+            id: 2,
+            indexNumber: 2,
+            monsterName: 'テストキャラ2',
+            element: '水',
+            type: '限定'
+          }
+        ],
+        ownedCharactersData: new Map([
+          [1, [
+            { characterMasterId: 1, items: [1, 2, 3] }, // アイテム3つ
+            { characterMasterId: 2, items: [1] }        // アイテム1つ
+          ]],
+          [2, [
+            { characterMasterId: 1, items: [1] },       // アイテム1つ
+            { characterMasterId: 2, items: [1, 2, 3] }  // アイテム3つ
+          ]]
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: {
+          plugins: [vuetify]
+        }
+      })
+
+      // v-expansion-panelを展開
+      const expansionPanel = wrapper.findComponent({ name: 'VExpansionPanel' })
+      await expansionPanel.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // 「アイテム3つ所持キャラが居る列」フィルタを設定
+      wrapper.vm.filters.columnFilter = 'has_three_item_character'
+      await wrapper.vm.$nextTick()
+
+      const dataTable = wrapper.findComponent({ name: 'VDataTableVirtual' })
+      const items = dataTable.props('items')
+
+      // 両方のキャラが表示される（両方ともいずれかのアカウントでアイテム3つ所持がある）
+      expect(items.length).toBe(2)
+    })
   })
 })

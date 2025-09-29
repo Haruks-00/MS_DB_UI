@@ -127,8 +127,10 @@
                   <v-select
                     v-model="filters.columnFilter"
                     :items="[
+                      { value: 'has_zero_item_character', title: 'アイテム0つ所持キャラが居る列' },
                       { value: 'has_one_item_character', title: 'アイテム1つ所持キャラが居る列' },
                       { value: 'has_two_item_character', title: 'アイテム2つ所持キャラが居る列' },
+                      { value: 'has_three_item_character', title: 'アイテム3つ所持キャラが居る列' },
                     ]"
                     label="列単位での絞り込み"
                     variant="outlined"
@@ -512,7 +514,20 @@ const filteredMasters = computed(() => {
       if (ownership === "two" && countInAccount !== 2) return false;
     }
 
-    // 列フィルタ処理: アイテム1つ所持、アイテム2つ所持キャラが居る列の絞り込み
+    // 列フィルタ処理: アイテム0つ、1つ、2つ、3つ所持キャラが居る列の絞り込み
+    if (columnFilter === 'has_zero_item_character') {
+      let hasZeroItemCharacter = false;
+      for (const acc of props.accounts) {
+        const accountChars = props.ownedCharactersData.get(acc.id) || [];
+        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
+        if (masterChars.some(char => !char.items || char.items.length === 0)) {
+          hasZeroItemCharacter = true;
+          break;
+        }
+      }
+      if (!hasZeroItemCharacter) return false;
+    }
+
     if (columnFilter === 'has_one_item_character') {
       let hasOneItemCharacter = false;
       for (const acc of props.accounts) {
@@ -537,6 +552,19 @@ const filteredMasters = computed(() => {
         }
       }
       if (!hasTwoItemCharacter) return false;
+    }
+
+    if (columnFilter === 'has_three_item_character') {
+      let hasThreeItemCharacter = false;
+      for (const acc of props.accounts) {
+        const accountChars = props.ownedCharactersData.get(acc.id) || [];
+        const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
+        if (masterChars.some(char => char.items && char.items.length === 3)) {
+          hasThreeItemCharacter = true;
+          break;
+        }
+      }
+      if (!hasThreeItemCharacter) return false;
     }
 
     return true;
