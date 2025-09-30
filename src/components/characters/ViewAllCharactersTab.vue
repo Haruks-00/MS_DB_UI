@@ -679,11 +679,11 @@ const getDisplayCellContent = (masterId, accountId, index) => {
 
       if (!itemName) return null;
 
-      // 仮想アイテムはオレンジ色で表示
+      // 仮想アイテムにはクラスを追加
       if (isVirtual) {
-        return `<span style="color: #FF9800;">${itemName}</span>`;
+        return `<span class="virtual-item item-name">${itemName}</span>`;
       }
-      return itemName;
+      return `<span class="item-name">${itemName}</span>`;
     })
     .filter(Boolean)
     .join("<br>");
@@ -711,7 +711,7 @@ const getTooltipContent = (masterId, accountId, index) => {
       if (!itemName) return null;
 
       if (isVirtual) {
-        return `${itemName}（予定）`;
+        return itemName;
       }
       return itemName;
     })
@@ -1033,9 +1033,8 @@ const handleSaveItems = async ({ character, items }) => {
 .table-fixed .cell-content {
   font-size: 0.75rem;
   line-height: 1.3;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
   width: 70px !important;
   min-width: 70px;
   max-width: 70px;
@@ -1065,10 +1064,9 @@ const handleSaveItems = async ({ character, items }) => {
 
 /* セルコンテンツの位置調整 */
 .table-fixed .cell-content {
-  display: flex;
-  align-items: flex-start;
+  display: block;
+  text-align: center;
   min-height: 78px;
-  justify-content: center;
   width: 100%;
 }
 
@@ -1105,9 +1103,7 @@ const handleSaveItems = async ({ character, items }) => {
   min-width: 60px !important;
   max-width: 60px !important;
   text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   min-height: 78px;
 }
 
@@ -1117,9 +1113,8 @@ const handleSaveItems = async ({ character, items }) => {
   width: 60px !important;
   min-width: 60px !important;
   max-width: 60px !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
+  display: block !important;
+  text-align: center;
   font-size: 1.2rem;
   color: #999;
 }
@@ -1224,8 +1219,21 @@ const handleSaveItems = async ({ character, items }) => {
 
 .table-fixed .v-data-table__th:nth-child(n+6), 
 .table-fixed .v-data-table__td:nth-child(n+6) { 
-  width: 78px !important; 
+  width: 78px !important;
   min-width: 78px !important;
   max-width: 78px !important;
 }
+
+/* 仮想アイテムのスタイル */
+:deep(.virtual-item) {
+  color: #FF9800;
+}
+
+/* アイテム名の途中で改行しない */
+:deep(.item-name) {
+  white-space: nowrap;
+  display: inline-block;
+  font-size: 0.7rem;
+}
+
 </style>
