@@ -1,4 +1,5 @@
 import { lazyLoadDatabase } from "../utils/lazyLoader.js";
+import { ensureNewFormat } from "../utils/itemMigration.js";
 import {
   collection,
   doc,
@@ -98,7 +99,10 @@ const loadAndProcessInitialData = async (userId) => {
     ownedCountMap.set(countKey, (ownedCountMap.get(countKey) || 0) + 1);
     if (!ownedCharactersData.has(accountId))
       ownedCharactersData.set(accountId, []);
-    ownedCharactersData.get(accountId).push({ ...data, id: doc.id });
+
+    // アイテムデータを新形式に自動変換
+    const migratedItems = ensureNewFormat(data.items);
+    ownedCharactersData.get(accountId).push({ ...data, items: migratedItems, id: doc.id });
   });
 
   return {

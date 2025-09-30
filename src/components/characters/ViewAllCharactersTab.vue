@@ -631,13 +631,29 @@ const getDisplayCellContent = (masterId, accountId, index) => {
   );
   if (!ownedList || ownedList.length <= index) return "—";
 
-  // アイテム名をすべて表示するように修正
-  const itemNames = (ownedList[index].items || [])
-    .map((id) => props.itemMastersMap.get(Number(id)))
-    .filter(Boolean)
-    .join("<br>"); // 改行区切りで表示
+  const items = ownedList[index].items || [];
 
-  return itemNames ? `✔️<br>${itemNames}` : "✔️";
+  // アイテムを実/仮想に分けて表示
+  const itemLines = items
+    .map((item) => {
+      // 新形式の場合: { itemId: 1, isVirtual: false }
+      // 旧形式の場合: 1（数値）
+      const itemId = typeof item === 'object' ? item.itemId : item;
+      const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+      const itemName = props.itemMastersMap.get(Number(itemId));
+
+      if (!itemName) return null;
+
+      // 仮想アイテムはグレーアウトして📋アイコンを表示
+      if (isVirtual) {
+        return `<span style="color: #999; opacity: 0.6;">📋 ${itemName}</span>`;
+      }
+      return itemName;
+    })
+    .filter(Boolean)
+    .join("<br>");
+
+  return itemLines ? `✔️<br>${itemLines}` : "✔️";
 };
 
 /**
@@ -649,12 +665,25 @@ const getTooltipContent = (masterId, accountId, index) => {
   );
   if (!ownedList || ownedList.length <= index) return "未所持";
 
-  const itemNames = (ownedList[index].items || [])
-    .map((id) => props.itemMastersMap.get(Number(id)))
+  const items = ownedList[index].items || [];
+
+  const itemLines = items
+    .map((item) => {
+      const itemId = typeof item === 'object' ? item.itemId : item;
+      const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+      const itemName = props.itemMastersMap.get(Number(itemId));
+
+      if (!itemName) return null;
+
+      if (isVirtual) {
+        return `📋 ${itemName}（予定）`;
+      }
+      return itemName;
+    })
     .filter(Boolean)
     .join("<br>");
 
-  return itemNames || "アイテムなし";
+  return itemLines || "アイテムなし";
 };
 
 const getOwnedStatusClass = (masterId, accountId, requiredCount) => {
