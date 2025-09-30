@@ -57,7 +57,7 @@
               <template v-slot:prepend>
                 <v-icon
                   :icon="item.isVirtual ? 'mdi-clipboard-text-outline' : 'mdi-check-circle'"
-                  :color="item.isVirtual ? 'grey' : 'success'"
+                  :color="item.isVirtual ? 'orange' : 'success'"
                 ></v-icon>
               </template>
 
@@ -170,7 +170,7 @@ const itemCountRule = (value) => {
 const getItemChipColor = (itemId) => {
   const item = editingItems.value.find(i => i.itemId === itemId)
   if (!item) return 'primary'
-  return item.isVirtual ? 'grey' : 'success'
+  return item.isVirtual ? 'orange' : 'success'
 }
 
 // アイテム名を取得

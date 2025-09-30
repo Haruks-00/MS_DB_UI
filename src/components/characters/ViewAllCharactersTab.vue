@@ -679,9 +679,9 @@ const getDisplayCellContent = (masterId, accountId, index) => {
 
       if (!itemName) return null;
 
-      // 仮想アイテムはグレーアウトして📋アイコンを表示
+      // 仮想アイテムはオレンジ色で表示
       if (isVirtual) {
-        return `<span style="color: #999; opacity: 0.6;">📋 ${itemName}</span>`;
+        return `<span style="color: #FF9800;">${itemName}</span>`;
       }
       return itemName;
     })
@@ -711,7 +711,7 @@ const getTooltipContent = (masterId, accountId, index) => {
       if (!itemName) return null;
 
       if (isVirtual) {
-        return `📋 ${itemName}（予定）`;
+        return `${itemName}（予定）`;
       }
       return itemName;
     })
