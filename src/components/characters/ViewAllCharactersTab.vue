@@ -139,6 +139,7 @@
                       { value: 'has_one_item_character', title: 'アイテム1つ所持キャラが居る列' },
                       { value: 'has_two_item_character', title: 'アイテム2つ所持キャラが居る列' },
                       { value: 'has_three_item_character', title: 'アイテム3つ所持キャラが居る列' },
+                      { value: 'has_virtual_item_character', title: '仮想アイテム所持キャラが居る列' },
                     ]"
                     multiple
                     label="列単位での絞り込み"
@@ -329,14 +330,16 @@
           </template>
 
           <!-- アカウント別所持状況の動的スロット -->
-          <template 
-            v-for="acc in accounts" 
-            :key="acc.id" 
+          <template
+            v-for="acc in accounts"
+            :key="acc.id"
             v-slot:[`item.account_${acc.id}_1`]="{ item }"
           >
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 1), 'account-cell']"
               class="text-center"
+              @click="openItemEditModal(item.id, acc.id, 0)"
+              style="cursor: pointer;"
             >
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props }">
@@ -351,14 +354,16 @@
             </div>
           </template>
 
-          <template 
-            v-for="acc in accounts" 
-            :key="acc.id" 
+          <template
+            v-for="acc in accounts"
+            :key="acc.id"
             v-slot:[`item.account_${acc.id}_2`]="{ item }"
           >
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 2), 'account-cell']"
               class="text-center"
+              @click="openItemEditModal(item.id, acc.id, 1)"
+              style="cursor: pointer;"
             >
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props }">
@@ -375,11 +380,22 @@
         </v-data-table-virtual>
       </v-card-text>
     </v-card>
+
+    <!-- アイテム編集モーダル -->
+    <ItemEditModal
+      v-model="isModalOpen"
+      :character="editingCharacter"
+      :item-masters="itemMasters"
+      :item-masters-map="itemMastersMap"
+      :character-masters-map="characterMastersMap"
+      @save="handleSaveItems"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed } from "vue";
+import ItemEditModal from "./ItemEditModal.vue";
 
 const props = defineProps({
   dataLoaded: { type: Boolean, required: true },
@@ -390,9 +406,17 @@ const props = defineProps({
   ownedCountMap: { type: Map, required: true },
   ownedCharactersData: { type: Map, required: true },
   itemMastersMap: { type: Map, required: true },
+  characterMastersMap: { type: Map, required: true },
 });
 
+const emit = defineEmits(['items-updated']);
+
 const showExtraColumns = ref(false);
+
+// アイテム編集モーダル用の状態
+const isModalOpen = ref(false);
+const editingCharacter = ref(null);
+const editingAccountId = ref(null);
 
 const createInitialFiltersState = () => ({
   charSearch: "",
@@ -575,7 +599,7 @@ const filteredMasters = computed(() => {
       if (ownership === "two" && countInAccount !== 2) return false;
     }
 
-    // 列フィルタ処理: アイテム0つ、1つ、2つ、3つ所持キャラが居る列の絞り込み（複数選択対応）
+    // 列フィルタ処理: アイテム0つ、1つ、2つ、3つ、仮想アイテム所持キャラが居る列の絞り込み（複数選択対応）
     if (columnFilter && columnFilter.length > 0) {
       let matchesAnyColumnCondition = false;
 
@@ -603,6 +627,17 @@ const filteredMasters = computed(() => {
           }
           if (condition === 'has_three_item_character' &&
               masterChars.some(char => char.items && char.items.length === 3)) {
+            hasMatchingCharacter = true;
+            break;
+          }
+          if (condition === 'has_virtual_item_character' &&
+              masterChars.some(char => {
+                const items = char.items || [];
+                return items.some(item => {
+                  // 新形式: { itemId: 1, isVirtual: true }
+                  return typeof item === 'object' && item.isVirtual === true;
+                });
+              })) {
             hasMatchingCharacter = true;
             break;
           }
@@ -725,6 +760,34 @@ const getTypeColor = (type) => {
 
 const resetFilters = () => {
   Object.assign(filters, createInitialFiltersState());
+};
+
+/**
+ * セルをクリックしたときにアイテム編集モーダルを開く
+ */
+const openItemEditModal = (masterId, accountId, index) => {
+  const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(
+    (c) => c.characterMasterId === masterId
+  );
+
+  if (!ownedList || ownedList.length <= index) {
+    return; // 未所持の場合は何もしない
+  }
+
+  editingCharacter.value = ownedList[index];
+  editingAccountId.value = accountId;
+  isModalOpen.value = true;
+};
+
+/**
+ * モーダルで保存されたアイテムを処理する
+ */
+const handleSaveItems = async ({ character, items }) => {
+  emit('items-updated', {
+    accountId: editingAccountId.value,
+    ownedCharacterId: character.id,
+    items
+  });
 };
 </script>
 

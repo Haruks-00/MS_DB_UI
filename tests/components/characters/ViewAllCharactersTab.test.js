@@ -57,6 +57,10 @@ const mockProps = {
   itemMastersMap: new Map([
     [1, 'テストアイテム1'],
     [2, 'テストアイテム2']
+  ]),
+  characterMastersMap: new Map([
+    [1, { id: 1, indexNumber: 1, monsterName: 'テストキャラ1', element: '火', type: '恒常', ejectionGacha: 'テストガチャ' }],
+    [2, { id: 2, indexNumber: 2, monsterName: 'テストキャラ2', element: '水', type: '限定', ejectionGacha: 'テストガチャ2' }]
   ])
 }
 

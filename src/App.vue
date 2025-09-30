@@ -82,6 +82,8 @@
                 :owned-count-map="ownedCountMap"
                 :owned-characters-data="ownedCharactersData"
                 :item-masters-map="itemMastersMap"
+                :character-masters-map="characterMastersMap"
+                @items-updated="handleItemsUpdated"
               />
             </v-window-item>
 
@@ -309,11 +311,22 @@ const handleCharacterAdded = ({ accountId, newCharacter }) => {
   ownedCountMap.value.set(countKey, currentCount + 1);
 };
 
-const handleItemsUpdated = ({ accountId, ownedCharacterId, items }) => {
-  const accountChars = ownedCharactersData.value.get(accountId) || [];
-  const charToUpdate = accountChars.find((c) => c.id === ownedCharacterId);
-  if (charToUpdate) {
-    charToUpdate.items = items;
+const handleItemsUpdated = async ({ accountId, ownedCharacterId, items }) => {
+  try {
+    // データベースに保存
+    await databaseService.updateCharacterItems(accountId, ownedCharacterId, items);
+
+    // ローカル状態を更新
+    const accountChars = ownedCharactersData.value.get(accountId) || [];
+    const charToUpdate = accountChars.find((c) => c.id === ownedCharacterId);
+    if (charToUpdate) {
+      charToUpdate.items = items;
+    }
+
+    alert('アイテムを更新しました');
+  } catch (error) {
+    console.error('アイテム更新エラー:', error);
+    alert(`アイテム更新エラー: ${error.message}`);
   }
 };
 
