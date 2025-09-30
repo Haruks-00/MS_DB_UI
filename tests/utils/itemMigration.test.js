@@ -16,6 +16,11 @@ describe('itemMigration', () => {
       expect(isOldFormat(oldItems)).toBe(true)
     })
 
+    it('旧形式（文字列配列）をtrueと判定する', () => {
+      const oldItems = ["5", "10"]
+      expect(isOldFormat(oldItems)).toBe(true)
+    })
+
     it('新形式（オブジェクト配列）をfalseと判定する', () => {
       const newItems = [
         { itemId: 1, isVirtual: false },
@@ -66,6 +71,24 @@ describe('itemMigration', () => {
 
       expect(newItems[0].itemId).toBe(1)
       expect(typeof newItems[0].itemId).toBe('number')
+    })
+
+    it('Image #2のような文字列配列を正しく変換する', () => {
+      const oldItems = ["5", "10"]
+      const newItems = migrateToNewFormat(oldItems)
+
+      expect(newItems).toHaveLength(2)
+      expect(newItems[0]).toEqual({ itemId: 5, isVirtual: false })
+      expect(newItems[1]).toEqual({ itemId: 10, isVirtual: false })
+    })
+
+    it('無効な値を含む配列をフィルタする', () => {
+      const oldItems = ['1', 'invalid', '3']
+      const newItems = migrateToNewFormat(oldItems)
+
+      expect(newItems).toHaveLength(2)
+      expect(newItems[0]).toEqual({ itemId: 1, isVirtual: false })
+      expect(newItems[1]).toEqual({ itemId: 3, isVirtual: false })
     })
   })
 
