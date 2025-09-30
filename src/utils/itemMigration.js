@@ -6,7 +6,7 @@
  */
 
 /**
- * アイテムデータが旧形式（数値配列）かどうかを判定する
+ * アイテムデータが旧形式（数値または文字列の配列）かどうかを判定する
  * @param {Array} items - アイテム配列
  * @returns {boolean} 旧形式の場合true
  */
@@ -14,13 +14,14 @@ export const isOldFormat = (items) => {
   if (!Array.isArray(items) || items.length === 0) {
     return false
   }
-  // 最初の要素が数値なら旧形式
-  return typeof items[0] === 'number'
+  // 最初の要素が数値または文字列なら旧形式
+  const firstItem = items[0]
+  return typeof firstItem === 'number' || typeof firstItem === 'string'
 }
 
 /**
  * 旧形式のアイテムデータを新形式に変換する
- * @param {Array<number>} oldItems - 旧形式のアイテム配列
+ * @param {Array<number|string>} oldItems - 旧形式のアイテム配列（数値または文字列）
  * @returns {Array<{itemId: number, isVirtual: boolean}>} 新形式のアイテム配列
  */
 export const migrateToNewFormat = (oldItems) => {
@@ -28,10 +29,18 @@ export const migrateToNewFormat = (oldItems) => {
     return []
   }
 
-  return oldItems.map(itemId => ({
-    itemId: Number(itemId),
-    isVirtual: false
-  }))
+  return oldItems.map(itemId => {
+    const numericId = Number(itemId)
+    // NaNチェック: 無効な値は除外
+    if (isNaN(numericId)) {
+      console.warn(`Invalid item ID detected: ${itemId}`)
+      return null
+    }
+    return {
+      itemId: numericId,
+      isVirtual: false
+    }
+  }).filter(item => item !== null) // 無効なアイテムを除外
 }
 
 /**
