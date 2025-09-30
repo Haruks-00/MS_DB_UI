@@ -1,3 +1,5 @@
+import { getRealItems } from "./itemMigration.js";
+
 /**
  * [概要] 所持キャラクターの表示名をフォーマットする。
  * @param {Object} char - フォーマット対象の所持キャラクターオブジェクト
@@ -34,8 +36,10 @@ export const formatOwnedCharDisplayName = (
   let text = `${charName} (${charIndex >= 0 ? charIndex + 1 : "？"}体目)`;
 
   if (includeItems) {
-    const itemNames = (char.items || [])
-      .map((id) => itemMastersMap.get(Number(id)))
+    // 新形式に変換して実アイテムのみを取得
+    const realItems = getRealItems(char.items || []);
+    const itemNames = realItems
+      .map((item) => itemMastersMap.get(item.itemId))
       .filter(Boolean)
       .join("、");
 

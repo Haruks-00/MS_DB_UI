@@ -289,6 +289,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { formatOwnedCharDisplayName } from "../../utils/formatters.js";
 import { databaseService } from "../../services/database.js";
+import { ensureNewFormat, getRealItems } from "../../utils/itemMigration.js";
 import CharacterSelector from "../shared/CharacterSelector.vue";
 
 const props = defineProps({
@@ -338,9 +339,12 @@ const movableItems = computed(() => {
     (c) => c.id === moveForm.from.selectedId
   );
   if (!fromChar || !fromChar.items) return [];
-  return fromChar.items.map((itemId) => ({
-    id: Number(itemId),
-    name: props.itemMastersMap.get(Number(itemId)) || `不明(ID:${itemId})`,
+
+  // 新形式に変換し、実アイテムのみを取得
+  const realItems = getRealItems(fromChar.items);
+  return realItems.map((item) => ({
+    id: item.itemId,
+    name: props.itemMastersMap.get(item.itemId) || `不明(ID:${item.itemId})`,
   }));
 });
 
@@ -363,7 +367,9 @@ watch(
       return;
     }
     const character = currentOwnedCharacters.value.find((c) => c.id === newId);
-    updateForm.items = character?.items?.map(Number) || [];
+    // 新形式に変換し、実アイテムのみを取得してitemIdを抽出
+    const realItems = getRealItems(character?.items || []);
+    updateForm.items = realItems.map(item => item.itemId);
   }
 );
 
@@ -379,16 +385,22 @@ const handleUpdateItems = async () => {
   if (updateForm.items.length > 3) return alert("アイテムは3つまでです。");
   isUpdating.value = true;
   try {
+    // 新形式に変換して保存
+    const newFormatItems = updateForm.items.map(itemId => ({
+      itemId: Number(itemId),
+      isVirtual: false
+    }));
+
     await databaseService.updateCharacterItems(
       props.selectedAccountId,
       updateForm.selectedOwnedId,
-      updateForm.items
+      newFormatItems
     );
 
     emit("items-updated", {
       accountId: props.selectedAccountId,
       ownedCharacterId: updateForm.selectedOwnedId,
-      items: updateForm.items,
+      items: newFormatItems,
     });
     alert("アイテムを更新しました。");
   } catch (e) {
@@ -415,13 +427,22 @@ const handleMoveItems = async () => {
     if (!fromChar || !toChar)
       throw new Error("キャラクター情報が見つかりません。");
 
-    if ((toChar.items?.length || 0) + itemIdsToMove.length > 3)
+    // 新形式に変換して実アイテムのみを取得
+    const fromRealItems = getRealItems(fromChar.items || []);
+    const toRealItems = getRealItems(toChar.items || []);
+
+    if (toRealItems.length + itemIdsToMove.length > 3)
       throw new Error(`移動先のアイテム所持数が上限を超えます。`);
 
-    const newFromItems = (fromChar.items || [])
-      .map(Number)
-      .filter((id) => !itemIdsToMove.includes(id));
-    const newToItems = [...(toChar.items || []).map(Number), ...itemIdsToMove];
+    // 移動後のアイテムを新形式で構築
+    const newFromItems = fromRealItems
+      .filter((item) => !itemIdsToMove.includes(item.itemId))
+      .map(item => ({ itemId: item.itemId, isVirtual: false }));
+
+    const newToItems = [
+      ...toRealItems.map(item => ({ itemId: item.itemId, isVirtual: false })),
+      ...itemIdsToMove.map(itemId => ({ itemId: Number(itemId), isVirtual: false }))
+    ];
 
     await databaseService.moveCharacterItems(
       props.selectedAccountId,

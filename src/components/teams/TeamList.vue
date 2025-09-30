@@ -125,6 +125,7 @@
 
 <script setup>
 import { reactive, computed } from "vue";
+import { getRealItems } from "../../utils/itemMigration.js";
 
 const props = defineProps({
   dataLoaded: { type: Boolean, required: true },
@@ -188,12 +189,17 @@ const getTeamSlotDetails = (team, slotIndex) => {
       items: [],
     };
   const master = props.characterMastersMap.get(ownedChar.characterMasterId);
+
+  // 新形式に変換して実アイテムのみを取得
+  const realItems = getRealItems(ownedChar.items || []);
+  const itemNames = realItems
+    .map((item) => props.itemMastersMap.get(item.itemId) || `不明ID:${item.itemId}`)
+    .filter(Boolean);
+
   return {
     characterName: master?.monsterName || "不明",
     accountName: account?.name || "不明",
-    items: (ownedChar.items || [])
-      .map((id) => props.itemMastersMap.get(Number(id)) || `不明ID:${id}`)
-      .filter(Boolean),
+    items: itemNames,
   };
 };
 
