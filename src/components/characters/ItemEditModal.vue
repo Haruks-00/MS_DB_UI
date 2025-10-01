@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="isOpen" max-width="600px" persistent>
-    <v-card>
+    <v-card class="dialog-card">
       <v-card-title class="bg-primary text-white pa-4">
         <v-icon icon="mdi-pencil" class="mr-2"></v-icon>
         アイテム編集
@@ -249,6 +249,10 @@ watch(() => props.character, (newChar) => {
 </script>
 
 <style scoped>
+.dialog-card {
+  background-color: white !important;
+}
+
 .border {
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
