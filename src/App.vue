@@ -315,7 +315,18 @@ const handleItemsUpdated = async ({ accountId, ownedCharacterId, characterMaster
   try {
     if (isNew) {
       // 新規追加の場合
-      const newCharacter = await databaseService.addOwnedCharacter(accountId, characterMasterId, items);
+      const characterData = {
+        characterMasterId: characterMasterId,
+        items: items
+      };
+      const docRef = await databaseService.addOwnedCharacter(accountId, characterData);
+
+      // 新しく追加されたキャラクターオブジェクトを作成
+      const newCharacter = {
+        id: docRef.id,
+        characterMasterId: characterMasterId,
+        items: items
+      };
 
       // ローカル状態を更新
       if (!ownedCharactersData.value.has(accountId)) {
