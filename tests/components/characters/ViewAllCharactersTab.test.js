@@ -639,4 +639,60 @@ describe('ViewAllCharactersTab', () => {
       })
     })
   })
+
+  describe('未所持セルクリック機能', () => {
+    it('未所持セルをクリックするとアイテム編集モーダルが開く', async () => {
+      const testProps = {
+        ...mockProps,
+        ownedCountMap: new Map([
+          ['1-1', 0],  // キャラ1、アカウント1は未所持
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: { plugins: [vuetify] }
+      })
+
+      // 未所持セルをクリック
+      await wrapper.vm.openItemEditModal(1, 1, 0)
+
+      // モーダルが開くことを確認
+      expect(wrapper.vm.isModalOpen).toBe(true)
+    })
+
+    it('未所持セルクリック時に仮characterオブジェクトが生成される', async () => {
+      const testProps = {
+        ...mockProps,
+        ownedCountMap: new Map([
+          ['1-1', 0],
+        ])
+      }
+
+      wrapper = mount(ViewAllCharactersTab, {
+        props: testProps,
+        global: { plugins: [vuetify] }
+      })
+
+      await wrapper.vm.openItemEditModal(1, 1, 0)
+
+      // 仮characterオブジェクトが生成されていることを確認
+      expect(wrapper.vm.editingCharacter).toBeDefined()
+      expect(wrapper.vm.editingCharacter.characterMasterId).toBe(1)
+      expect(wrapper.vm.editingCharacter.isNew).toBe(true)
+    })
+
+    it('所持済みセルクリック時は既存のcharacterオブジェクトが使用される', async () => {
+      wrapper = mount(ViewAllCharactersTab, {
+        props: mockProps,
+        global: { plugins: [vuetify] }
+      })
+
+      await wrapper.vm.openItemEditModal(1, 1, 0)
+
+      // 既存のcharacterオブジェクトが使用される
+      expect(wrapper.vm.editingCharacter).toBeDefined()
+      expect(wrapper.vm.editingCharacter.isNew).toBeUndefined()
+    })
+  })
 })
