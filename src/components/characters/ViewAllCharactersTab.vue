@@ -388,6 +388,7 @@
       :item-masters="itemMasters"
       :item-masters-map="itemMastersMap"
       :character-masters-map="characterMastersMap"
+      :is-new-character="editingCharacter?.isNew || false"
       @save="handleSaveItems"
     />
   </div>
@@ -771,7 +772,16 @@ const openItemEditModal = (masterId, accountId, index) => {
   );
 
   if (!ownedList || ownedList.length <= index) {
-    return; // 未所持の場合は何もしない
+    // 未所持の場合は仮のcharacterオブジェクトを生成
+    editingCharacter.value = {
+      characterMasterId: masterId,
+      accountId: accountId,
+      items: [],
+      isNew: true
+    };
+    editingAccountId.value = accountId;
+    isModalOpen.value = true;
+    return;
   }
 
   editingCharacter.value = ownedList[index];
@@ -782,12 +792,24 @@ const openItemEditModal = (masterId, accountId, index) => {
 /**
  * モーダルで保存されたアイテムを処理する
  */
-const handleSaveItems = async ({ character, items }) => {
-  emit('items-updated', {
-    accountId: editingAccountId.value,
-    ownedCharacterId: character.id,
-    items
-  });
+const handleSaveItems = async ({ character, items, isNew }) => {
+  if (isNew) {
+    // 新規追加の場合
+    emit('items-updated', {
+      accountId: editingAccountId.value,
+      characterMasterId: character.characterMasterId,
+      items,
+      isNew: true
+    });
+  } else {
+    // 既存の編集の場合
+    emit('items-updated', {
+      accountId: editingAccountId.value,
+      ownedCharacterId: character.id,
+      items,
+      isNew: false
+    });
+  }
 };
 </script>
 

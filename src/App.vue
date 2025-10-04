@@ -311,19 +311,37 @@ const handleCharacterAdded = ({ accountId, newCharacter }) => {
   ownedCountMap.value.set(countKey, currentCount + 1);
 };
 
-const handleItemsUpdated = async ({ accountId, ownedCharacterId, items }) => {
+const handleItemsUpdated = async ({ accountId, ownedCharacterId, characterMasterId, items, isNew }) => {
   try {
-    // データベースに保存
-    await databaseService.updateCharacterItems(accountId, ownedCharacterId, items);
+    if (isNew) {
+      // 新規追加の場合
+      const newCharacter = await databaseService.addOwnedCharacter(accountId, characterMasterId, items);
 
-    // ローカル状態を更新
-    const accountChars = ownedCharactersData.value.get(accountId) || [];
-    const charToUpdate = accountChars.find((c) => c.id === ownedCharacterId);
-    if (charToUpdate) {
-      charToUpdate.items = items;
+      // ローカル状態を更新
+      if (!ownedCharactersData.value.has(accountId)) {
+        ownedCharactersData.value.set(accountId, []);
+      }
+      ownedCharactersData.value.get(accountId).push(newCharacter);
+
+      // 所持数を更新
+      const countKey = `${characterMasterId}-${accountId}`;
+      const currentCount = ownedCountMap.value.get(countKey) || 0;
+      ownedCountMap.value.set(countKey, currentCount + 1);
+
+      alert('キャラクターを追加しました');
+    } else {
+      // 既存のアイテム更新の場合
+      await databaseService.updateCharacterItems(accountId, ownedCharacterId, items);
+
+      // ローカル状態を更新
+      const accountChars = ownedCharactersData.value.get(accountId) || [];
+      const charToUpdate = accountChars.find((c) => c.id === ownedCharacterId);
+      if (charToUpdate) {
+        charToUpdate.items = items;
+      }
+
+      alert('アイテムを更新しました');
     }
-
-    alert('アイテムを更新しました');
   } catch (error) {
     console.error('アイテム更新エラー:', error);
     alert(`アイテム更新エラー: ${error.message}`);

@@ -665,7 +665,15 @@ describe('ViewAllCharactersTab', () => {
       const testProps = {
         ...mockProps,
         ownedCountMap: new Map([
-          ['1-1', 0],
+          ['1-1', 0],  // キャラ1、アカウント1は未所持
+        ]),
+        ownedCharactersData: new Map([
+          [1, [
+            { characterMasterId: 2, items: [1, 2] },  // キャラ2のみ所持
+          ]],
+          [2, [
+            { characterMasterId: 2, items: [1] }
+          ]]
         ])
       }
 

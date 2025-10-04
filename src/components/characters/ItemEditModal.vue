@@ -2,8 +2,8 @@
   <v-dialog v-model="isOpen" max-width="600px" persistent>
     <v-card class="dialog-card">
       <v-card-title class="bg-primary text-white pa-4">
-        <v-icon icon="mdi-pencil" class="mr-2"></v-icon>
-        アイテム編集
+        <v-icon :icon="isNewCharacter ? 'mdi-plus-circle' : 'mdi-pencil'" class="mr-2"></v-icon>
+        {{ isNewCharacter ? '所持追加+アイテム設定' : 'アイテム編集' }}
       </v-card-title>
 
       <v-card-text class="pa-6">
@@ -131,7 +131,8 @@ const props = defineProps({
   character: { type: Object, default: null },
   itemMasters: { type: Array, required: true },
   itemMastersMap: { type: Map, required: true },
-  characterMastersMap: { type: Map, required: true }
+  characterMastersMap: { type: Map, required: true },
+  isNewCharacter: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
@@ -222,7 +223,8 @@ const saveItems = async () => {
   try {
     emit('save', {
       character: props.character,
-      items: editingItems.value
+      items: editingItems.value,
+      isNew: props.isNewCharacter
     })
 
     closeModal()
