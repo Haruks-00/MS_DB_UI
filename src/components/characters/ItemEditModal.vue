@@ -66,22 +66,34 @@
               </v-list-item-title>
 
               <template v-slot:append>
-                <v-btn-toggle
-                  :model-value="item.isVirtual ? 'virtual' : 'real'"
-                  @update:model-value="(val) => toggleItemType(item.itemId, val)"
-                  mandatory
-                  density="compact"
-                  color="primary"
-                >
-                  <v-btn value="real" size="small">
-                    <v-icon icon="mdi-check" class="mr-1"></v-icon>
-                    実
-                  </v-btn>
-                  <v-btn value="virtual" size="small">
-                    <v-icon icon="mdi-clipboard-text-outline" class="mr-1"></v-icon>
-                    予定
-                  </v-btn>
-                </v-btn-toggle>
+                <div class="d-flex align-center gap-2">
+                  <v-btn-toggle
+                    :model-value="item.isVirtual ? 'virtual' : 'real'"
+                    @update:model-value="(val) => toggleItemType(item.itemId, val)"
+                    mandatory
+                    density="compact"
+                    color="primary"
+                  >
+                    <v-btn value="real" size="small">
+                      <v-icon icon="mdi-check" class="mr-1"></v-icon>
+                      実
+                    </v-btn>
+                    <v-btn value="virtual" size="small">
+                      <v-icon icon="mdi-clipboard-text-outline" class="mr-1"></v-icon>
+                      予定
+                    </v-btn>
+                  </v-btn-toggle>
+
+                  <!-- 実アイテムのみ「外す予定」チェックボックスを表示 -->
+                  <v-checkbox
+                    v-if="!item.isVirtual"
+                    v-model="item.willRemove"
+                    label="外す予定"
+                    density="compact"
+                    hide-details
+                    color="warning"
+                  ></v-checkbox>
+                </div>
               </template>
             </v-list-item>
           </v-list>
@@ -187,11 +199,12 @@ const onItemSelectionChange = (newIds) => {
   // 削除されたアイテムを除外
   editingItems.value = editingItems.value.filter(item => newIds.includes(item.itemId))
 
-  // 新規アイテムを追加（デフォルトは実アイテム）
+  // 新規アイテムを追加（デフォルトは実アイテム、willRemove: false）
   newItems.forEach(id => {
     editingItems.value.push({
       itemId: Number(id),
-      isVirtual: false
+      isVirtual: false,
+      willRemove: false
     })
   })
 }
@@ -245,7 +258,12 @@ watch(() => props.character, (newChar) => {
 
   // 既存のアイテムデータを新形式に変換してロード
   const items = ensureNewFormat(newChar.items || [])
-  editingItems.value = JSON.parse(JSON.stringify(items)) // ディープコピー
+  // ディープコピーして willRemove プロパティを確保
+  editingItems.value = items.map(item => ({
+    itemId: item.itemId,
+    isVirtual: item.isVirtual || false,
+    willRemove: item.willRemove || false
+  }))
   selectedItemIds.value = items.map(item => item.itemId)
 }, { immediate: true })
 </script>

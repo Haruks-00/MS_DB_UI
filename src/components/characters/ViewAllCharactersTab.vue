@@ -213,6 +213,7 @@
               >
                 {{ showExtraColumns ? "詳細を非表示" : "詳細を表示" }}
               </v-btn>
+
               <v-spacer></v-spacer>
               <v-btn
                 @click="resetFilters"
@@ -338,19 +339,38 @@
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 1), 'account-cell']"
               class="text-center"
-              @click="openItemEditModal(item.id, acc.id, 0)"
-              style="cursor: pointer;"
             >
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props }">
-                  <div
-                    v-bind="props"
-                    class="cell-content"
-                    v-html="getDisplayCellContent(item.id, acc.id, 0)"
-                  ></div>
-                </template>
-                <span v-html="getTooltipContent(item.id, acc.id, 0)"></span>
-              </v-tooltip>
+              <div class="cell-wrapper" style="position: relative;">
+                <!-- トグルアイコン -->
+                <v-btn
+                  v-if="getOwnedCount(item.id, acc.id) > 0"
+                  icon
+                  size="x-small"
+                  class="toggle-icon"
+                  @click.stop="toggleCellDisplayMode(item.id, acc.id, 0)"
+                  style="position: absolute; top: 2px; right: 2px; z-index: 1;"
+                  variant="text"
+                >
+                  <v-icon :icon="getCellDisplayMode(item.id, acc.id, 0) === 'current' ? 'mdi-eye' : 'mdi-eye-outline'" size="small"></v-icon>
+                </v-btn>
+
+                <!-- セル内容 -->
+                <div
+                  @click="openItemEditModal(item.id, acc.id, 0)"
+                  style="cursor: pointer;"
+                >
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <div
+                        v-bind="props"
+                        class="cell-content"
+                        v-html="getDisplayCellContent(item.id, acc.id, 0)"
+                      ></div>
+                    </template>
+                    <span v-html="getTooltipContent(item.id, acc.id, 0)"></span>
+                  </v-tooltip>
+                </div>
+              </div>
             </div>
           </template>
 
@@ -362,19 +382,38 @@
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 2), 'account-cell']"
               class="text-center"
-              @click="openItemEditModal(item.id, acc.id, 1)"
-              style="cursor: pointer;"
             >
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props }">
-                  <div
-                    v-bind="props"
-                    class="cell-content"
-                    v-html="getDisplayCellContent(item.id, acc.id, 1)"
-                  ></div>
-                </template>
-                <span v-html="getTooltipContent(item.id, acc.id, 1)"></span>
-              </v-tooltip>
+              <div class="cell-wrapper" style="position: relative;">
+                <!-- トグルアイコン -->
+                <v-btn
+                  v-if="getOwnedCount(item.id, acc.id) > 1"
+                  icon
+                  size="x-small"
+                  class="toggle-icon"
+                  @click.stop="toggleCellDisplayMode(item.id, acc.id, 1)"
+                  style="position: absolute; top: 2px; right: 2px; z-index: 1;"
+                  variant="text"
+                >
+                  <v-icon :icon="getCellDisplayMode(item.id, acc.id, 1) === 'current' ? 'mdi-eye' : 'mdi-eye-outline'" size="small"></v-icon>
+                </v-btn>
+
+                <!-- セル内容 -->
+                <div
+                  @click="openItemEditModal(item.id, acc.id, 1)"
+                  style="cursor: pointer;"
+                >
+                  <v-tooltip location="bottom">
+                    <template v-slot:activator="{ props }">
+                      <div
+                        v-bind="props"
+                        class="cell-content"
+                        v-html="getDisplayCellContent(item.id, acc.id, 1)"
+                      ></div>
+                    </template>
+                    <span v-html="getTooltipContent(item.id, acc.id, 1)"></span>
+                  </v-tooltip>
+                </div>
+              </div>
             </div>
           </template>
         </v-data-table-virtual>
@@ -418,6 +457,9 @@ const showExtraColumns = ref(false);
 const isModalOpen = ref(false);
 const editingCharacter = ref(null);
 const editingAccountId = ref(null);
+
+// セルごとのアイテム表示モード管理
+const cellDisplayModes = ref(new Map());
 
 const createInitialFiltersState = () => ({
   charSearch: "",
@@ -669,21 +711,42 @@ const getDisplayCellContent = (masterId, accountId, index) => {
 
   const items = ownedList[index].items || [];
 
-  // アイテムを実/仮想に分けて表示
-  const itemLines = items
+  // セルごとの表示モードに応じてアイテムをフィルタリング
+  const displayMode = getCellDisplayMode(masterId, accountId, index);
+  const filteredItems = items.filter((item) => {
+    const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+    const willRemove = typeof item === 'object' ? item.willRemove : false;
+
+    if (displayMode === 'current') {
+      // 現在モード: 実アイテムのみ（外す予定も含む）
+      return !isVirtual;
+    } else {
+      // 予定適用後モード: 外す予定でないすべてのアイテム
+      return !willRemove;
+    }
+  });
+
+  // アイテムを実/仮想/外す予定に分けて表示
+  const itemLines = filteredItems
     .map((item) => {
-      // 新形式の場合: { itemId: 1, isVirtual: false }
+      // 新形式の場合: { itemId: 1, isVirtual: false, willRemove: false }
       // 旧形式の場合: 1（数値）
       const itemId = typeof item === 'object' ? item.itemId : item;
       const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+      const willRemove = typeof item === 'object' ? item.willRemove : false;
       const itemName = props.itemMastersMap.get(Number(itemId));
 
       if (!itemName) return null;
 
-      // 仮想アイテムにはクラスを追加
+      // 外す予定のアイテムは赤色で表示（現在モードのみ）
+      if (displayMode === 'current' && willRemove) {
+        return `<span class="will-remove-item item-name">${itemName}</span>`;
+      }
+      // 仮想アイテムはオレンジ色で表示（予定適用後モードのみ）
       if (isVirtual) {
         return `<span class="virtual-item item-name">${itemName}</span>`;
       }
+      // 通常の実アイテム
       return `<span class="item-name">${itemName}</span>`;
     })
     .filter(Boolean)
@@ -764,6 +827,24 @@ const resetFilters = () => {
 };
 
 /**
+ * セルの表示モードを取得（デフォルトは'current'）
+ */
+const getCellDisplayMode = (masterId, accountId, index) => {
+  const key = `${masterId}-${accountId}-${index}`;
+  return cellDisplayModes.value.get(key) || 'current';
+};
+
+/**
+ * セルの表示モードを切り替え
+ */
+const toggleCellDisplayMode = (masterId, accountId, index) => {
+  const key = `${masterId}-${accountId}-${index}`;
+  const currentMode = getCellDisplayMode(masterId, accountId, index);
+  const newMode = currentMode === 'current' ? 'planned' : 'current';
+  cellDisplayModes.value.set(key, newMode);
+};
+
+/**
  * セルをクリックしたときにアイテム編集モーダルを開く
  */
 const openItemEditModal = (masterId, accountId, index) => {
@@ -811,6 +892,16 @@ const handleSaveItems = async ({ character, items, isNew }) => {
     });
   }
 };
+
+// テスト用にコンポーネントのメソッドとプロパティを公開
+defineExpose({
+  cellDisplayModes,
+  getCellDisplayMode,
+  toggleCellDisplayMode,
+  isModalOpen,
+  editingCharacter,
+  filters
+});
 </script>
 
 <style scoped>
@@ -1114,9 +1205,29 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   max-width: 60px !important;
   padding: 16px 8px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   box-sizing: border-box;
+}
+
+/* セルラッパー（トグルアイコン配置用） */
+.cell-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* トグルアイコン */
+.toggle-icon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cell-wrapper:hover .toggle-icon {
+  opacity: 1;
 }
 
 /* 「—」表示の場合も同じ幅を確保 */
@@ -1239,16 +1350,22 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   box-sizing: border-box;
 }
 
-.table-fixed .v-data-table__th:nth-child(n+6), 
-.table-fixed .v-data-table__td:nth-child(n+6) { 
-  width: 78px !important;
-  min-width: 78px !important;
-  max-width: 78px !important;
+.table-fixed .v-data-table__th:nth-child(n+6),
+.table-fixed .v-data-table__td:nth-child(n+6) {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  text-align: center !important;
 }
 
-/* 仮想アイテムのスタイル */
+/* 仮想アイテムのスタイル（オレンジ） */
 :deep(.virtual-item) {
   color: #FF9800;
+}
+
+/* 外す予定アイテムのスタイル（赤） */
+:deep(.will-remove-item) {
+  color: #F44336;
 }
 
 /* アイテム名の途中で改行しない */
