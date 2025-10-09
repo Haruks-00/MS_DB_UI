@@ -285,31 +285,30 @@
         >
           <!-- キャラ名列のカスタムスロット -->
           <template v-slot:item.monsterName="{ item }">
-            <div class="d-flex align-center justify-space-between">
+            <div class="character-name-cell">
               <div class="d-flex align-center">
                 <v-avatar
                   size="32"
                   :color="getElementColor(item.element)"
-                  class="mr-3"
+                  class="mr-2"
                 >
                   <span class="text-caption text-white font-weight-bold">{{
                     item.element || "?"
                   }}</span>
                 </v-avatar>
-                <span class="font-weight-medium">{{
+                <span class="character-name">{{
                   item.monsterName || "—"
                 }}</span>
               </div>
               <!-- 行単位の表示切り替えボタン -->
               <v-btn
-                v-if="getOwnedCount(item.id, accounts[0]?.id) > 0 || getOwnedCount(item.id, accounts[1]?.id) > 0"
                 @click.stop="toggleRowDisplayMode(item.id)"
                 :color="getRowDisplayMode(item.id) === 'current' ? 'primary' : 'orange'"
                 variant="tonal"
-                size="small"
-                class="row-toggle-btn"
+                size="x-small"
+                class="row-toggle-btn mt-1"
               >
-                <v-icon size="small">{{ getRowDisplayMode(item.id) === 'current' ? 'mdi-eye' : 'mdi-eye-outline' }}</v-icon>
+                <v-icon size="x-small">{{ getRowDisplayMode(item.id) === 'current' ? 'mdi-eye' : 'mdi-eye-outline' }}</v-icon>
                 <span class="ml-1">{{ getRowDisplayMode(item.id) === 'current' ? '現在' : '予定後' }}</span>
               </v-btn>
             </div>
@@ -1050,23 +1049,22 @@ defineExpose({
   box-sizing: border-box !important;
 }
 
-/* キャラクター名の表示を最適化 */
-.table-fixed td:nth-child(2) .d-flex {
-  width: 200px !important;
-  max-width: 200px !important;
-  min-width: 200px !important;
-  box-sizing: border-box;
-  overflow: hidden;
+/* キャラクター名セルの表示を最適化 */
+.character-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0;
 }
 
-.table-fixed td:nth-child(2) .font-weight-medium {
+.character-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px !important;
-  width: 140px;
-  flex-shrink: 1;
-  flex-grow: 0;
+  max-width: 140px;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 /* アバターサイズも固定 */
@@ -1198,12 +1196,16 @@ defineExpose({
 
 /* 行単位の表示切り替えボタン */
 .row-toggle-btn {
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  min-width: 70px;
-  height: 28px;
-  text-transform: none;
-  font-weight: 500;
+  font-size: 0.7rem !important;
+  padding: 2px 6px !important;
+  min-width: 60px !important;
+  height: 24px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
 /* 「—」表示の場合も同じ幅を確保 */

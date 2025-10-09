@@ -118,6 +118,28 @@
         </v-card-title>
         <v-card-text class="pa-6">
           <v-container>
+            <!-- アイテムフィルタ -->
+            <v-row class="mb-4">
+              <v-col cols="12">
+                <v-select
+                  v-model="moveForm.itemFilter"
+                  :items="itemMasters"
+                  item-title="name"
+                  item-value="id"
+                  label="アイテムでフィルタ（外す予定のキャラを優先表示）"
+                  clearable
+                  variant="outlined"
+                  color="secondary"
+                  prepend-inner-icon="mdi-filter"
+                  density="comfortable"
+                >
+                  <template v-slot:prepend-inner>
+                    <v-icon icon="mdi-filter" color="secondary"></v-icon>
+                  </template>
+                </v-select>
+              </v-col>
+            </v-row>
+
             <v-row>
               <!-- INFO: より美しい移動元セクション -->
               <v-col cols="12" md="4">
@@ -135,7 +157,7 @@
                 </div>
                 <CharacterSelector
                   v-model="moveForm.from.selectedId"
-                  :items="currentOwnedCharacters"
+                  :items="filteredOwnedCharacters"
                   label="移動元キャラクターを検索"
                   list-height="250px"
                   :disabled-items="[moveForm.to.selectedId].filter(Boolean)"
@@ -238,7 +260,7 @@
                 </div>
                 <CharacterSelector
                   v-model="moveForm.to.selectedId"
-                  :items="currentOwnedCharacters"
+                  :items="allOwnedCharacters"
                   label="移動先キャラクターを検索"
                   list-height="250px"
                   :disabled-items="[moveForm.from.selectedId].filter(Boolean)"
@@ -307,11 +329,13 @@ const moveForm = reactive({
   from: { selectedId: null },
   to: { selectedId: null },
   selectedItemIds: [],
+  itemFilter: null, // アイテム名フィルタ
 });
 const isUpdating = ref(false);
 const isMoving = ref(false);
 
-const currentOwnedCharacters = computed(() => {
+// 全所持キャラクター（フィルタなし、移動先用）
+const allOwnedCharacters = computed(() => {
   if (
     !props.selectedAccountId ||
     !props.ownedCharactersData.has(props.selectedAccountId)
@@ -319,10 +343,10 @@ const currentOwnedCharacters = computed(() => {
     return [];
   const ownedList =
     props.ownedCharactersData.get(props.selectedAccountId) || [];
+
   return ownedList
     .map((char) => {
       const master = props.characterMastersMap.get(char.characterMasterId);
-      // NOTE: subtitleプロパティを追加して、リスト表示の柔軟性を高めます
       return {
         ...char,
         id: char.id,
@@ -332,6 +356,56 @@ const currentOwnedCharacters = computed(() => {
     })
     .sort((a, b) => a.indexNumber - b.indexNumber);
 });
+
+// フィルタ適用済みキャラクター（移動元用）
+const filteredOwnedCharacters = computed(() => {
+  let characters = [...allOwnedCharacters.value];
+
+  // アイテムフィルタが指定されている場合
+  if (moveForm.itemFilter) {
+    const filteredItemId = Number(moveForm.itemFilter);
+    characters = characters.filter((char) => {
+      if (!char.items || char.items.length === 0) return false;
+      // アイテムリストから指定されたアイテムIDを持っているかチェック
+      // ただし、仮想アイテム（つける予定）は除外
+      return char.items.some((item) => {
+        const itemId = typeof item === 'object' ? item.itemId : item;
+        const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+
+        // 実アイテム（仮想でない）のみをチェック
+        return Number(itemId) === filteredItemId && !isVirtual;
+      });
+    });
+
+    // willRemove優先でソート
+    characters.sort((a, b) => {
+      // aとbのアイテムリストから、フィルタされたアイテムを見つける
+      const aItem = a.items.find((item) => {
+        const itemId = typeof item === 'object' ? item.itemId : item;
+        return Number(itemId) === filteredItemId;
+      });
+      const bItem = b.items.find((item) => {
+        const itemId = typeof item === 'object' ? item.itemId : item;
+        return Number(itemId) === filteredItemId;
+      });
+
+      const aWillRemove = typeof aItem === 'object' ? aItem.willRemove : false;
+      const bWillRemove = typeof bItem === 'object' ? bItem.willRemove : false;
+
+      // willRemove: trueを優先（降順）
+      if (aWillRemove && !bWillRemove) return -1;
+      if (!aWillRemove && bWillRemove) return 1;
+
+      // 同じwillRemove状態なら図鑑番号でソート
+      return a.indexNumber - b.indexNumber;
+    });
+  }
+
+  return characters;
+});
+
+// 後方互換性のため、currentOwnedCharactersはallOwnedCharactersのエイリアスとする
+const currentOwnedCharacters = computed(() => allOwnedCharacters.value);
 
 const movableItems = computed(() => {
   if (!moveForm.from.selectedId) return [];
