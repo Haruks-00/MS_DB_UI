@@ -285,19 +285,33 @@
         >
           <!-- キャラ名列のカスタムスロット -->
           <template v-slot:item.monsterName="{ item }">
-            <div class="d-flex align-center">
-              <v-avatar
-                size="32"
-                :color="getElementColor(item.element)"
-                class="mr-3"
-              >
-                <span class="text-caption text-white font-weight-bold">{{
-                  item.element || "?"
+            <div class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-avatar
+                  size="32"
+                  :color="getElementColor(item.element)"
+                  class="mr-3"
+                >
+                  <span class="text-caption text-white font-weight-bold">{{
+                    item.element || "?"
+                  }}</span>
+                </v-avatar>
+                <span class="font-weight-medium">{{
+                  item.monsterName || "—"
                 }}</span>
-              </v-avatar>
-              <span class="font-weight-medium">{{
-                item.monsterName || "—"
-              }}</span>
+              </div>
+              <!-- 行単位の表示切り替えボタン -->
+              <v-btn
+                v-if="getOwnedCount(item.id, accounts[0]?.id) > 0 || getOwnedCount(item.id, accounts[1]?.id) > 0"
+                @click.stop="toggleRowDisplayMode(item.id)"
+                :color="getRowDisplayMode(item.id) === 'current' ? 'primary' : 'orange'"
+                variant="tonal"
+                size="small"
+                class="row-toggle-btn"
+              >
+                <v-icon size="small">{{ getRowDisplayMode(item.id) === 'current' ? 'mdi-eye' : 'mdi-eye-outline' }}</v-icon>
+                <span class="ml-1">{{ getRowDisplayMode(item.id) === 'current' ? '現在' : '予定後' }}</span>
+              </v-btn>
             </div>
           </template>
 
@@ -339,38 +353,19 @@
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 1), 'account-cell']"
               class="text-center"
+              @click="openItemEditModal(item.id, acc.id, 0)"
+              style="cursor: pointer;"
             >
-              <div class="cell-wrapper" style="position: relative;">
-                <!-- トグルアイコン -->
-                <v-btn
-                  v-if="getOwnedCount(item.id, acc.id) > 0"
-                  icon
-                  size="x-small"
-                  class="toggle-icon"
-                  @click.stop="toggleCellDisplayMode(item.id, acc.id, 0)"
-                  style="position: absolute; top: 2px; right: 2px; z-index: 1;"
-                  variant="text"
-                >
-                  <v-icon :icon="getCellDisplayMode(item.id, acc.id, 0) === 'current' ? 'mdi-eye' : 'mdi-eye-outline'" size="small"></v-icon>
-                </v-btn>
-
-                <!-- セル内容 -->
-                <div
-                  @click="openItemEditModal(item.id, acc.id, 0)"
-                  style="cursor: pointer;"
-                >
-                  <v-tooltip location="bottom">
-                    <template v-slot:activator="{ props }">
-                      <div
-                        v-bind="props"
-                        class="cell-content"
-                        v-html="getDisplayCellContent(item.id, acc.id, 0)"
-                      ></div>
-                    </template>
-                    <span v-html="getTooltipContent(item.id, acc.id, 0)"></span>
-                  </v-tooltip>
-                </div>
-              </div>
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props }">
+                  <div
+                    v-bind="props"
+                    class="cell-content"
+                    v-html="getDisplayCellContent(item.id, acc.id, 0)"
+                  ></div>
+                </template>
+                <span v-html="getTooltipContent(item.id, acc.id, 0)"></span>
+              </v-tooltip>
             </div>
           </template>
 
@@ -382,38 +377,19 @@
             <div
               :class="[getOwnedStatusClass(item.id, acc.id, 2), 'account-cell']"
               class="text-center"
+              @click="openItemEditModal(item.id, acc.id, 1)"
+              style="cursor: pointer;"
             >
-              <div class="cell-wrapper" style="position: relative;">
-                <!-- トグルアイコン -->
-                <v-btn
-                  v-if="getOwnedCount(item.id, acc.id) > 1"
-                  icon
-                  size="x-small"
-                  class="toggle-icon"
-                  @click.stop="toggleCellDisplayMode(item.id, acc.id, 1)"
-                  style="position: absolute; top: 2px; right: 2px; z-index: 1;"
-                  variant="text"
-                >
-                  <v-icon :icon="getCellDisplayMode(item.id, acc.id, 1) === 'current' ? 'mdi-eye' : 'mdi-eye-outline'" size="small"></v-icon>
-                </v-btn>
-
-                <!-- セル内容 -->
-                <div
-                  @click="openItemEditModal(item.id, acc.id, 1)"
-                  style="cursor: pointer;"
-                >
-                  <v-tooltip location="bottom">
-                    <template v-slot:activator="{ props }">
-                      <div
-                        v-bind="props"
-                        class="cell-content"
-                        v-html="getDisplayCellContent(item.id, acc.id, 1)"
-                      ></div>
-                    </template>
-                    <span v-html="getTooltipContent(item.id, acc.id, 1)"></span>
-                  </v-tooltip>
-                </div>
-              </div>
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props }">
+                  <div
+                    v-bind="props"
+                    class="cell-content"
+                    v-html="getDisplayCellContent(item.id, acc.id, 1)"
+                  ></div>
+                </template>
+                <span v-html="getTooltipContent(item.id, acc.id, 1)"></span>
+              </v-tooltip>
             </div>
           </template>
         </v-data-table-virtual>
@@ -458,8 +434,8 @@ const isModalOpen = ref(false);
 const editingCharacter = ref(null);
 const editingAccountId = ref(null);
 
-// セルごとのアイテム表示モード管理
-const cellDisplayModes = ref(new Map());
+// 行ごとのアイテム表示モード管理（masterId単位）
+const rowDisplayModes = ref(new Map());
 
 const createInitialFiltersState = () => ({
   charSearch: "",
@@ -827,21 +803,28 @@ const resetFilters = () => {
 };
 
 /**
- * セルの表示モードを取得（デフォルトは'current'）
+ * 行の表示モードを取得（デフォルトは'current'）
  */
-const getCellDisplayMode = (masterId, accountId, index) => {
-  const key = `${masterId}-${accountId}-${index}`;
-  return cellDisplayModes.value.get(key) || 'current';
+const getRowDisplayMode = (masterId) => {
+  return rowDisplayModes.value.get(masterId) || 'current';
 };
 
 /**
- * セルの表示モードを切り替え
+ * 行の表示モードを切り替え
  */
-const toggleCellDisplayMode = (masterId, accountId, index) => {
-  const key = `${masterId}-${accountId}-${index}`;
-  const currentMode = getCellDisplayMode(masterId, accountId, index);
+const toggleRowDisplayMode = (masterId) => {
+  const currentMode = getRowDisplayMode(masterId);
   const newMode = currentMode === 'current' ? 'planned' : 'current';
-  cellDisplayModes.value.set(key, newMode);
+  rowDisplayModes.value.set(masterId, newMode);
+};
+
+// 後方互換性のため、セル単位の関数も残す（行単位に委譲）
+const getCellDisplayMode = (masterId, accountId, index) => {
+  return getRowDisplayMode(masterId);
+};
+
+const toggleCellDisplayMode = (masterId, accountId, index) => {
+  toggleRowDisplayMode(masterId);
 };
 
 /**
@@ -895,8 +878,11 @@ const handleSaveItems = async ({ character, items, isNew }) => {
 
 // テスト用にコンポーネントのメソッドとプロパティを公開
 defineExpose({
-  cellDisplayModes,
+  rowDisplayModes,
+  cellDisplayModes: rowDisplayModes, // 後方互換性
+  getRowDisplayMode,
   getCellDisplayMode,
+  toggleRowDisplayMode,
   toggleCellDisplayMode,
   isModalOpen,
   editingCharacter,
@@ -1210,24 +1196,14 @@ defineExpose({
   box-sizing: border-box;
 }
 
-/* セルラッパー（トグルアイコン配置用） */
-.cell-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* トグルアイコン */
-.toggle-icon {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.cell-wrapper:hover .toggle-icon {
-  opacity: 1;
+/* 行単位の表示切り替えボタン */
+.row-toggle-btn {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  min-width: 70px;
+  height: 28px;
+  text-transform: none;
+  font-weight: 500;
 }
 
 /* 「—」表示の場合も同じ幅を確保 */
