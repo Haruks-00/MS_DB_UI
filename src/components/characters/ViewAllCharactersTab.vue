@@ -300,8 +300,9 @@
                   item.monsterName || "—"
                 }}</span>
               </div>
-              <!-- 行単位の表示切り替えボタン -->
+              <!-- 行単位の表示切り替えボタン（仮想アイテムがある場合のみ表示） -->
               <v-btn
+                v-if="hasVirtualItems(item.id)"
                 @click.stop="toggleRowDisplayMode(item.id)"
                 :color="getRowDisplayMode(item.id) === 'current' ? 'primary' : 'orange'"
                 variant="tonal"
@@ -815,6 +816,29 @@ const toggleRowDisplayMode = (masterId) => {
   const currentMode = getRowDisplayMode(masterId);
   const newMode = currentMode === 'current' ? 'planned' : 'current';
   rowDisplayModes.value.set(masterId, newMode);
+};
+
+/**
+ * その行に仮想アイテム（つける予定）が存在するかチェック
+ */
+const hasVirtualItems = (masterId) => {
+  // 全アカウントのキャラクターをチェック
+  for (const acc of props.accounts) {
+    const ownedList = (props.ownedCharactersData.get(acc.id) || []).filter(
+      (c) => c.characterMasterId === masterId
+    );
+
+    for (const char of ownedList) {
+      const items = char.items || [];
+      // 仮想アイテムが1つでもあればtrueを返す
+      const hasVirtual = items.some((item) => {
+        return typeof item === 'object' && item.isVirtual === true;
+      });
+      if (hasVirtual) return true;
+    }
+  }
+
+  return false;
 };
 
 // 後方互換性のため、セル単位の関数も残す（行単位に委譲）
