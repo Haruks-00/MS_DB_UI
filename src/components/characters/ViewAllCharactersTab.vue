@@ -234,17 +234,35 @@
     <v-card class="mb-4 minimal-stats-card">
       <v-card-text class="pa-4">
         <div class="d-flex justify-space-between align-center">
-          <div class="d-flex align-center">
-            <v-icon
-              icon="mdi-chart-bar"
+          <div class="d-flex align-center gap-4">
+            <div class="d-flex align-center">
+              <v-icon
+                icon="mdi-chart-bar"
+                color="primary"
+                class="mr-2"
+                size="20"
+              ></v-icon>
+              <span class="text-body-1 font-weight-medium"
+                >表示件数: {{ filteredMasters.length }} /
+                {{ characterMasters.length }}</span
+              >
+            </div>
+            <!-- 一括表示切り替えボタン -->
+            <v-btn-toggle
+              v-model="globalDisplayMode"
+              mandatory
+              density="comfortable"
               color="primary"
-              class="mr-2"
-              size="20"
-            ></v-icon>
-            <span class="text-body-1 font-weight-medium"
-              >表示件数: {{ filteredMasters.length }} /
-              {{ characterMasters.length }}</span
             >
+              <v-btn value="current" size="small">
+                <v-icon size="small" class="mr-1">mdi-eye</v-icon>
+                全て現在
+              </v-btn>
+              <v-btn value="planned" size="small">
+                <v-icon size="small" class="mr-1">mdi-eye-outline</v-icon>
+                全て予定後
+              </v-btn>
+            </v-btn-toggle>
           </div>
           <v-chip
             :color="
@@ -410,7 +428,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import ItemEditModal from "./ItemEditModal.vue";
 
 const props = defineProps({
@@ -436,6 +454,20 @@ const editingAccountId = ref(null);
 
 // 行ごとのアイテム表示モード管理（masterId単位）
 const rowDisplayModes = ref(new Map());
+
+// グローバルな表示モード（一括切り替え用）
+const globalDisplayMode = ref('current');
+
+// グローバル表示モードが変更されたら、仮想アイテムを持つ全ての行を一括切り替え
+watch(globalDisplayMode, (newMode) => {
+  // 全キャラクターマスターをループ
+  props.characterMasters.forEach((master) => {
+    // 仮想アイテムを持つキャラクターのみ対象
+    if (hasVirtualItems(master.id)) {
+      rowDisplayModes.value.set(master.id, newMode);
+    }
+  });
+});
 
 const createInitialFiltersState = () => ({
   charSearch: "",
