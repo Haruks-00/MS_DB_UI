@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vue-tsc --noEmit && vite build",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx --fix"
   },
   "repository": {
     "type": "git",
@@ -20,13 +23,18 @@
   },
   "homepage": "https://github.com/Haruks-00/MS_DB_UI#readme",
   "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-vue": "^5.0.5",
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^26.1.0",
     "terser": "^5.43.1",
+    "typescript": "^5.9.3",
     "vite": "^5.4.19",
     "vitest": "^3.2.4",
-    "vue": "^3.4.31"
+    "vue": "^3.4.31",
+    "vue-tsc": "^3.1.1"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
