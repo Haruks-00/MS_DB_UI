@@ -476,6 +476,15 @@ const createInitialFiltersState = () => ({
 
 const filters = reactive(createInitialFiltersState());
 
+// テンプレートで使用するためのcomputed プロパティ
+const characterMasters = computed(() => dataStore.characterMasters);
+const accounts = computed(() => dataStore.accounts);
+const itemMasters = computed(() => dataStore.itemMasters);
+const gachaMasters = computed(() => dataStore.gachaMasters);
+const itemMastersMap = computed(() => dataStore.itemMastersMap);
+const characterMastersMap = computed(() => dataStore.characterMastersMap);
+const dataLoaded = computed(() => dataStore.dataLoaded);
+
 const characterTypes = computed(() => {
   return Array.from(
     new Set(dataStore.characterMasters.map((m) => m.type).filter(Boolean))
