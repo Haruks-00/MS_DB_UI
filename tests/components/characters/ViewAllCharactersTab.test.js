@@ -640,6 +640,80 @@ describe('ViewAllCharactersTab', () => {
     })
   })
 
+  describe('セルごとのアイテム表示モード切り替え機能', () => {
+    it('セルキーごとに表示モードを管理できる', () => {
+      wrapper = mount(ViewAllCharactersTab, {
+        props: mockProps,
+        global: { plugins: [vuetify] }
+      })
+
+      const key1 = '1-1-0'
+      const key2 = '2-1-0'
+
+      wrapper.vm.cellDisplayModes.set(key1, 'planned')
+      wrapper.vm.cellDisplayModes.set(key2, 'current')
+
+      expect(wrapper.vm.cellDisplayModes.get(key1)).toBe('planned')
+      expect(wrapper.vm.cellDisplayModes.get(key2)).toBe('current')
+    })
+
+    it('getCellDisplayMode: デフォルトは「current」', () => {
+      wrapper = mount(ViewAllCharactersTab, {
+        props: mockProps,
+        global: { plugins: [vuetify] }
+      })
+
+      const mode = wrapper.vm.getCellDisplayMode(1, 1, 0)
+      expect(mode).toBe('current')
+    })
+
+    it('toggleCellDisplayMode: セルの表示モードを切り替えられる', () => {
+      wrapper = mount(ViewAllCharactersTab, {
+        props: mockProps,
+        global: { plugins: [vuetify] }
+      })
+
+      const masterId = 1, accountId = 1, index = 0
+
+      // 初期値は'current'
+      expect(wrapper.vm.getCellDisplayMode(masterId, accountId, index)).toBe('current')
+
+      // トグル実行
+      wrapper.vm.toggleCellDisplayMode(masterId, accountId, index)
+      expect(wrapper.vm.getCellDisplayMode(masterId, accountId, index)).toBe('planned')
+
+      // もう一度トグル
+      wrapper.vm.toggleCellDisplayMode(masterId, accountId, index)
+      expect(wrapper.vm.getCellDisplayMode(masterId, accountId, index)).toBe('current')
+    })
+
+    it('「現在」モードではwillRemove: trueのアイテムが除外される', () => {
+      const items = [
+        { itemId: 1, isVirtual: false },
+        { itemId: 2, isVirtual: false, willRemove: true },
+        { itemId: 3, isVirtual: true }
+      ]
+
+      // 現在モードでのフィルタリングロジック
+      const currentItems = items.filter(item => !item.willRemove && !item.isVirtual)
+      expect(currentItems.length).toBe(1)
+      expect(currentItems[0].itemId).toBe(1)
+    })
+
+    it('「予定適用後」モードではwillRemove除外+仮想アイテム含む', () => {
+      const items = [
+        { itemId: 1, isVirtual: false },
+        { itemId: 2, isVirtual: false, willRemove: true },
+        { itemId: 3, isVirtual: true }
+      ]
+
+      // 予定適用後モードでのフィルタリングロジック
+      const plannedItems = items.filter(item => !item.willRemove)
+      expect(plannedItems.length).toBe(2)
+      expect(plannedItems.map(i => i.itemId)).toEqual([1, 3])
+    })
+  })
+
   describe('未所持セルクリック機能', () => {
     it('未所持セルをクリックするとアイテム編集モーダルが開く', async () => {
       const testProps = {

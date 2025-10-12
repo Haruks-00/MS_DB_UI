@@ -213,6 +213,7 @@
               >
                 {{ showExtraColumns ? "詳細を非表示" : "詳細を表示" }}
               </v-btn>
+
               <v-spacer></v-spacer>
               <v-btn
                 @click="resetFilters"
@@ -233,17 +234,35 @@
     <v-card class="mb-4 minimal-stats-card">
       <v-card-text class="pa-4">
         <div class="d-flex justify-space-between align-center">
-          <div class="d-flex align-center">
-            <v-icon
-              icon="mdi-chart-bar"
+          <div class="d-flex align-center gap-4">
+            <div class="d-flex align-center">
+              <v-icon
+                icon="mdi-chart-bar"
+                color="primary"
+                class="mr-2"
+                size="20"
+              ></v-icon>
+              <span class="text-body-1 font-weight-medium"
+                >表示件数: {{ filteredMasters.length }} /
+                {{ characterMasters.length }}</span
+              >
+            </div>
+            <!-- 一括表示切り替えボタン -->
+            <v-btn-toggle
+              v-model="globalDisplayMode"
+              mandatory
+              density="comfortable"
               color="primary"
-              class="mr-2"
-              size="20"
-            ></v-icon>
-            <span class="text-body-1 font-weight-medium"
-              >表示件数: {{ filteredMasters.length }} /
-              {{ characterMasters.length }}</span
             >
+              <v-btn value="current" size="small">
+                <v-icon size="small" class="mr-1">mdi-eye</v-icon>
+                全て現在
+              </v-btn>
+              <v-btn value="planned" size="small">
+                <v-icon size="small" class="mr-1">mdi-eye-outline</v-icon>
+                全て予定後
+              </v-btn>
+            </v-btn-toggle>
           </div>
           <v-chip
             :color="
@@ -284,19 +303,33 @@
         >
           <!-- キャラ名列のカスタムスロット -->
           <template v-slot:item.monsterName="{ item }">
-            <div class="d-flex align-center">
-              <v-avatar
-                size="32"
-                :color="getElementColor(item.element)"
-                class="mr-3"
-              >
-                <span class="text-caption text-white font-weight-bold">{{
-                  item.element || "?"
+            <div class="character-name-cell">
+              <div class="d-flex align-center">
+                <v-avatar
+                  size="32"
+                  :color="getElementColor(item.element)"
+                  class="mr-2"
+                >
+                  <span class="text-caption text-white font-weight-bold">{{
+                    item.element || "?"
+                  }}</span>
+                </v-avatar>
+                <span class="character-name">{{
+                  item.monsterName || "—"
                 }}</span>
-              </v-avatar>
-              <span class="font-weight-medium">{{
-                item.monsterName || "—"
-              }}</span>
+              </div>
+              <!-- 行単位の表示切り替えボタン（仮想アイテムがある場合のみ表示） -->
+              <v-btn
+                v-if="hasVirtualItems(item.id)"
+                @click.stop="toggleRowDisplayMode(item.id)"
+                :color="getRowDisplayMode(item.id) === 'current' ? 'primary' : 'orange'"
+                variant="tonal"
+                size="x-small"
+                class="row-toggle-btn mt-1"
+              >
+                <v-icon size="x-small">{{ getRowDisplayMode(item.id) === 'current' ? 'mdi-eye' : 'mdi-eye-outline' }}</v-icon>
+                <span class="ml-1">{{ getRowDisplayMode(item.id) === 'current' ? '現在' : '予定後' }}</span>
+              </v-btn>
             </div>
           </template>
 
@@ -395,8 +428,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import ItemEditModal from "./ItemEditModal.vue";
+import { ensureNewFormat } from "../../utils/itemMigration.js";
 
 const props = defineProps({
   dataLoaded: { type: Boolean, required: true },
@@ -418,6 +452,23 @@ const showExtraColumns = ref(false);
 const isModalOpen = ref(false);
 const editingCharacter = ref(null);
 const editingAccountId = ref(null);
+
+// 行ごとのアイテム表示モード管理（masterId単位）
+const rowDisplayModes = ref(new Map());
+
+// グローバルな表示モード（一括切り替え用）
+const globalDisplayMode = ref('current');
+
+// グローバル表示モードが変更されたら、仮想アイテムを持つ全ての行を一括切り替え
+watch(globalDisplayMode, (newMode) => {
+  // 全キャラクターマスターをループ
+  props.characterMasters.forEach((master) => {
+    // 仮想アイテムを持つキャラクターのみ対象
+    if (hasVirtualItems(master.id)) {
+      rowDisplayModes.value.set(master.id, newMode);
+    }
+  });
+});
 
 const createInitialFiltersState = () => ({
   charSearch: "",
@@ -518,9 +569,14 @@ const filteredMasters = computed(() => {
       for (const searchItemId of searchItemIds) {
         if (targetAccount) {
           if ((props.ownedCharactersData.get(targetAccount) || []).some(
-            (char) =>
-              char.characterMasterId === master.id &&
-              char.items?.some((itemId) => Number(itemId) === searchItemId)
+            (char) => {
+              if (char.characterMasterId !== master.id) return false;
+              if (!char.items || char.items.length === 0) return false;
+
+              // 新形式に変換してからチェック
+              const normalizedItems = ensureNewFormat(char.items);
+              return normalizedItems.some((item) => item.itemId === searchItemId);
+            }
           )) {
             hasItem = true;
             break;
@@ -530,9 +586,14 @@ const filteredMasters = computed(() => {
           for (const ownedChars of props.ownedCharactersData.values()) {
             if (
               ownedChars.some(
-                (char) =>
-                  char.characterMasterId === master.id &&
-                  char.items?.some((itemId) => Number(itemId) === searchItemId)
+                (char) => {
+                  if (char.characterMasterId !== master.id) return false;
+                  if (!char.items || char.items.length === 0) return false;
+
+                  // 新形式に変換してからチェック
+                  const normalizedItems = ensureNewFormat(char.items);
+                  return normalizedItems.some((item) => item.itemId === searchItemId);
+                }
               )
             ) {
               foundInAnyAccount = true;
@@ -669,21 +730,42 @@ const getDisplayCellContent = (masterId, accountId, index) => {
 
   const items = ownedList[index].items || [];
 
-  // アイテムを実/仮想に分けて表示
-  const itemLines = items
+  // セルごとの表示モードに応じてアイテムをフィルタリング
+  const displayMode = getCellDisplayMode(masterId, accountId, index);
+  const filteredItems = items.filter((item) => {
+    const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+    const willRemove = typeof item === 'object' ? item.willRemove : false;
+
+    if (displayMode === 'current') {
+      // 現在モード: 実アイテムのみ（外す予定も含む）
+      return !isVirtual;
+    } else {
+      // 予定適用後モード: 外す予定でないすべてのアイテム
+      return !willRemove;
+    }
+  });
+
+  // アイテムを実/仮想/外す予定に分けて表示
+  const itemLines = filteredItems
     .map((item) => {
-      // 新形式の場合: { itemId: 1, isVirtual: false }
+      // 新形式の場合: { itemId: 1, isVirtual: false, willRemove: false }
       // 旧形式の場合: 1（数値）
       const itemId = typeof item === 'object' ? item.itemId : item;
       const isVirtual = typeof item === 'object' ? item.isVirtual : false;
+      const willRemove = typeof item === 'object' ? item.willRemove : false;
       const itemName = props.itemMastersMap.get(Number(itemId));
 
       if (!itemName) return null;
 
-      // 仮想アイテムにはクラスを追加
+      // 外す予定のアイテムは赤色で表示（現在モードのみ）
+      if (displayMode === 'current' && willRemove) {
+        return `<span class="will-remove-item item-name">${itemName}</span>`;
+      }
+      // 仮想アイテムはオレンジ色で表示（予定適用後モードのみ）
       if (isVirtual) {
         return `<span class="virtual-item item-name">${itemName}</span>`;
       }
+      // 通常の実アイテム
       return `<span class="item-name">${itemName}</span>`;
     })
     .filter(Boolean)
@@ -764,6 +846,54 @@ const resetFilters = () => {
 };
 
 /**
+ * 行の表示モードを取得（デフォルトは'current'）
+ */
+const getRowDisplayMode = (masterId) => {
+  return rowDisplayModes.value.get(masterId) || 'current';
+};
+
+/**
+ * 行の表示モードを切り替え
+ */
+const toggleRowDisplayMode = (masterId) => {
+  const currentMode = getRowDisplayMode(masterId);
+  const newMode = currentMode === 'current' ? 'planned' : 'current';
+  rowDisplayModes.value.set(masterId, newMode);
+};
+
+/**
+ * その行に仮想アイテム（つける予定）が存在するかチェック
+ */
+const hasVirtualItems = (masterId) => {
+  // 全アカウントのキャラクターをチェック
+  for (const acc of props.accounts) {
+    const ownedList = (props.ownedCharactersData.get(acc.id) || []).filter(
+      (c) => c.characterMasterId === masterId
+    );
+
+    for (const char of ownedList) {
+      const items = char.items || [];
+      // 仮想アイテムが1つでもあればtrueを返す
+      const hasVirtual = items.some((item) => {
+        return typeof item === 'object' && item.isVirtual === true;
+      });
+      if (hasVirtual) return true;
+    }
+  }
+
+  return false;
+};
+
+// 後方互換性のため、セル単位の関数も残す（行単位に委譲）
+const getCellDisplayMode = (masterId, accountId, index) => {
+  return getRowDisplayMode(masterId);
+};
+
+const toggleCellDisplayMode = (masterId, accountId, index) => {
+  toggleRowDisplayMode(masterId);
+};
+
+/**
  * セルをクリックしたときにアイテム編集モーダルを開く
  */
 const openItemEditModal = (masterId, accountId, index) => {
@@ -811,6 +941,19 @@ const handleSaveItems = async ({ character, items, isNew }) => {
     });
   }
 };
+
+// テスト用にコンポーネントのメソッドとプロパティを公開
+defineExpose({
+  rowDisplayModes,
+  cellDisplayModes: rowDisplayModes, // 後方互換性
+  getRowDisplayMode,
+  getCellDisplayMode,
+  toggleRowDisplayMode,
+  toggleCellDisplayMode,
+  isModalOpen,
+  editingCharacter,
+  filters
+});
 </script>
 
 <style scoped>
@@ -973,23 +1116,22 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   box-sizing: border-box !important;
 }
 
-/* キャラクター名の表示を最適化 */
-.table-fixed td:nth-child(2) .d-flex {
-  width: 200px !important;
-  max-width: 200px !important;
-  min-width: 200px !important;
-  box-sizing: border-box;
-  overflow: hidden;
+/* キャラクター名セルの表示を最適化 */
+.character-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0;
 }
 
-.table-fixed td:nth-child(2) .font-weight-medium {
+.character-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px !important;
-  width: 140px;
-  flex-shrink: 1;
-  flex-grow: 0;
+  max-width: 140px;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 /* アバターサイズも固定 */
@@ -1114,9 +1256,23 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   max-width: 60px !important;
   padding: 16px 8px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   box-sizing: border-box;
+}
+
+/* 行単位の表示切り替えボタン */
+.row-toggle-btn {
+  font-size: 0.7rem !important;
+  padding: 2px 6px !important;
+  min-width: 60px !important;
+  height: 24px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
 /* 「—」表示の場合も同じ幅を確保 */
@@ -1239,16 +1395,22 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   box-sizing: border-box;
 }
 
-.table-fixed .v-data-table__th:nth-child(n+6), 
-.table-fixed .v-data-table__td:nth-child(n+6) { 
-  width: 78px !important;
-  min-width: 78px !important;
-  max-width: 78px !important;
+.table-fixed .v-data-table__th:nth-child(n+6),
+.table-fixed .v-data-table__td:nth-child(n+6) {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  text-align: center !important;
 }
 
-/* 仮想アイテムのスタイル */
+/* 仮想アイテムのスタイル（オレンジ） */
 :deep(.virtual-item) {
   color: #FF9800;
+}
+
+/* 外す予定アイテムのスタイル（赤） */
+:deep(.will-remove-item) {
+  color: #F44336;
 }
 
 /* アイテム名の途中で改行しない */

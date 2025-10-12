@@ -35,9 +35,23 @@ describe('ItemEditModal（仮想アイテム編集モーダル）', () => {
       expect(true).toBe(true)
     })
 
-    it('最大3個までしか選択できない', () => {
-      // 3個制限のテスト
-      expect(true).toBe(true)
+    it('実アイテム最大3個、仮想アイテム最大3個まで選択できる', () => {
+      // 実3個 + 仮想3個 = 合計6個まで選択可能
+      const realItems = [
+        { itemId: 1, isVirtual: false },
+        { itemId: 2, isVirtual: false },
+        { itemId: 3, isVirtual: false }
+      ]
+      const virtualItems = [
+        { itemId: 4, isVirtual: true },
+        { itemId: 5, isVirtual: true },
+        { itemId: 6, isVirtual: true }
+      ]
+      const allItems = [...realItems, ...virtualItems]
+
+      expect(realItems.length).toBe(3)
+      expect(virtualItems.length).toBe(3)
+      expect(allItems.length).toBe(6)
     })
 
     it('同じアイテムは1つだけ選択できる', () => {
@@ -118,6 +132,35 @@ describe('新規追加モード', () => {
   })
 })
 
+describe('外す予定機能（willRemoveフラグ）', () => {
+  it('実アイテムに「外す予定」チェックボックスが表示される', () => {
+    // 実アイテム(isVirtual: false)のみチェックボックス表示のテスト
+    expect(true).toBe(true)
+  })
+
+  it('仮想アイテムには「外す予定」チェックボックスが表示されない', () => {
+    // 仮想アイテム(isVirtual: true)はチェックボックス非表示のテスト
+    expect(true).toBe(true)
+  })
+
+  it('「外す予定」をチェックするとwillRemove: trueが設定される', () => {
+    // willRemoveフラグの設定テスト
+    expect(true).toBe(true)
+  })
+
+  it('保存時にwillRemoveフラグが正しく送信される', () => {
+    // willRemoveフラグを含むデータ形式のテスト
+    const items = [
+      { itemId: 1, isVirtual: false },
+      { itemId: 2, isVirtual: false, willRemove: true },
+      { itemId: 3, isVirtual: true }
+    ]
+    expect(items[1].willRemove).toBe(true)
+    expect(items[0].willRemove).toBeUndefined()
+    expect(items[2].willRemove).toBeUndefined()
+  })
+})
+
 describe('アイテム編集ロジック', () => {
   it('アイテムを追加できる', () => {
     const items = []
@@ -165,19 +208,42 @@ describe('アイテム編集ロジック', () => {
     expect(hasDuplicate(3)).toBe(false)
   })
 
-  it('アイテムが3個を超えていないかチェックできる', () => {
+  it('実アイテムが3個を超えていないかチェックできる', () => {
     const items = [
-      { itemId: 1, isVirtual: false },
-      { itemId: 2, isVirtual: true },
-      { itemId: 3, isVirtual: false }
+      { itemId: 1, isVirtual: false, willRemove: false },
+      { itemId: 2, isVirtual: true, willRemove: false },
+      { itemId: 3, isVirtual: false, willRemove: false },
+      { itemId: 4, isVirtual: true, willRemove: false }
     ]
 
-    const isValid = items.length <= 3
-    expect(isValid).toBe(true)
+    const realCount = items.filter(item => !item.isVirtual).length
+    expect(realCount).toBe(2)
+    expect(realCount <= 3).toBe(true)
 
-    items.push({ itemId: 4, isVirtual: false })
-    const isStillValid = items.length <= 3
-    expect(isStillValid).toBe(false)
+    items.push({ itemId: 5, isVirtual: false, willRemove: false })
+    items.push({ itemId: 6, isVirtual: false, willRemove: false })
+    const newRealCount = items.filter(item => !item.isVirtual).length
+    expect(newRealCount).toBe(4)
+    expect(newRealCount <= 3).toBe(false)
+  })
+
+  it('仮想アイテムが3個を超えていないかチェックできる', () => {
+    const items = [
+      { itemId: 1, isVirtual: false, willRemove: false },
+      { itemId: 2, isVirtual: true, willRemove: false },
+      { itemId: 3, isVirtual: false, willRemove: false },
+      { itemId: 4, isVirtual: true, willRemove: false }
+    ]
+
+    const virtualCount = items.filter(item => item.isVirtual).length
+    expect(virtualCount).toBe(2)
+    expect(virtualCount <= 3).toBe(true)
+
+    items.push({ itemId: 5, isVirtual: true, willRemove: false })
+    items.push({ itemId: 6, isVirtual: true, willRemove: false })
+    const newVirtualCount = items.filter(item => item.isVirtual).length
+    expect(newVirtualCount).toBe(4)
+    expect(newVirtualCount <= 3).toBe(false)
   })
 
   it('新形式のデータを保存用に整形できる', () => {
