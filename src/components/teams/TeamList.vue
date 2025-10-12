@@ -125,7 +125,7 @@
 
 <script setup>
 import { reactive, computed } from "vue";
-import { getRealItems } from "../../utils/itemMigration.ts";
+import { getRealItems } from "../../utils/itemMigration";
 
 const props = defineProps({
   dataLoaded: { type: Boolean, required: true },

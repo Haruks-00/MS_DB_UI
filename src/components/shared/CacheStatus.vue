@@ -100,7 +100,7 @@ import {
   getCacheStats,
   clearAllCache,
   clearUserCache,
-} from "../../utils/cache.ts";
+} from "../../utils/cache";
 
 const props = defineProps({
   userId: {
