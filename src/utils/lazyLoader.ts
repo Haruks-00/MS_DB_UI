@@ -27,7 +27,7 @@ export const lazyLoadComponent = <T>(
  * Firebaseサービスの遅延読み込み
  */
 export const lazyLoadFirebase = async (): Promise<FirebaseInstances> => {
-  const { getFirebaseInstances } = await import("../firebase-init.js");
+  const { getFirebaseInstances } = await import("../firebase-init");
   return getFirebaseInstances();
 };
 
