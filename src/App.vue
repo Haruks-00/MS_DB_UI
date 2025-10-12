@@ -169,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";
@@ -203,22 +203,30 @@ const isAccountControlVisible = computed(() => {
 });
 
 // 認証状態の初期化
-onMounted(async () => {
-  await authStore.initAuthListener();
-
-  // ユーザーがログインしている場合、データをロード
-  if (authStore.isLoggedIn && authStore.userId) {
-    await loadInitialData();
-  }
+onMounted(() => {
+  // 認証リスナーを設定
+  authStore.initAuthListener();
 });
+
+// 認証状態の変化を監視してデータロード
+watch(
+  () => authStore.user,
+  (newUser) => {
+    if (newUser && authStore.userId) {
+      loadInitialData();
+    } else {
+      // ログアウト時はデータをリセット
+      dataStore.resetData();
+      uiStore.resetUI();
+    }
+  }
+);
 
 // ログイン処理
 const handleLogin = async (): Promise<void> => {
   try {
     await authStore.loginWithGoogle();
-    if (authStore.userId) {
-      await loadInitialData();
-    }
+    // watcherが自動的にデータをロードします
   } catch (error) {
     uiStore.showError("ログインに失敗しました");
   }
@@ -227,8 +235,7 @@ const handleLogin = async (): Promise<void> => {
 // ログアウト処理
 const handleLogout = async (): Promise<void> => {
   await authStore.logout();
-  dataStore.resetData();
-  uiStore.resetUI();
+  // watcherが自動的にデータをリセットします
 };
 
 // 初期データロード
