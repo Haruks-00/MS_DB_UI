@@ -173,7 +173,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { formatOwnedCharDisplayName } from "../../utils/formatters.js";
+import { formatOwnedCharDisplayName } from "../../utils/formatters.ts";
 import CharacterSelector from "../shared/CharacterSelector.vue"; // INFO: 共通コンポーネントをインポート
 
 const props = defineProps({

@@ -152,7 +152,7 @@
 
 <script setup>
 import { reactive, computed, watch, ref } from "vue";
-import { databaseService } from "../../services/database.js";
+import { databaseService } from "../../services/database.ts";
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";
 import CharacterSelector from "../shared/CharacterSelector.vue";

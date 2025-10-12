@@ -77,7 +77,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { serverTimestamp } from "firebase/firestore";
-import { databaseService } from "../../services/database.js";
+import { databaseService } from "../../services/database.ts";
 import CharacterSelector from "../shared/CharacterSelector.vue"; // INFO: 共通コンポーネントをインポート
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";

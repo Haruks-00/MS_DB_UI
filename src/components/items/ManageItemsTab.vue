@@ -309,9 +309,9 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
-import { formatOwnedCharDisplayName } from "../../utils/formatters.js";
-import { databaseService } from "../../services/database.js";
-import { ensureNewFormat, getRealItems } from "../../utils/itemMigration.js";
+import { formatOwnedCharDisplayName } from "../../utils/formatters.ts";
+import { databaseService } from "../../services/database.ts";
+import { ensureNewFormat, getRealItems } from "../../utils/itemMigration.ts";
 import CharacterSelector from "../shared/CharacterSelector.vue";
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";

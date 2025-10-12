@@ -428,7 +428,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { useDataStore } from "@/stores/data";
 import ItemEditModal from "./ItemEditModal.vue";
-import { ensureNewFormat } from "../../utils/itemMigration.js";
+import { ensureNewFormat } from "../../utils/itemMigration.ts";
 
 // Pinia Storeを使用
 const dataStore = useDataStore();

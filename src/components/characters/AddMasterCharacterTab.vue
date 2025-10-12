@@ -121,7 +121,7 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { databaseService } from "../../services/database.js";
+import { databaseService } from "../../services/database.ts";
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";
 
