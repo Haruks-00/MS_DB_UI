@@ -1,4 +1,5 @@
 import { createApp } from "vue";
+import { createPinia } from "pinia";
 import App from "./App.vue";
 // Firebaseの初期化を遅延読み込みに変更
 // import "./firebase-init.js";
@@ -7,13 +8,15 @@ import "./assets/styles/global.css";
 import {
   performanceTracker,
   setPerformanceWarnings,
-} from "./utils/performance.js";
+} from "./utils/performance";
 
 // パフォーマンス監視の開始
 performanceTracker.startMarker("app-init");
 
 const app = createApp(App);
+const pinia = createPinia();
 
+app.use(pinia);
 app.use(vuetify);
 
 // パフォーマンス警告の設定

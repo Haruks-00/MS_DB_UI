@@ -28,3 +28,10 @@ export type {
   SubCollectionPath,
   FirebaseConfig
 } from './firebase';
+
+// Store
+export type {
+  AuthState,
+  DataState,
+  UIState
+} from './store';
