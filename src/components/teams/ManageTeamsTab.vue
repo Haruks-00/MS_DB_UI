@@ -15,12 +15,12 @@
       <v-col cols="12" lg="5">
         <!-- INFO: より美しいTeamListコンポーネント -->
         <team-list
-          :data-loaded="dataLoaded"
-          :teams="teams"
-          :accounts="accounts"
-          :owned-characters-data="ownedCharactersData"
-          :character-masters-map="characterMastersMap"
-          :item-masters-map="itemMastersMap"
+          :data-loaded="dataStore.dataLoaded"
+          :teams="dataStore.teams"
+          :accounts="dataStore.accounts"
+          :owned-characters-data="dataStore.ownedCharactersData"
+          :character-masters-map="dataStore.characterMastersMap"
+          :item-masters-map="dataStore.itemMastersMap"
           :selected-team-id="teamForm.id"
           @select-team="selectTeam"
           @delete-team="handleDeleteTeam"
@@ -31,10 +31,10 @@
         <!-- INFO: より美しいTeamFormコンポーネント -->
         <team-form
           :team="teamForm"
-          :accounts="accounts"
-          :owned-characters-data="ownedCharactersData"
-          :character-masters-map="characterMastersMap"
-          :item-masters-map="itemMastersMap"
+          :accounts="dataStore.accounts"
+          :owned-characters-data="dataStore.ownedCharactersData"
+          :character-masters-map="dataStore.characterMastersMap"
+          :item-masters-map="dataStore.itemMastersMap"
           :is-saving="isSaving"
           @save-team="handleSaveTeam"
           @reset-form="resetTeamForm"
@@ -49,18 +49,16 @@
 import { ref, reactive } from "vue";
 import { serverTimestamp } from "firebase/firestore";
 import { databaseService } from "../../services/database.js";
+import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
+import { useAuthStore } from "@/stores/auth";
 import TeamList from "./TeamList.vue";
 import TeamForm from "./TeamForm.vue";
 
-const props = defineProps({
-  userId: { type: String, required: true },
-  dataLoaded: { type: Boolean, required: true },
-  teams: { type: Array, required: true },
-  accounts: { type: Array, required: true },
-  ownedCharactersData: { type: Map, required: true },
-  characterMastersMap: { type: Map, required: true },
-  itemMastersMap: { type: Map, required: true },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
+const uiStore = useUIStore();
+const authStore = useAuthStore();
 
 const emit = defineEmits(["team-added", "team-updated", "team-deleted"]);
 
@@ -138,7 +136,7 @@ const handleSaveTeam = async () => {
   }
   isSaving.value = true;
   const teamData = {
-    userId: props.userId,
+    userId: authStore.userId,
     name: teamForm.name,
     type: teamForm.type,
     characters: teamForm.slots.map((s) => ({

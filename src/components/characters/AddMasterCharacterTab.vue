@@ -82,7 +82,7 @@
               <v-col cols="12">
                 <v-select
                   v-model="masterData.gacha"
-                  :items="gachaMasters"
+                  :items="dataStore.gachaMasters"
                   item-title="name"
                   item-value="name"
                   label="排出ガチャ (限定の場合)"
@@ -122,16 +122,12 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { databaseService } from "../../services/database.js";
+import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
 
-/**
- * [概要] 親から渡されるガチャのマスターデータ。
- */
-const props = defineProps({
-  gachaMasters: {
-    type: Array,
-    required: true,
-  },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
+const uiStore = useUIStore();
 
 /**
  * [概要] 親にマスターデータが追加されたことを通知するイベント。
