@@ -430,6 +430,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import ItemEditModal from "./ItemEditModal.vue";
+import { ensureNewFormat } from "../../utils/itemMigration.js";
 
 const props = defineProps({
   dataLoaded: { type: Boolean, required: true },
@@ -568,9 +569,14 @@ const filteredMasters = computed(() => {
       for (const searchItemId of searchItemIds) {
         if (targetAccount) {
           if ((props.ownedCharactersData.get(targetAccount) || []).some(
-            (char) =>
-              char.characterMasterId === master.id &&
-              char.items?.some((itemId) => Number(itemId) === searchItemId)
+            (char) => {
+              if (char.characterMasterId !== master.id) return false;
+              if (!char.items || char.items.length === 0) return false;
+
+              // 新形式に変換してからチェック
+              const normalizedItems = ensureNewFormat(char.items);
+              return normalizedItems.some((item) => item.itemId === searchItemId);
+            }
           )) {
             hasItem = true;
             break;
@@ -580,9 +586,14 @@ const filteredMasters = computed(() => {
           for (const ownedChars of props.ownedCharactersData.values()) {
             if (
               ownedChars.some(
-                (char) =>
-                  char.characterMasterId === master.id &&
-                  char.items?.some((itemId) => Number(itemId) === searchItemId)
+                (char) => {
+                  if (char.characterMasterId !== master.id) return false;
+                  if (!char.items || char.items.length === 0) return false;
+
+                  // 新形式に変換してからチェック
+                  const normalizedItems = ensureNewFormat(char.items);
+                  return normalizedItems.some((item) => item.itemId === searchItemId);
+                }
               )
             ) {
               foundInAnyAccount = true;

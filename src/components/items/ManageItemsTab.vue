@@ -364,33 +364,30 @@ const filteredOwnedCharacters = computed(() => {
   // アイテムフィルタが指定されている場合
   if (moveForm.itemFilter) {
     const filteredItemId = Number(moveForm.itemFilter);
+
     characters = characters.filter((char) => {
       if (!char.items || char.items.length === 0) return false;
-      // アイテムリストから指定されたアイテムIDを持っているかチェック
-      // ただし、仮想アイテム（つける予定）は除外
-      return char.items.some((item) => {
-        const itemId = typeof item === 'object' ? item.itemId : item;
-        const isVirtual = typeof item === 'object' ? item.isVirtual : false;
 
-        // 実アイテム（仮想でない）のみをチェック
-        return Number(itemId) === filteredItemId && !isVirtual;
+      // 新形式に変換してからチェック
+      const normalizedItems = ensureNewFormat(char.items);
+
+      // 指定されたアイテムIDを持ち、かつ仮想アイテムでないものがあるかチェック
+      return normalizedItems.some((item) => {
+        return item.itemId === filteredItemId && !item.isVirtual;
       });
     });
 
     // willRemove優先でソート
     characters.sort((a, b) => {
-      // aとbのアイテムリストから、フィルタされたアイテムを見つける
-      const aItem = a.items.find((item) => {
-        const itemId = typeof item === 'object' ? item.itemId : item;
-        return Number(itemId) === filteredItemId;
-      });
-      const bItem = b.items.find((item) => {
-        const itemId = typeof item === 'object' ? item.itemId : item;
-        return Number(itemId) === filteredItemId;
-      });
+      // 新形式に変換してからアイテムを検索
+      const aNormalizedItems = ensureNewFormat(a.items || []);
+      const bNormalizedItems = ensureNewFormat(b.items || []);
 
-      const aWillRemove = typeof aItem === 'object' ? aItem.willRemove : false;
-      const bWillRemove = typeof bItem === 'object' ? bItem.willRemove : false;
+      const aItem = aNormalizedItems.find((item) => item.itemId === filteredItemId);
+      const bItem = bNormalizedItems.find((item) => item.itemId === filteredItemId);
+
+      const aWillRemove = aItem?.willRemove || false;
+      const bWillRemove = bItem?.willRemove || false;
 
       // willRemove: trueを優先（降順）
       if (aWillRemove && !bWillRemove) return -1;
