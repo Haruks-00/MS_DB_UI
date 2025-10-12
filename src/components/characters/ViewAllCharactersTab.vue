@@ -429,20 +429,12 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
+import { useDataStore } from "@/stores/data";
 import ItemEditModal from "./ItemEditModal.vue";
 import { ensureNewFormat } from "../../utils/itemMigration.js";
 
-const props = defineProps({
-  dataLoaded: { type: Boolean, required: true },
-  accounts: { type: Array, required: true },
-  characterMasters: { type: Array, required: true },
-  itemMasters: { type: Array, required: true },
-  gachaMasters: { type: Array, required: true },
-  ownedCountMap: { type: Map, required: true },
-  ownedCharactersData: { type: Map, required: true },
-  itemMastersMap: { type: Map, required: true },
-  characterMastersMap: { type: Map, required: true },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
 
 const emit = defineEmits(['items-updated']);
 
@@ -462,7 +454,7 @@ const globalDisplayMode = ref('current');
 // グローバル表示モードが変更されたら、仮想アイテムを持つ全ての行を一括切り替え
 watch(globalDisplayMode, (newMode) => {
   // 全キャラクターマスターをループ
-  props.characterMasters.forEach((master) => {
+  dataStore.characterMasters.forEach((master) => {
     // 仮想アイテムを持つキャラクターのみ対象
     if (hasVirtualItems(master.id)) {
       rowDisplayModes.value.set(master.id, newMode);
@@ -486,7 +478,7 @@ const filters = reactive(createInitialFiltersState());
 
 const characterTypes = computed(() => {
   return Array.from(
-    new Set(props.characterMasters.map((m) => m.type).filter(Boolean))
+    new Set(dataStore.characterMasters.map((m) => m.type).filter(Boolean))
   ).sort();
 });
 
@@ -505,7 +497,7 @@ const headers = computed(() => {
   }
 
   // アカウント別の列を動的に追加
-  props.accounts.forEach(acc => {
+  dataStore.accounts.forEach(acc => {
     // アカウント名から数字部分を抽出（例：「アカウント1」→「1」）
     const accountNumber = acc.indexNumber || acc.name.match(/\d+/)?.[0] || acc.id;
     basicHeaders.push(
@@ -518,7 +510,7 @@ const headers = computed(() => {
 });
 
 const filteredMasters = computed(() => {
-  if (!props.dataLoaded) return [];
+  if (!dataStore.dataLoaded) return [];
 
   const {
     charSearch,
@@ -534,7 +526,7 @@ const filteredMasters = computed(() => {
   const lowerCharSearch = charSearch.toLowerCase();
   const searchItemIds = itemSearch.map(id => Number(id));
 
-  return props.characterMasters.filter((master) => {
+  return dataStore.characterMasters.filter((master) => {
     if (
       lowerCharSearch &&
       !master.monsterName.toLowerCase().includes(lowerCharSearch) &&
@@ -568,7 +560,7 @@ const filteredMasters = computed(() => {
 
       for (const searchItemId of searchItemIds) {
         if (targetAccount) {
-          if ((props.ownedCharactersData.get(targetAccount) || []).some(
+          if ((dataStore.ownedCharactersData.get(targetAccount) || []).some(
             (char) => {
               if (char.characterMasterId !== master.id) return false;
               if (!char.items || char.items.length === 0) return false;
@@ -583,7 +575,7 @@ const filteredMasters = computed(() => {
           }
         } else {
           let foundInAnyAccount = false;
-          for (const ownedChars of props.ownedCharactersData.values()) {
+          for (const ownedChars of dataStore.ownedCharactersData.values()) {
             if (
               ownedChars.some(
                 (char) => {
@@ -611,7 +603,7 @@ const filteredMasters = computed(() => {
 
     // 全体の所持状況フィルタ（複数選択対応）
     if (totalOwnership && totalOwnership.length > 0) {
-      const totalOwnedCount = props.accounts.reduce(
+      const totalOwnedCount = dataStore.accounts.reduce(
         (sum, acc) => sum + getOwnedCount(master.id, acc.id),
         0
       );
@@ -644,7 +636,7 @@ const filteredMasters = computed(() => {
         }
         if (
           condition === "one_in_each" &&
-          props.accounts.every((acc) => getOwnedCount(master.id, acc.id) >= 1)
+          dataStore.accounts.every((acc) => getOwnedCount(master.id, acc.id) >= 1)
         ) {
           matchesAnyCondition = true;
           break;
@@ -668,8 +660,8 @@ const filteredMasters = computed(() => {
       for (const condition of columnFilter) {
         let hasMatchingCharacter = false;
 
-        for (const acc of props.accounts) {
-          const accountChars = props.ownedCharactersData.get(acc.id) || [];
+        for (const acc of dataStore.accounts) {
+          const accountChars = dataStore.ownedCharactersData.get(acc.id) || [];
           const masterChars = accountChars.filter(char => char.characterMasterId === master.id);
 
           if (condition === 'has_zero_item_character' &&
@@ -719,11 +711,11 @@ const filteredMasters = computed(() => {
 });
 
 const getOwnedCount = (masterId, accountId) => {
-  return props.ownedCountMap.get(`${masterId}-${accountId}`) || 0;
+  return dataStore.ownedCountMap.get(`${masterId}-${accountId}`) || 0;
 };
 
 const getDisplayCellContent = (masterId, accountId, index) => {
-  const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(
+  const ownedList = (dataStore.ownedCharactersData.get(accountId) || []).filter(
     (c) => c.characterMasterId === masterId
   );
   if (!ownedList || ownedList.length <= index) return "—";
@@ -753,7 +745,7 @@ const getDisplayCellContent = (masterId, accountId, index) => {
       const itemId = typeof item === 'object' ? item.itemId : item;
       const isVirtual = typeof item === 'object' ? item.isVirtual : false;
       const willRemove = typeof item === 'object' ? item.willRemove : false;
-      const itemName = props.itemMastersMap.get(Number(itemId));
+      const itemName = dataStore.itemMastersMap.get(Number(itemId));
 
       if (!itemName) return null;
 
@@ -778,7 +770,7 @@ const getDisplayCellContent = (masterId, accountId, index) => {
  * [概要] ツールチップに表示する内容を取得する。
  */
 const getTooltipContent = (masterId, accountId, index) => {
-  const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(
+  const ownedList = (dataStore.ownedCharactersData.get(accountId) || []).filter(
     (c) => c.characterMasterId === masterId
   );
   if (!ownedList || ownedList.length <= index) return "未所持";
@@ -789,7 +781,7 @@ const getTooltipContent = (masterId, accountId, index) => {
     .map((item) => {
       const itemId = typeof item === 'object' ? item.itemId : item;
       const isVirtual = typeof item === 'object' ? item.isVirtual : false;
-      const itemName = props.itemMastersMap.get(Number(itemId));
+      const itemName = dataStore.itemMastersMap.get(Number(itemId));
 
       if (!itemName) return null;
 
@@ -866,8 +858,8 @@ const toggleRowDisplayMode = (masterId) => {
  */
 const hasVirtualItems = (masterId) => {
   // 全アカウントのキャラクターをチェック
-  for (const acc of props.accounts) {
-    const ownedList = (props.ownedCharactersData.get(acc.id) || []).filter(
+  for (const acc of dataStore.accounts) {
+    const ownedList = (dataStore.ownedCharactersData.get(acc.id) || []).filter(
       (c) => c.characterMasterId === masterId
     );
 
@@ -897,7 +889,7 @@ const toggleCellDisplayMode = (masterId, accountId, index) => {
  * セルをクリックしたときにアイテム編集モーダルを開く
  */
 const openItemEditModal = (masterId, accountId, index) => {
-  const ownedList = (props.ownedCharactersData.get(accountId) || []).filter(
+  const ownedList = (dataStore.ownedCharactersData.get(accountId) || []).filter(
     (c) => c.characterMasterId === masterId
   );
 
