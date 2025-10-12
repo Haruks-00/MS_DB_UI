@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
+import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   // INFO: GitHub Pagesのリポジトリ名に合わせてベースパスを設定
@@ -42,13 +43,15 @@ export default defineConfig({
   optimizeDeps: {
     include: ["vue", "vuetify"],
   },
-  // Firebaseの解決設定
+  // パスエイリアスとFirebaseの解決設定
   resolve: {
     alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
       "firebase/app": "firebase/app",
       "firebase/firestore": "firebase/firestore",
       "firebase/auth": "firebase/auth",
     },
+    extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", ".vue"],
   },
   // PWA対応
   define: {
