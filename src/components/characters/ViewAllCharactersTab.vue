@@ -418,9 +418,6 @@
     <ItemEditModal
       v-model="isModalOpen"
       :character="editingCharacter"
-      :item-masters="itemMasters"
-      :item-masters-map="itemMastersMap"
-      :character-masters-map="characterMastersMap"
       :is-new-character="editingCharacter?.isNew || false"
       @save="handleSaveItems"
     />

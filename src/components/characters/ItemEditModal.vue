@@ -137,17 +137,17 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ensureNewFormat } from '../../utils/itemMigration.js'
+import { useDataStore } from '@/stores/data'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   character: { type: Object, default: null },
-  itemMasters: { type: Array, required: true },
-  itemMastersMap: { type: Map, required: true },
-  characterMastersMap: { type: Map, required: true },
   isNewCharacter: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
+
+const dataStore = useDataStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -162,12 +162,12 @@ const isSaving = ref(false)
 // キャラクター情報を取得
 const characterInfo = computed(() => {
   if (!props.character) return null
-  return props.characterMastersMap.get(props.character.characterMasterId)
+  return dataStore.characterMastersMap.get(props.character.characterMasterId)
 })
 
 // 利用可能なアイテムリスト
 const availableItems = computed(() => {
-  return props.itemMasters.map(item => ({
+  return dataStore.itemMasters.map(item => ({
     id: item.id,
     name: item.name
   }))
@@ -196,7 +196,7 @@ const getItemChipColor = (itemId) => {
 
 // アイテム名を取得
 const getItemName = (itemId) => {
-  return props.itemMastersMap.get(Number(itemId)) || '不明'
+  return dataStore.itemMastersMap.get(Number(itemId)) || '不明'
 }
 
 // アイテム選択変更時の処理
