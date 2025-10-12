@@ -1,6 +1,6 @@
 import firebase from "firebase/compat/app";
 import type { UserCredential, User } from "firebase/compat/auth";
-import { lazyLoadAuth } from "../utils/lazyLoader.js";
+import { lazyLoadAuth } from "../utils/lazyLoader";
 
 /**
  * Googleアカウントでのログインを試みます。

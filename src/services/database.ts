@@ -1,4 +1,4 @@
-import { lazyLoadDatabase } from "../utils/lazyLoader.js";
+import { lazyLoadDatabase } from "../utils/lazyLoader";
 import { ensureNewFormat } from "../utils/itemMigration";
 import type {
   CharacterMaster,
@@ -24,7 +24,7 @@ import {
   type QuerySnapshot,
   type DocumentData,
   type DocumentReference,
-} from "../firebase-init.js";
+} from "../firebase-init";
 
 /**
  * 初期データの戻り値型
