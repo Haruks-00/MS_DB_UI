@@ -136,7 +136,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ensureNewFormat } from '../../utils/itemMigration.js'
+import { ensureNewFormat } from '../../utils/itemMigration'
 import { useDataStore } from '@/stores/data'
 
 const props = defineProps({
