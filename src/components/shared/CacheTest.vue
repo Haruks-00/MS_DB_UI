@@ -104,7 +104,7 @@ import {
   getCacheStats,
   isCacheValid,
   clearAllCache,
-} from "../../utils/cache.js";
+} from "../../utils/cache";
 
 const props = defineProps({
   userId: {

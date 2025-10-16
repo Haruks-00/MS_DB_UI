@@ -61,7 +61,7 @@
                   </div>
                   <v-select
                     v-model="updateForm.items"
-                    :items="itemMasters"
+                    :items="dataStore.itemMasters"
                     item-title="name"
                     item-value="id"
                     label="アイテム (最大3つまで)"
@@ -123,7 +123,7 @@
               <v-col cols="12">
                 <v-select
                   v-model="moveForm.itemFilter"
-                  :items="itemMasters"
+                  :items="dataStore.itemMasters"
                   item-title="name"
                   item-value="id"
                   label="アイテムでフィルタ（外す予定のキャラを優先表示）"
@@ -309,18 +309,16 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
-import { formatOwnedCharDisplayName } from "../../utils/formatters.js";
-import { databaseService } from "../../services/database.js";
-import { ensureNewFormat, getRealItems } from "../../utils/itemMigration.js";
+import { formatOwnedCharDisplayName } from "../../utils/formatters";
+import { databaseService } from "../../services/database";
+import { ensureNewFormat, getRealItems } from "../../utils/itemMigration";
 import CharacterSelector from "../shared/CharacterSelector.vue";
+import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
 
-const props = defineProps({
-  selectedAccountId: { type: String, default: null },
-  ownedCharactersData: { type: Map, required: true },
-  characterMastersMap: { type: Map, required: true },
-  itemMasters: { type: Array, required: true },
-  itemMastersMap: { type: Map, required: true },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
+const uiStore = useUIStore();
 
 const emit = defineEmits(["items-updated", "items-moved"]);
 
@@ -337,16 +335,16 @@ const isMoving = ref(false);
 // 全所持キャラクター（フィルタなし、移動先用）
 const allOwnedCharacters = computed(() => {
   if (
-    !props.selectedAccountId ||
-    !props.ownedCharactersData.has(props.selectedAccountId)
+    !uiStore.selectedAccountId ||
+    !dataStore.ownedCharactersData.has(uiStore.selectedAccountId)
   )
     return [];
   const ownedList =
-    props.ownedCharactersData.get(props.selectedAccountId) || [];
+    dataStore.ownedCharactersData.get(uiStore.selectedAccountId) || [];
 
   return ownedList
     .map((char) => {
-      const master = props.characterMastersMap.get(char.characterMasterId);
+      const master = dataStore.characterMastersMap.get(char.characterMasterId);
       return {
         ...char,
         id: char.id,
@@ -415,7 +413,7 @@ const movableItems = computed(() => {
   const realItems = getRealItems(fromChar.items);
   return realItems.map((item) => ({
     id: item.itemId,
-    name: props.itemMastersMap.get(item.itemId) || `不明(ID:${item.itemId})`,
+    name: dataStore.itemMastersMap.get(item.itemId) || `不明(ID:${item.itemId})`,
   }));
 });
 
@@ -428,7 +426,7 @@ const resetForms = () => {
   });
 };
 
-watch(() => props.selectedAccountId, resetForms);
+watch(() => uiStore.selectedAccountId, resetForms);
 
 watch(
   () => updateForm.selectedOwnedId,
@@ -463,13 +461,13 @@ const handleUpdateItems = async () => {
     }));
 
     await databaseService.updateCharacterItems(
-      props.selectedAccountId,
+      uiStore.selectedAccountId,
       updateForm.selectedOwnedId,
       newFormatItems
     );
 
     emit("items-updated", {
-      accountId: props.selectedAccountId,
+      accountId: uiStore.selectedAccountId,
       ownedCharacterId: updateForm.selectedOwnedId,
       items: newFormatItems,
     });
@@ -516,13 +514,13 @@ const handleMoveItems = async () => {
     ];
 
     await databaseService.moveCharacterItems(
-      props.selectedAccountId,
+      uiStore.selectedAccountId,
       { id: fromId, items: newFromItems },
       { id: toId, items: newToItems }
     );
 
     emit("items-moved", {
-      accountId: props.selectedAccountId,
+      accountId: uiStore.selectedAccountId,
       from: { id: fromId, items: newFromItems },
       to: { id: toId, items: newToItems },
     });
@@ -542,10 +540,10 @@ const formatCharForDisplay = (char, includeItems) => {
   return formatOwnedCharDisplayName(
     char,
     includeItems,
-    props.characterMastersMap,
-    props.ownedCharactersData,
-    props.itemMastersMap,
-    props.selectedAccountId
+    dataStore.characterMastersMap,
+    dataStore.ownedCharactersData,
+    dataStore.itemMastersMap,
+    uiStore.selectedAccountId
   );
 };
 /**
@@ -556,7 +554,7 @@ const formatCharForDisplay = (char, includeItems) => {
 const formatItemNames = (itemIds) => {
   if (!itemIds || itemIds.length === 0) return "アイテムなし";
   return itemIds
-    .map((id) => props.itemMastersMap.get(Number(id))?.name || `不明(ID:${id})`)
+    .map((id) => dataStore.itemMastersMap.get(Number(id))?.name || `不明(ID:${id})`)
     .join("、 ");
 };
 </script>

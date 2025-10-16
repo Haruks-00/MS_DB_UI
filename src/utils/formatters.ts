@@ -1,23 +1,24 @@
-import { getRealItems } from "./itemMigration.js";
+import { getRealItems } from "./itemMigration";
+import type { OwnedCharacter, CharacterMaster } from "@/types";
 
 /**
  * [概要] 所持キャラクターの表示名をフォーマットする。
- * @param {Object} char - フォーマット対象の所持キャラクターオブジェクト
- * @param {boolean} includeItems - アイテム情報を含めるか
- * @param {Map<string, Object>} characterMastersMap - キャラクターマスターのMap
- * @param {Map<string, Array<Object>>} ownedCharactersData - 全アカウントの所持キャラクターデータMap
- * @param {Map<number, string>} itemMastersMap - アイテムマスターのMap
- * @param {string | null} [currentAccountId=null] - 現在のアカウントID (charにaccountIdがない場合のフォールバック)
- * @returns {string} フォーマットされた表示名
+ * @param char - フォーマット対象の所持キャラクターオブジェクト
+ * @param includeItems - アイテム情報を含めるか
+ * @param characterMastersMap - キャラクターマスターのMap
+ * @param ownedCharactersData - 全アカウントの所持キャラクターデータMap
+ * @param itemMastersMap - アイテムマスターのMap
+ * @param currentAccountId - 現在のアカウントID (charにaccountIdがない場合のフォールバック)
+ * @returns フォーマットされた表示名
  */
 export const formatOwnedCharDisplayName = (
-  char,
-  includeItems,
-  characterMastersMap,
-  ownedCharactersData,
-  itemMastersMap,
-  currentAccountId = null
-) => {
+  char: OwnedCharacter & { accountId?: string },
+  includeItems: boolean,
+  characterMastersMap: Map<string, CharacterMaster>,
+  ownedCharactersData: Map<string, OwnedCharacter[]>,
+  itemMastersMap: Map<number, string>,
+  currentAccountId: string | null = null
+): string => {
   if (!char) return "キャラクター情報なし";
 
   const master = characterMastersMap.get(char.characterMasterId);
@@ -39,7 +40,7 @@ export const formatOwnedCharDisplayName = (
     // 新形式に変換して実アイテムのみを取得
     const realItems = getRealItems(char.items || []);
     const itemNames = realItems
-      .map((item) => itemMastersMap.get(item.itemId))
+      .map((item) => itemMastersMap.get(item.itemId as number))
       .filter(Boolean)
       .join("、");
 

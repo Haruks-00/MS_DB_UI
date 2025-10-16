@@ -27,7 +27,7 @@
               <v-card-text class="pa-4">
                 <CharacterSelector
                   v-model="form.selectedMasterId"
-                  :items="props.characterMasters"
+                  :items="dataStore.characterMasters"
                   :item-title="
                     (master) =>
                       `[${master.indexNumber || '?'}] ${master.monsterName}`
@@ -110,7 +110,7 @@
                     <v-col cols="12">
                       <v-select
                         v-model="form.gacha"
-                        :items="gachaMasters"
+                        :items="dataStore.gachaMasters"
                         item-title="name"
                         item-value="name"
                         label="排出ガチャ (限定の場合)"
@@ -152,13 +152,14 @@
 
 <script setup>
 import { reactive, computed, watch, ref } from "vue";
-import { databaseService } from "../../services/database.js";
+import { databaseService } from "../../services/database";
+import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
 import CharacterSelector from "../shared/CharacterSelector.vue";
 
-const props = defineProps({
-  characterMasters: { type: Array, required: true },
-  gachaMasters: { type: Array, required: true },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
+const uiStore = useUIStore();
 
 const emit = defineEmits(["master-updated"]);
 
@@ -178,13 +179,7 @@ const form = reactive({
 /** @type {import('vue').Ref<boolean>} 更新処理が実行中かどうかのフラグ */
 const isUpdating = ref(false);
 
-/**
- * [概要] IDによる高速アクセスのため、マスターリストをMap形式に変換する。
- * @returns {Map<string, Object>} キャラクターマスターIDをキーとするMap
- */
-const characterMastersMap = computed(() => {
-  return new Map(props.characterMasters.map((m) => [m.id, m]));
-});
+// INFO: characterMastersMapはdataStoreから直接取得するため、computed不要
 
 // INFO: フィルタリングとプロキシ用のcomputedは不要になったため削除
 // (editableMasters, selectedMasterIdProxy)
@@ -206,8 +201,8 @@ watch(
       });
       return;
     }
-    // INFO: .valueは不要 (computedはRefオブジェクトを返すため)
-    const master = characterMastersMap.value.get(newId);
+    // INFO: dataStoreから直接characterMastersMapを取得
+    const master = dataStore.characterMastersMap.get(newId);
     if (master) {
       Object.assign(form, {
         name: master.monsterName,

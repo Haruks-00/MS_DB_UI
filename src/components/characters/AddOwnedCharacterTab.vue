@@ -77,18 +77,14 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { serverTimestamp } from "firebase/firestore";
-import { databaseService } from "../../services/database.js";
+import { databaseService } from "../../services/database";
 import CharacterSelector from "../shared/CharacterSelector.vue"; // INFO: 共通コンポーネントをインポート
+import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
 
-/**
- * [概要] コンポーネントが受け取るプロパティを定義します。
- */
-const props = defineProps({
-  characterMasters: { type: Array, required: true },
-  characterMastersMap: { type: Map, required: true },
-  selectedAccountId: { type: String, default: null },
-  ownedCountMap: { type: Map, required: true },
-});
+// Pinia Storeを使用
+const dataStore = useDataStore();
+const uiStore = useUIStore();
 
 /**
  * [概要] 親コンポーネントに通知するイベントを定義します。
@@ -104,8 +100,8 @@ const isAdding = ref(false);
  * @returns {Array<Object>} 追加可能なキャラクターの配列
  */
 const addableCharacters = computed(() => {
-  if (!props.selectedAccountId) return [];
-  return props.characterMasters.filter((master) => {
+  if (!uiStore.selectedAccountId) return [];
+  return dataStore.characterMasters.filter((master) => {
     return getOwnedCountForMaster(master.id) < 2;
   });
 });
@@ -115,7 +111,7 @@ const addableCharacters = computed(() => {
  * @note INFO: watchオプションはwatch関数に置き換わります
  */
 watch(
-  () => props.selectedAccountId,
+  () => uiStore.selectedAccountId,
   () => {
     selectedMasterId.value = null;
   }
@@ -127,8 +123,8 @@ watch(
  * @returns {number} 所持数
  */
 const getOwnedCountForMaster = (masterId) => {
-  if (!props.selectedAccountId) return 0;
-  return props.ownedCountMap.get(`${masterId}-${props.selectedAccountId}`) || 0;
+  if (!uiStore.selectedAccountId) return 0;
+  return dataStore.ownedCountMap.get(`${masterId}-${uiStore.selectedAccountId}`) || 0;
 };
 
 /**
@@ -148,14 +144,14 @@ const formatCharacterForSelection = (master) => {
  * [概要] キャラクター追加ボタンがクリックされた際の処理。
  */
 const handleAddCharacter = async () => {
-  if (!selectedMasterId.value || !props.selectedAccountId)
+  if (!selectedMasterId.value || !uiStore.selectedAccountId)
     return alert("追加するキャラとアカウントを選択してください。");
   if (getOwnedCountForMaster(selectedMasterId.value) >= 2)
     return alert("このキャラは既に2体所持しています。");
 
   isAdding.value = true;
   try {
-    const master = props.characterMastersMap.get(selectedMasterId.value);
+    const master = dataStore.characterMastersMap.get(selectedMasterId.value);
     if (!master) throw new Error("キャラのマスター情報が見つかりません。");
 
     const newOwnedCharData = {
@@ -166,7 +162,7 @@ const handleAddCharacter = async () => {
     };
 
     const docRef = await databaseService.addOwnedCharacter(
-      props.selectedAccountId,
+      uiStore.selectedAccountId,
       newOwnedCharData
     );
 
@@ -176,7 +172,7 @@ const handleAddCharacter = async () => {
       createdAt: { toDate: () => new Date() },
     };
     emit("character-added", {
-      accountId: props.selectedAccountId,
+      accountId: uiStore.selectedAccountId,
       newCharacter: newLocalChar,
     });
 
