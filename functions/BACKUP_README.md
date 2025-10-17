@@ -43,18 +43,34 @@ firebase use [your-project-id]
 
 ### 2. Cloud Storageバケットの確認
 
-デフォルトバケットを確認:
+**推奨方法: Firebase Console（最も簡単）**
+
+1. ブラウザで以下のURLを開く:
+   ```
+   https://console.firebase.google.com/project/[your-project-id]/storage
+   ```
+
+2. Cloud Storageが有効化されていない場合は「使ってみる」ボタンをクリック
+
+3. デフォルトバケット名を確認（通常 `[your-project-id].appspot.com`）
+
+**代替方法: gcloud CLI（上級者向け）**
+
+gcloud CLIを使用する場合は、事前にプロジェクト設定が必要です:
+
 ```bash
-# gcloud CLIでバケット一覧を表示
+# 1. gcloud CLIの初期化（初回のみ）
+gcloud init
+
+# 2. プロジェクトIDを設定
+gcloud config set project [your-project-id]
+
+# 3. 設定確認
+gcloud config get-value project
+
+# 4. バケット一覧を表示
 gsutil ls
-
-# または、Firebase Consoleで直接確認
-# https://console.firebase.google.com/project/[your-project-id]/storage
 ```
-
-バケット名は通常 `gs://[your-project-id].appspot.com` の形式です。
-
-**注意**: Cloud Storageが有効化されていない場合は、Firebase Consoleから手動で有効化してください。
 
 ### 3. Firestoreのインデックス作成
 
@@ -225,6 +241,23 @@ gcloud projects add-iam-policy-binding [your-project-id] \
   --member="serviceAccount:[your-project-id]@appspot.gserviceaccount.com" \
   --role="roles/storage.objectAdmin"
 ```
+
+### エラー: "gsutil: command requires a project id"
+
+`gsutil ls` コマンドでプロジェクトIDが設定されていないエラーが出る場合:
+
+```bash
+# プロジェクトIDを設定
+gcloud config set project [your-project-id]
+
+# 設定確認
+gcloud config get-value project
+
+# 再度実行
+gsutil ls
+```
+
+または、Firebase Consoleから確認することを推奨します（セットアップ手順2を参照）。
 
 ### バックアップが空になる
 
