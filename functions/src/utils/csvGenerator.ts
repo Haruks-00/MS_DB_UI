@@ -1,7 +1,7 @@
 import type {
   CharacterMaster,
   OwnedCharacterWithAccount,
-} from '../types';
+} from "../types";
 
 /**
  * CSV特殊文字をエスケープする
@@ -12,9 +12,9 @@ const escapeCSVValue = (value: string | number): string => {
   const strValue = String(value);
 
   // カンマ、ダブルクォート、改行を含む場合
-  if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
+  if (strValue.includes(",") || strValue.includes("\"") || strValue.includes("\n")) {
     // ダブルクォートを2つに
-    const escaped = strValue.replace(/"/g, '""');
+    const escaped = strValue.replace(/"/g, "\"\"");
     return `"${escaped}"`;
   }
 
@@ -27,7 +27,7 @@ const escapeCSVValue = (value: string | number): string => {
  */
 const escapeNameField = (value: string): string => {
   // ダブルクォートをエスケープ
-  const escaped = value.replace(/"/g, '""');
+  const escaped = value.replace(/"/g, "\"\"");
   // 常にダブルクォートで囲む
   return `"${escaped}"`;
 };
@@ -43,7 +43,7 @@ const getItemName = (
     return `アイテム${itemId}`;
   }
 
-  const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+  const numericId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
   return itemMastersMap.get(numericId) || `アイテム${itemId}`;
 };
 
@@ -71,7 +71,7 @@ export const generateCSV = (
   const rows: string[] = [];
 
   // ヘッダー行
-  rows.push('図鑑No,名前,属性,種類,アカウント,わくわく1,わくわく2,わくわく3');
+  rows.push("図鑑No,名前,属性,種類,アカウント,わくわく1,わくわく2,わくわく3");
 
   // 所持キャラクターを図鑑番号順にソート
   const sortedOwnedCharacters = [...ownedCharacters].sort((a, b) => {
@@ -108,24 +108,24 @@ export const generateCSV = (
 
     // 3つに満たない場合は空文字で埋める
     while (itemNames.length < 3) {
-      itemNames.push('');
+      itemNames.push("");
     }
 
     // CSVの1行を構築
     const row = [
-      master.indexNumber !== undefined ? master.indexNumber : '', // 図鑑No
+      master.indexNumber !== undefined ? master.indexNumber : "", // 図鑑No
       escapeNameField(master.monsterName || master.name), // モンスター名（常にダブルクォートで囲む）
-      master.element || '', // 属性
-      master.type || '', // 種類
+      master.element || "", // 属性
+      master.type || "", // 種類
       escapeCSVValue(ownedChar.accountName),
       escapeCSVValue(itemNames[0]),
       escapeCSVValue(itemNames[1]),
       escapeCSVValue(itemNames[2]),
-    ].join(',');
+    ].join(",");
 
     rows.push(row);
   });
 
   // BOM付きUTF-8として返す
-  return '\uFEFF' + rows.join('\n');
+  return "\uFEFF" + rows.join("\n");
 };

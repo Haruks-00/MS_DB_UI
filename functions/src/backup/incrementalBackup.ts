@@ -1,19 +1,19 @@
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 import type {
   CharacterMaster,
   OwnedCharacterWithAccount,
   ItemMaster,
   BackupMetadata,
-} from '../types';
+} from "../types";
 
 /**
  * 前回のバックアップ時刻を取得
  */
 async function getLastBackupTime(db: admin.firestore.Firestore): Promise<Date> {
-  const backupHistoryRef = db.collection('backup_history')
-    .where('type', '==', 'incremental')
-    .where('status', '==', 'success')
-    .orderBy('endTime', 'desc')
+  const backupHistoryRef = db.collection("backup_history")
+    .where("type", "==", "incremental")
+    .where("status", "==", "success")
+    .orderBy("endTime", "desc")
     .limit(1);
 
   const snapshot = await backupHistoryRef.get();
@@ -45,12 +45,12 @@ async function fetchIncrementalData(
     itemMastersSnapshot,
     ownedCharactersSnapshot,
   ] = await Promise.all([
-    db.collection('accounts').get(), // アカウントは常に全取得
-    db.collection('character_masters').get(), // マスターデータは常に全取得
-    db.collection('itemMasters').get(), // アイテムマスターも常に全取得
+    db.collection("accounts").get(), // アカウントは常に全取得
+    db.collection("character_masters").get(), // マスターデータは常に全取得
+    db.collection("itemMasters").get(), // アイテムマスターも常に全取得
     // 新規追加されたowned_charactersのみ取得
-    db.collectionGroup('owned_characters')
-      .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(since))
+    db.collectionGroup("owned_characters")
+      .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(since))
       .get(),
   ]);
 
@@ -146,31 +146,31 @@ export async function executeIncrementalBackup(): Promise<BackupMetadata> {
     const snapshots = await fetchIncrementalData(db, lastBackupTime);
 
     // データ変換
-    console.log('Transforming incremental data...');
+    console.log("Transforming incremental data...");
     const { ownedCharacters } = transformData(snapshots);
 
     if (ownedCharacters.length === 0) {
-      console.log('No changes detected since last backup');
+      console.log("No changes detected since last backup");
       return {
-        type: 'incremental',
+        type: "incremental",
         timestamp: startTime,
         recordCount: 0,
-        filePath: '', // 変更なしの場合はファイル保存しない
+        filePath: "", // 変更なしの場合はファイル保存しない
       };
     }
 
-    const fileName = `${startTime.toISOString().split('T')[0]}_incremental_backup.csv`;
+    const fileName = `${startTime.toISOString().split("T")[0]}_incremental_backup.csv`;
 
     console.log(`Incremental backup completed: ${ownedCharacters.length} records`);
 
     return {
-      type: 'incremental',
+      type: "incremental",
       timestamp: startTime,
       recordCount: ownedCharacters.length,
       filePath: `backups/incremental/${fileName}`,
     };
   } catch (error) {
-    console.error('Incremental backup failed:', error);
+    console.error("Incremental backup failed:", error);
     throw error;
   }
 }

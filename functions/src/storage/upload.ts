@@ -1,5 +1,5 @@
-import * as admin from 'firebase-admin';
-import type { BackupMetadata } from '../types';
+import * as admin from "firebase-admin";
+import type { BackupMetadata } from "../types";
 
 /**
  * CSVをCloud Storageにアップロードする
@@ -19,7 +19,7 @@ export async function uploadToStorage(
     // CSVをアップロード
     await file.save(csvContent, {
       metadata: {
-        contentType: 'text/csv;charset=utf-8',
+        contentType: "text/csv;charset=utf-8",
         metadata: {
           uploadedAt: new Date().toISOString(),
         },
@@ -30,13 +30,13 @@ export async function uploadToStorage(
 
     // 署名付きURLを生成（7日間有効）
     const [url] = await file.getSignedUrl({
-      action: 'read',
+      action: "read",
       expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7日後
     });
 
     return url;
   } catch (error) {
-    console.error('Failed to upload to Cloud Storage:', error);
+    console.error("Failed to upload to Cloud Storage:", error);
     throw error;
   }
 }
@@ -50,12 +50,12 @@ export async function uploadToStorage(
  */
 export async function saveBackupHistory(
   metadata: BackupMetadata,
-  status: 'success' | 'failed',
+  status: "success" | "failed",
   errorMessage?: string
 ): Promise<void> {
   try {
     const db = admin.firestore();
-    const backupHistoryRef = db.collection('backup_history');
+    const backupHistoryRef = db.collection("backup_history");
 
     await backupHistoryRef.add({
       type: metadata.type,
@@ -70,7 +70,7 @@ export async function saveBackupHistory(
 
     console.log(`Backup history saved: ${metadata.type} - ${status}`);
   } catch (error) {
-    console.error('Failed to save backup history:', error);
+    console.error("Failed to save backup history:", error);
     // 履歴保存失敗はバックアップ失敗とはみなさない
   }
 }

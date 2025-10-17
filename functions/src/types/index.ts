@@ -66,7 +66,7 @@ export interface OwnedCharacterWithAccount extends OwnedCharacter {
 /**
  * バックアップタイプ
  */
-export type BackupType = 'full' | 'incremental';
+export type BackupType = "full" | "incremental";
 
 /**
  * バックアップメタデータ
@@ -87,7 +87,7 @@ export interface BackupHistory {
   startTime: Date;
   endTime: Date;
   recordCount: number;
-  status: 'success' | 'failed';
+  status: "success" | "failed";
   errorMessage?: string;
   filePath: string;
 }

@@ -1,10 +1,10 @@
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 import type {
   CharacterMaster,
   OwnedCharacterWithAccount,
   ItemMaster,
   BackupMetadata,
-} from '../types';
+} from "../types";
 
 /**
  * Firestoreから全データを取得する
@@ -17,10 +17,10 @@ async function fetchAllData(db: admin.firestore.Firestore) {
     itemMastersSnapshot,
     ownedCharactersSnapshot,
   ] = await Promise.all([
-    db.collection('accounts').get(),
-    db.collection('character_masters').get(),
-    db.collection('itemMasters').get(),
-    db.collectionGroup('owned_characters').get(),
+    db.collection("accounts").get(),
+    db.collection("character_masters").get(),
+    db.collection("itemMasters").get(),
+    db.collectionGroup("owned_characters").get(),
   ]);
 
   return {
@@ -108,25 +108,25 @@ export async function executeFullBackup(): Promise<BackupMetadata> {
     const db = admin.firestore();
 
     // 全データ取得
-    console.log('Fetching all data from Firestore...');
+    console.log("Fetching all data from Firestore...");
     const snapshots = await fetchAllData(db);
 
     // データ変換
-    console.log('Transforming data...');
+    console.log("Transforming data...");
     const { ownedCharacters } = transformData(snapshots);
 
-    const fileName = `${startTime.toISOString().split('T')[0]}_full_backup.csv`;
+    const fileName = `${startTime.toISOString().split("T")[0]}_full_backup.csv`;
 
     console.log(`Full backup completed: ${ownedCharacters.length} records`);
 
     return {
-      type: 'full',
+      type: "full",
       timestamp: startTime,
       recordCount: ownedCharacters.length,
       filePath: `backups/full/${fileName}`,
     };
   } catch (error) {
-    console.error('Full backup failed:', error);
+    console.error("Full backup failed:", error);
     throw error;
   }
 }

@@ -1,9 +1,9 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-import { executeFullBackup } from './backup/fullBackup';
-import { executeIncrementalBackup } from './backup/incrementalBackup';
-import { uploadToStorage, saveBackupHistory } from './storage/upload';
-import { generateCSV } from './utils/csvGenerator';
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { executeFullBackup } from "./backup/fullBackup";
+import { executeIncrementalBackup } from "./backup/incrementalBackup";
+import { uploadToStorage, saveBackupHistory } from "./storage/upload";
+import { generateCSV } from "./utils/csvGenerator";
 
 // Firebase Admin SDK初期化
 admin.initializeApp();
@@ -13,11 +13,11 @@ admin.initializeApp();
  * Cloud Schedulerから呼び出される想定
  */
 export const weeklyFullBackup = functions
-  .region('asia-northeast1') // 東京リージョン
-  .pubsub.schedule('0 0 * * 1') // 毎週月曜0時（UTC）
-  .timeZone('Asia/Tokyo')
+  .region("asia-northeast1") // 東京リージョン
+  .pubsub.schedule("0 0 * * 1") // 毎週月曜0時（UTC）
+  .timeZone("Asia/Tokyo")
   .onRun(async (context) => {
-    console.log('Starting weekly full backup...');
+    console.log("Starting weekly full backup...");
 
     try {
       // フルバックアップ実行
@@ -26,10 +26,10 @@ export const weeklyFullBackup = functions
       // CSV生成（再取得）
       const db = admin.firestore();
       const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap] = await Promise.all([
-        db.collection('accounts').get(),
-        db.collection('character_masters').get(),
-        db.collection('itemMasters').get(),
-        db.collectionGroup('owned_characters').get(),
+        db.collection("accounts").get(),
+        db.collection("character_masters").get(),
+        db.collection("itemMasters").get(),
+        db.collectionGroup("owned_characters").get(),
       ]);
 
       // データ変換
@@ -74,21 +74,21 @@ export const weeklyFullBackup = functions
       console.log(`Full backup uploaded: ${fileUrl}`);
 
       // バックアップ履歴を保存
-      await saveBackupHistory(metadata, 'success');
+      await saveBackupHistory(metadata, "success");
 
       return { success: true, recordCount: metadata.recordCount, fileUrl };
     } catch (error) {
-      console.error('Weekly full backup failed:', error);
+      console.error("Weekly full backup failed:", error);
 
       // エラー履歴を保存
       await saveBackupHistory(
         {
-          type: 'full',
+          type: "full",
           timestamp: new Date(),
           recordCount: 0,
-          filePath: '',
+          filePath: "",
         },
-        'failed',
+        "failed",
         error instanceof Error ? error.message : String(error)
       );
 
@@ -101,11 +101,11 @@ export const weeklyFullBackup = functions
  * Cloud Schedulerから呼び出される想定
  */
 export const dailyIncrementalBackup = functions
-  .region('asia-northeast1') // 東京リージョン
-  .pubsub.schedule('0 0 * * *') // 毎日0時（UTC）
-  .timeZone('Asia/Tokyo')
+  .region("asia-northeast1") // 東京リージョン
+  .pubsub.schedule("0 0 * * *") // 毎日0時（UTC）
+  .timeZone("Asia/Tokyo")
   .onRun(async (context) => {
-    console.log('Starting daily incremental backup...');
+    console.log("Starting daily incremental backup...");
 
     try {
       // 差分バックアップ実行
@@ -113,9 +113,9 @@ export const dailyIncrementalBackup = functions
 
       // 変更がない場合はスキップ
       if (metadata.recordCount === 0) {
-        console.log('No changes detected, skipping upload');
-        await saveBackupHistory(metadata, 'success');
-        return { success: true, recordCount: 0, message: 'No changes' };
+        console.log("No changes detected, skipping upload");
+        await saveBackupHistory(metadata, "success");
+        return { success: true, recordCount: 0, message: "No changes" };
       }
 
       // CSV生成（再取得）
@@ -124,11 +124,11 @@ export const dailyIncrementalBackup = functions
       lastBackupTime.setDate(lastBackupTime.getDate() - 1);
 
       const [accountsSnap, mastersSnap, itemsSnap, ownedCharsSnap] = await Promise.all([
-        db.collection('accounts').get(),
-        db.collection('character_masters').get(),
-        db.collection('itemMasters').get(),
-        db.collectionGroup('owned_characters')
-          .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(lastBackupTime))
+        db.collection("accounts").get(),
+        db.collection("character_masters").get(),
+        db.collection("itemMasters").get(),
+        db.collectionGroup("owned_characters")
+          .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(lastBackupTime))
           .get(),
       ]);
 
@@ -174,21 +174,21 @@ export const dailyIncrementalBackup = functions
       console.log(`Incremental backup uploaded: ${fileUrl}`);
 
       // バックアップ履歴を保存
-      await saveBackupHistory(metadata, 'success');
+      await saveBackupHistory(metadata, "success");
 
       return { success: true, recordCount: metadata.recordCount, fileUrl };
     } catch (error) {
-      console.error('Daily incremental backup failed:', error);
+      console.error("Daily incremental backup failed:", error);
 
       // エラー履歴を保存
       await saveBackupHistory(
         {
-          type: 'incremental',
+          type: "incremental",
           timestamp: new Date(),
           recordCount: 0,
-          filePath: '',
+          filePath: "",
         },
-        'failed',
+        "failed",
         error instanceof Error ? error.message : String(error)
       );
 
