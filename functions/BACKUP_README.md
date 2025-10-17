@@ -45,14 +45,16 @@ firebase use [your-project-id]
 
 デフォルトバケットを確認:
 ```bash
-# Firebase Consoleでストレージを開く
-firebase open storage
-
-# または、gcloud CLIで確認
+# gcloud CLIでバケット一覧を表示
 gsutil ls
+
+# または、Firebase Consoleで直接確認
+# https://console.firebase.google.com/project/[your-project-id]/storage
 ```
 
-バケット名は通常 `[your-project-id].appspot.com` の形式です。
+バケット名は通常 `gs://[your-project-id].appspot.com` の形式です。
+
+**注意**: Cloud Storageが有効化されていない場合は、Firebase Consoleから手動で有効化してください。
 
 ### 3. Firestoreのインデックス作成
 
