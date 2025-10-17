@@ -1,12 +1,19 @@
 import type { CharacterMaster, OwnedCharacter, ItemData } from '@/types';
 
 /**
+ * エクスポート用の所持キャラクターデータ（アカウント名付き）
+ */
+export interface OwnedCharacterWithAccount extends OwnedCharacter {
+  accountName: string;
+}
+
+/**
  * CSVエクスポートに必要なデータ
  */
 export interface ExportData {
   characterMasters: CharacterMaster[];
-  ownedCharacters: OwnedCharacter[];
-  accountName: string;
+  ownedCharacters: OwnedCharacterWithAccount[];
+  accountName: string; // 互換性のため残すが、各キャラクターのaccountNameを優先
   itemMastersMap?: Map<number, string>;
 }
 
@@ -84,13 +91,16 @@ export const generateCSV = (exportData: ExportData): string => {
       itemNames.push('');
     }
 
+    // アカウント名を取得（個別のaccountNameがあればそれを優先）
+    const charAccountName = ownedChar.accountName || accountName;
+
     // CSVの1行を構築
     const row = [
       '', // 図鑑No（現在は空）
       escapeCSVValue(master.name),
       '', // 属性（現在は空）
       '', // 種類（現在は空）
-      escapeCSVValue(accountName),
+      escapeCSVValue(charAccountName),
       escapeCSVValue(itemNames[0]),
       escapeCSVValue(itemNames[1]),
       escapeCSVValue(itemNames[2]),

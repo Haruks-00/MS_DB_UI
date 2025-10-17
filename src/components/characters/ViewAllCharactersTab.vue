@@ -264,21 +264,34 @@
               </v-btn>
             </v-btn-toggle>
           </div>
-          <v-chip
-            :color="
-              filteredMasters.length === characterMasters.length
-                ? 'success'
-                : 'warning'
-            "
-            variant="outlined"
-            class="minimal-chip"
-          >
-            {{
-              filteredMasters.length === characterMasters.length
-                ? "全件表示"
-                : "フィルター適用中"
-            }}
-          </v-chip>
+          <div class="d-flex align-center gap-2">
+            <!-- CSVエクスポートボタン -->
+            <v-btn
+              @click="exportToCSV"
+              :loading="isExporting"
+              color="success"
+              variant="outlined"
+              prepend-icon="mdi-file-export"
+              class="minimal-button"
+            >
+              CSVエクスポート
+            </v-btn>
+            <v-chip
+              :color="
+                filteredMasters.length === characterMasters.length
+                  ? 'success'
+                  : 'warning'
+              "
+              variant="outlined"
+              class="minimal-chip"
+            >
+              {{
+                filteredMasters.length === characterMasters.length
+                  ? "全件表示"
+                  : "フィルター適用中"
+              }}
+            </v-chip>
+          </div>
         </div>
       </v-card-text>
     </v-card>
@@ -427,13 +440,19 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { useDataStore } from "@/stores/data";
+import { useUIStore } from "@/stores/ui";
 import ItemEditModal from "./ItemEditModal.vue";
 import { ensureNewFormat } from "../../utils/itemMigration";
+import { generateCSV, downloadCSV } from "@/utils/csvExport";
 
 // Pinia Storeを使用
 const dataStore = useDataStore();
+const uiStore = useUIStore();
 
 const emit = defineEmits(['items-updated']);
+
+// CSVエクスポート状態
+const isExporting = ref(false);
 
 const showExtraColumns = ref(false);
 
@@ -940,6 +959,51 @@ const handleSaveItems = async ({ character, items, isNew }) => {
   }
 };
 
+/**
+ * CSVエクスポートを実行
+ */
+const exportToCSV = async () => {
+  try {
+    isExporting.value = true;
+
+    // 全アカウントの全所持キャラクターをまとめて取得
+    const allOwnedCharacters = [];
+    dataStore.accounts.forEach(account => {
+      const accountChars = dataStore.ownedCharactersData.get(account.id) || [];
+      accountChars.forEach(char => {
+        allOwnedCharacters.push({
+          ...char,
+          accountName: account.name,
+        });
+      });
+    });
+
+    // CSVデータを生成
+    const csvContent = generateCSV({
+      characterMasters: dataStore.characterMasters,
+      ownedCharacters: allOwnedCharacters,
+      accountName: '', // 各キャラクターに個別のaccountNameがあるため不要
+      itemMastersMap: dataStore.itemMastersMap,
+    });
+
+    // ファイル名を生成（日時付き）
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+    const filename = `characters_export_${dateStr}_${timeStr}.csv`;
+
+    // ダウンロード
+    downloadCSV(csvContent, filename);
+
+    uiStore.showSuccess('CSVエクスポートが完了しました');
+  } catch (error) {
+    console.error('CSVエクスポートエラー:', error);
+    uiStore.showError('CSVエクスポートに失敗しました');
+  } finally {
+    isExporting.value = false;
+  }
+};
+
 // テスト用にコンポーネントのメソッドとプロパティを公開
 defineExpose({
   rowDisplayModes,
@@ -950,7 +1014,8 @@ defineExpose({
   toggleCellDisplayMode,
   isModalOpen,
   editingCharacter,
-  filters
+  filters,
+  exportToCSV,
 });
 </script>
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { generateCSV, type ExportData } from './csvExport';
-import type { CharacterMaster, OwnedCharacter, ItemData } from '@/types';
+import { generateCSV, type ExportData, type OwnedCharacterWithAccount } from './csvExport';
+import type { CharacterMaster, ItemData } from '@/types';
 
 describe('csvExport', () => {
   describe('generateCSV', () => {
@@ -24,10 +24,11 @@ describe('csvExport', () => {
         gachaId: 'gacha1',
       };
 
-      const ownedCharacter: OwnedCharacter = {
+      const ownedCharacter: OwnedCharacterWithAccount = {
         id: 'owned1',
         characterMasterId: 'char1',
         items: [],
+        accountName: 'テストアカウント',
       };
 
       const exportData: ExportData = {
@@ -59,10 +60,11 @@ describe('csvExport', () => {
         { itemId: 3, isVirtual: false },
       ];
 
-      const ownedCharacter: OwnedCharacter = {
+      const ownedCharacter: OwnedCharacterWithAccount = {
         id: 'owned1',
         characterMasterId: 'char1',
         items,
+        accountName: 'テストアカウント',
       };
 
       const exportData: ExportData = {
@@ -98,10 +100,11 @@ describe('csvExport', () => {
         { itemId: 3, isVirtual: false },
       ];
 
-      const ownedCharacter: OwnedCharacter = {
+      const ownedCharacter: OwnedCharacterWithAccount = {
         id: 'owned1',
         characterMasterId: 'char1',
         items,
+        accountName: 'テストアカウント',
       };
 
       const exportData: ExportData = {
@@ -129,9 +132,9 @@ describe('csvExport', () => {
         { id: 'char2', name: 'キャラ2', rarity: 5, gachaId: 'gacha2' },
       ];
 
-      const ownedCharacters: OwnedCharacter[] = [
-        { id: 'owned1', characterMasterId: 'char1', items: [] },
-        { id: 'owned2', characterMasterId: 'char2', items: [] },
+      const ownedCharacters: OwnedCharacterWithAccount[] = [
+        { id: 'owned1', characterMasterId: 'char1', items: [], accountName: 'テストアカウント' },
+        { id: 'owned2', characterMasterId: 'char2', items: [], accountName: 'テストアカウント' },
       ];
 
       const exportData: ExportData = {
@@ -170,16 +173,17 @@ describe('csvExport', () => {
         gachaId: 'gacha1',
       };
 
-      const ownedCharacter: OwnedCharacter = {
+      const ownedCharacter: OwnedCharacterWithAccount = {
         id: 'owned1',
         characterMasterId: 'char1',
         items: [],
+        accountName: 'テスト,アカウント',
       };
 
       const exportData: ExportData = {
         characterMasters: [characterMaster],
         ownedCharacters: [ownedCharacter],
-        accountName: 'テスト,アカウント',
+        accountName: 'テストアカウント',
       };
 
       const result = generateCSV(exportData);
@@ -194,9 +198,9 @@ describe('csvExport', () => {
         { id: 'char1', name: 'キャラ1', rarity: 6, gachaId: 'gacha1' },
       ];
 
-      const ownedCharacters: OwnedCharacter[] = [
-        { id: 'owned1', characterMasterId: 'char1', items: [] },
-        { id: 'owned2', characterMasterId: 'char_not_exist', items: [] }, // 存在しないID
+      const ownedCharacters: OwnedCharacterWithAccount[] = [
+        { id: 'owned1', characterMasterId: 'char1', items: [], accountName: 'テストアカウント' },
+        { id: 'owned2', characterMasterId: 'char_not_exist', items: [], accountName: 'テストアカウント' }, // 存在しないID
       ];
 
       const exportData: ExportData = {
