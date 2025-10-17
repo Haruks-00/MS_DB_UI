@@ -12,9 +12,10 @@ Firebase Cloud FunctionsとCloud Storageを使用した、週次フルバック�
 
 ### 日次差分バックアップ
 - **実行タイミング**: 毎日 0時（日本時間）
-- **対象データ**: 前日以降に更新された所持キャラクター情報
+- **対象データ**: 前日以降に新規追加された所持キャラクター情報（createdAtベース）
 - **保存先**: `gs://[your-bucket]/backups/incremental/YYYY-MM-DD_incremental_backup.csv`
 - **Cloud Function**: `dailyIncrementalBackup`
+- **注意**: アイテム変更などの更新は含まれません
 
 ## アーキテクチャ
 
@@ -77,36 +78,29 @@ gsutil ls
 差分バックアップで使用するクエリのために、以下のインデックスを作成してください:
 
 **コレクショングループ**: `owned_characters`
-- フィールド: `updatedAt` (昇順)
+- フィールド: `createdAt` (昇順)
 
-Firebase Consoleから作成するか、以下のコマンドを実行:
-```bash
-firebase firestore:indexes
-```
+**作成方法**:
 
-### 4. updatedAtフィールドの追加
+1. Firebase Consoleから作成（推奨）:
+   ```
+   https://console.firebase.google.com/project/[your-project-id]/firestore/indexes
+   ```
+   - 「インデックスを作成」をクリック
+   - コレクションID: `owned_characters`
+   - **コレクショングループ**: ✅ チェック
+   - フィールドパス: `createdAt`
+   - 順序: `昇順`
 
-既存の `owned_characters` ドキュメントに `updatedAt` フィールドがない場合、追加する必要があります。
+2. または、初回実行時のエラーURLから自動作成（最も簡単）
 
-フロントエンドコードで、キャラクター更新時に自動的に `updatedAt` を追加するように修正:
+### 4. 前提条件の確認
 
-```typescript
-// src/services/database.ts 内の updateCharacterItems関数
-const updateCharacterItems = async (
-  accountId: string,
-  ownedCharacterId: string,
-  items: ItemData[]
-): Promise<void> => {
-  const db = await lazyLoadDatabase();
-  return updateDoc(
-    doc(db, "accounts", accountId, "owned_characters", ownedCharacterId),
-    {
-      items,
-      updatedAt: new Date() // 追加
-    }
-  );
-};
-```
+既存の `owned_characters` ドキュメントに `createdAt` フィールドが存在することを確認してください。
+
+**注意**: 本システムでは `createdAt` フィールドを使用するため、**差分バックアップは新規追加されたキャラクターのみが対象**となります。アイテム変更などの更新は週次フルバックアップでのみ記録されます。
+
+`createdAt` フィールドが存在しない場合は、キャラクター追加時に自動的に設定されるようフロントエンドコードを確認してください。
 
 ### 5. デプロイ
 
@@ -259,10 +253,15 @@ gsutil ls
 
 または、Firebase Consoleから確認することを推奨します（セットアップ手順2を参照）。
 
-### バックアップが空になる
+### バックアップが空になる（差分バックアップの場合）
 
-`updatedAt` フィールドが既存のドキュメントに存在しない可能性があります。
-セットアップ手順4を確認し、既存データに `updatedAt` を追加してください。
+以下の可能性があります:
+
+1. `createdAt` フィールドが既存のドキュメントに存在しない
+2. 前回バックアップ以降に新規追加されたキャラクターがない（正常動作）
+3. インデックスが正しく作成されていない
+
+セットアップ手順3と4を確認してください。
 
 ## ログの確認
 

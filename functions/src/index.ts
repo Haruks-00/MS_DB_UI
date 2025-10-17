@@ -128,7 +128,7 @@ export const dailyIncrementalBackup = functions
         db.collection('character_masters').get(),
         db.collection('itemMasters').get(),
         db.collectionGroup('owned_characters')
-          .where('updatedAt', '>=', admin.firestore.Timestamp.fromDate(lastBackupTime))
+          .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(lastBackupTime))
           .get(),
       ]);
 

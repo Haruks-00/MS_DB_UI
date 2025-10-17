@@ -30,13 +30,13 @@ async function getLastBackupTime(db: admin.firestore.Firestore): Promise<Date> {
 }
 
 /**
- * 指定時刻以降に更新されたデータを取得
+ * 指定時刻以降に作成されたデータを取得
  */
 async function fetchIncrementalData(
   db: admin.firestore.Firestore,
   since: Date
 ) {
-  console.log(`Fetching data updated since ${since.toISOString()}...`);
+  console.log(`Fetching data created since ${since.toISOString()}...`);
 
   // 並列でデータ取得
   const [
@@ -48,9 +48,9 @@ async function fetchIncrementalData(
     db.collection('accounts').get(), // アカウントは常に全取得
     db.collection('character_masters').get(), // マスターデータは常に全取得
     db.collection('itemMasters').get(), // アイテムマスターも常に全取得
-    // 更新されたowned_charactersのみ取得
+    // 新規追加されたowned_charactersのみ取得
     db.collectionGroup('owned_characters')
-      .where('updatedAt', '>=', admin.firestore.Timestamp.fromDate(since))
+      .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(since))
       .get(),
   ]);
 
