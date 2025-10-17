@@ -80,8 +80,24 @@ export const generateCSV = (exportData: ExportData): string => {
   // ヘッダー行
   rows.push('図鑑No,名前,属性,種類,アカウント,わくわく1,わくわく2,わくわく3');
 
+  // 所持キャラクターを図鑑番号順にソート
+  const sortedOwnedCharacters = [...ownedCharacters].sort((a, b) => {
+    const masterA = masterMap.get(a.characterMasterId);
+    const masterB = masterMap.get(b.characterMasterId);
+
+    // マスターデータが存在しない場合は後ろに回す
+    if (!masterA) return 1;
+    if (!masterB) return -1;
+
+    // 図鑑番号でソート（undefinedの場合は最後に）
+    const indexA = masterA.indexNumber ?? Number.MAX_SAFE_INTEGER;
+    const indexB = masterB.indexNumber ?? Number.MAX_SAFE_INTEGER;
+
+    return indexA - indexB;
+  });
+
   // データ行
-  ownedCharacters.forEach(ownedChar => {
+  sortedOwnedCharacters.forEach(ownedChar => {
     const master = masterMap.get(ownedChar.characterMasterId);
 
     // マスターデータが存在しない場合はスキップ

@@ -235,5 +235,39 @@ describe('csvExport', () => {
       expect(lines.length).toBe(2);
       expect(result).toContain('"キャラ1"');
     });
+
+    it('図鑑番号順にソートされること', () => {
+      const characterMasters: CharacterMaster[] = [
+        { id: 'char3', name: 'キャラC', monsterName: 'キャラC', indexNumber: 300, element: '木', type: '恒常', rarity: 6, gachaId: 'gacha1' },
+        { id: 'char1', name: 'キャラA', monsterName: 'キャラA', indexNumber: 100, element: '火', type: '恒常', rarity: 6, gachaId: 'gacha1' },
+        { id: 'char2', name: 'キャラB', monsterName: 'キャラB', indexNumber: 200, element: '水', type: '恒常', rarity: 6, gachaId: 'gacha1' },
+      ];
+
+      const ownedCharacters: OwnedCharacterWithAccount[] = [
+        { id: 'owned3', characterMasterId: 'char3', items: [], accountName: 'テストアカウント' },
+        { id: 'owned1', characterMasterId: 'char1', items: [], accountName: 'テストアカウント' },
+        { id: 'owned2', characterMasterId: 'char2', items: [], accountName: 'テストアカウント' },
+      ];
+
+      const exportData: ExportData = {
+        characterMasters,
+        ownedCharacters,
+        accountName: 'テストアカウント',
+      };
+
+      const result = generateCSV(exportData);
+      const lines = result.split('\n').filter(line => line.trim() !== '');
+
+      // ヘッダー行 + データ行3つ
+      expect(lines.length).toBe(4);
+
+      // 図鑑番号順にソートされているか確認
+      expect(lines[1]).toContain('100'); // 最初のデータ行はindexNumber: 100
+      expect(lines[1]).toContain('"キャラA"');
+      expect(lines[2]).toContain('200'); // 2番目のデータ行はindexNumber: 200
+      expect(lines[2]).toContain('"キャラB"');
+      expect(lines[3]).toContain('300'); // 3番目のデータ行はindexNumber: 300
+      expect(lines[3]).toContain('"キャラC"');
+    });
   });
 });
