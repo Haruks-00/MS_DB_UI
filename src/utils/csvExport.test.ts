@@ -358,5 +358,75 @@ describe('csvExport', () => {
       // マッピングされていない場合はitemMastersMapの値をそのまま使用
       expect(lines[1]).toContain('未知のアイテム');
     });
+
+    it('アカウント名から「アカウント」を削除して番号のみ表示すること', () => {
+      const characterMaster: CharacterMaster = {
+        id: 'char1',
+        name: 'テストキャラ',
+        monsterName: 'テストキャラ',
+        indexNumber: 1,
+        element: '火',
+        type: '恒常',
+        rarity: 6,
+        gachaId: 'gacha1',
+      };
+
+      const ownedCharacters: OwnedCharacterWithAccount[] = [
+        { id: 'owned1', characterMasterId: 'char1', items: [], accountName: 'アカウント1' },
+        { id: 'owned2', characterMasterId: 'char1', items: [], accountName: 'アカウント2' },
+        { id: 'owned3', characterMasterId: 'char1', items: [], accountName: 'アカウント10' },
+      ];
+
+      const exportData: ExportData = {
+        characterMasters: [characterMaster],
+        ownedCharacters,
+        accountName: 'アカウント1',
+      };
+
+      const result = generateCSV(exportData);
+      const lines = result.split('\n');
+
+      // 「アカウント」が削除され、番号のみが表示される
+      expect(lines[1]).toContain(',1,');  // アカウント1 → 1
+      expect(lines[2]).toContain(',2,');  // アカウント2 → 2
+      expect(lines[3]).toContain(',10,'); // アカウント10 → 10
+
+      // 「アカウント」という文字列は含まれない
+      expect(lines[1]).not.toContain('アカウント1');
+      expect(lines[2]).not.toContain('アカウント2');
+      expect(lines[3]).not.toContain('アカウント10');
+    });
+
+    it('アカウント名が「アカウント」で始まらない場合はそのまま表示すること', () => {
+      const characterMaster: CharacterMaster = {
+        id: 'char1',
+        name: 'テストキャラ',
+        monsterName: 'テストキャラ',
+        indexNumber: 1,
+        element: '火',
+        type: '恒常',
+        rarity: 6,
+        gachaId: 'gacha1',
+      };
+
+      const ownedCharacter: OwnedCharacterWithAccount = {
+        id: 'owned1',
+        characterMasterId: 'char1',
+        items: [],
+        accountName: 'メインアカウント',
+      };
+
+      const exportData: ExportData = {
+        characterMasters: [characterMaster],
+        ownedCharacters: [ownedCharacter],
+        accountName: 'メインアカウント',
+      };
+
+      const result = generateCSV(exportData);
+      const lines = result.split('\n');
+
+      // 「アカウント」で始まらない場合はそのまま表示
+      expect(lines[1]).toContain('メインアカウント');
+    });
   });
 });

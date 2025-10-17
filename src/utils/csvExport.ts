@@ -110,6 +110,19 @@ const getItemName = (
 };
 
 /**
+ * アカウント名を短縮する
+ * 「アカウント」で始まる場合は「アカウント」を削除して番号のみ返す
+ * それ以外の場合はそのまま返す
+ */
+const shortenAccountName = (accountName: string): string => {
+  // 「アカウント」で始まる場合は削除
+  if (accountName.startsWith('アカウント')) {
+    return accountName.substring(5); // 「アカウント」は5文字（ア・カ・ウ・ン・ト）
+  }
+  return accountName;
+};
+
+/**
  * 所持キャラクターとマスターデータからCSV形式の文字列を生成
  * BOM付きUTF-8でエンコードされたCSVを返す
  */
@@ -166,8 +179,9 @@ export const generateCSV = (exportData: ExportData): string => {
       itemNames.push('');
     }
 
-    // アカウント名を取得（個別のaccountNameがあればそれを優先）
+    // アカウント名を取得（個別のaccountNameがあればそれを優先）し、短縮する
     const charAccountName = ownedChar.accountName || accountName;
+    const shortenedAccountName = shortenAccountName(charAccountName);
 
     // CSVの1行を構築
     const row = [
@@ -175,7 +189,7 @@ export const generateCSV = (exportData: ExportData): string => {
       escapeNameField(master.monsterName || master.name), // モンスター名（常にダブルクォートで囲む）
       master.element || '', // 属性
       master.type || '', // 種類
-      escapeCSVValue(charAccountName),
+      escapeCSVValue(shortenedAccountName),
       escapeCSVValue(itemNames[0]),
       escapeCSVValue(itemNames[1]),
       escapeCSVValue(itemNames[2]),
