@@ -66,9 +66,9 @@ describe('csvExport', () => {
       };
 
       const items: ItemData[] = [
-        { itemId: 1, isVirtual: false },
-        { itemId: 2, isVirtual: false },
-        { itemId: 3, isVirtual: false },
+        { itemId: 100, isVirtual: false },
+        { itemId: 101, isVirtual: false },
+        { itemId: 102, isVirtual: false },
       ];
 
       const ownedCharacter: OwnedCharacterWithAccount = {
@@ -83,18 +83,18 @@ describe('csvExport', () => {
         ownedCharacters: [ownedCharacter],
         accountName: 'テストアカウント',
         itemMastersMap: new Map([
-          [1, 'アイテム1'],
-          [2, 'アイテム2'],
-          [3, 'アイテム3'],
+          [100, 'アイテム100'],
+          [101, 'アイテム101'],
+          [102, 'アイテム102'],
         ]),
       };
 
       const result = generateCSV(exportData);
       const lines = result.split('\n');
 
-      expect(lines[1]).toContain('アイテム1');
-      expect(lines[1]).toContain('アイテム2');
-      expect(lines[1]).toContain('アイテム3');
+      expect(lines[1]).toContain('アイテム100');
+      expect(lines[1]).toContain('アイテム101');
+      expect(lines[1]).toContain('アイテム102');
     });
 
     it('仮アイテム（isVirtual: true）を除外すること', () => {
@@ -110,9 +110,9 @@ describe('csvExport', () => {
       };
 
       const items: ItemData[] = [
-        { itemId: 1, isVirtual: false },
-        { itemId: 2, isVirtual: true }, // 仮アイテム
-        { itemId: 3, isVirtual: false },
+        { itemId: 100, isVirtual: false },
+        { itemId: 101, isVirtual: true }, // 仮アイテム
+        { itemId: 102, isVirtual: false },
       ];
 
       const ownedCharacter: OwnedCharacterWithAccount = {
@@ -127,18 +127,18 @@ describe('csvExport', () => {
         ownedCharacters: [ownedCharacter],
         accountName: 'テストアカウント',
         itemMastersMap: new Map([
-          [1, 'アイテム1'],
-          [2, '仮アイテム'],
-          [3, 'アイテム3'],
+          [100, 'アイテム100'],
+          [101, '仮アイテム'],
+          [102, 'アイテム102'],
         ]),
       };
 
       const result = generateCSV(exportData);
       const lines = result.split('\n');
 
-      expect(lines[1]).toContain('アイテム1');
+      expect(lines[1]).toContain('アイテム100');
       expect(lines[1]).not.toContain('仮アイテム');
-      expect(lines[1]).toContain('アイテム3');
+      expect(lines[1]).toContain('アイテム102');
     });
 
     it('複数のキャラクターを正しくCSV形式に変換すること', () => {
@@ -268,6 +268,95 @@ describe('csvExport', () => {
       expect(lines[2]).toContain('"キャラB"');
       expect(lines[3]).toContain('300'); // 3番目のデータ行はindexNumber: 300
       expect(lines[3]).toContain('"キャラC"');
+    });
+
+    it('アイテムIDを日本語文字列にマッピングすること', () => {
+      const characterMaster: CharacterMaster = {
+        id: 'char1',
+        name: 'テストキャラ',
+        monsterName: 'テストキャラ',
+        indexNumber: 1,
+        element: '火',
+        type: '恒常',
+        rarity: 6,
+        gachaId: 'gacha1',
+      };
+
+      const items: ItemData[] = [
+        { itemId: 1, isVirtual: false },
+        { itemId: 14, isVirtual: false },
+        { itemId: 27, isVirtual: false },
+      ];
+
+      const ownedCharacter: OwnedCharacterWithAccount = {
+        id: 'owned1',
+        characterMasterId: 'char1',
+        items,
+        accountName: 'テストアカウント',
+      };
+
+      const exportData: ExportData = {
+        characterMasters: [characterMaster],
+        ownedCharacters: [ownedCharacter],
+        accountName: 'テストアカウント',
+        itemMastersMap: new Map([
+          [1, 'アイテム名1'],  // 実際のDBに保存されている名前
+          [14, 'アイテム名14'],
+          [27, 'アイテム名27'],
+        ]),
+      };
+
+      const result = generateCSV(exportData);
+      const lines = result.split('\n');
+
+      // アイテムIDが日本語文字列にマッピングされている
+      expect(lines[1]).toContain('同族・加撃');  // ID 1 → 同族・加撃
+      expect(lines[1]).toContain('戦型・加撃速'); // ID 14 → 戦型・加撃速
+      expect(lines[1]).toContain('ハート');       // ID 27 → ハート
+
+      // 元のアイテム名は含まれない
+      expect(lines[1]).not.toContain('アイテム名1');
+      expect(lines[1]).not.toContain('アイテム名14');
+      expect(lines[1]).not.toContain('アイテム名27');
+    });
+
+    it('マッピングされていないアイテムIDはitemMastersMapの値をそのまま使用すること', () => {
+      const characterMaster: CharacterMaster = {
+        id: 'char1',
+        name: 'テストキャラ',
+        monsterName: 'テストキャラ',
+        indexNumber: 1,
+        element: '火',
+        type: '恒常',
+        rarity: 6,
+        gachaId: 'gacha1',
+      };
+
+      const items: ItemData[] = [
+        { itemId: 999, isVirtual: false }, // マッピングに存在しないID
+      ];
+
+      const ownedCharacter: OwnedCharacterWithAccount = {
+        id: 'owned1',
+        characterMasterId: 'char1',
+        items,
+        accountName: 'テストアカウント',
+      };
+
+      const exportData: ExportData = {
+        characterMasters: [characterMaster],
+        ownedCharacters: [ownedCharacter],
+        accountName: 'テストアカウント',
+        itemMastersMap: new Map([
+          [999, '未知のアイテム'],
+        ]),
+      };
+
+      const result = generateCSV(exportData);
+      const lines = result.split('\n');
+
+      // マッピングされていない場合はitemMastersMapの値をそのまま使用
+      expect(lines[1]).toContain('未知のアイテム');
     });
   });
 });

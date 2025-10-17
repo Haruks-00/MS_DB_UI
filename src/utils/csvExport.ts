@@ -1,4 +1,4 @@
-import type { CharacterMaster, OwnedCharacter, ItemData } from '@/types';
+import type { CharacterMaster, OwnedCharacter } from '@/types';
 
 /**
  * エクスポート用の所持キャラクターデータ（アカウント名付き）
@@ -47,17 +47,65 @@ const escapeNameField = (value: string): string => {
 };
 
 /**
+ * アイテムIDから表示用の日本語文字列へのマッピング
+ * CSV出力時に使用する
+ */
+const ITEM_ID_TO_DISPLAY_NAME: Map<number, string> = new Map([
+  [1, '同族・加撃'],
+  [2, '同族・加撃速'],
+  [3, '同族・加命撃'],
+  [4, '同族・加速'],
+  [5, '同族・加命'],
+  [6, '同族・加速命'],
+  [7, '撃種・加撃'],
+  [8, '撃種・加撃速'],
+  [9, '撃種・加命撃'],
+  [10, '撃種・加速'],
+  [11, '撃種・加命'],
+  [12, '撃種・加速命'],
+  [13, '戦型・加撃'],
+  [14, '戦型・加撃速'],
+  [15, '戦型・加命撃'],
+  [16, '戦型・加速'],
+  [17, '戦型・加命'],
+  [18, '戦型・加速命'],
+  [19, '熱き友撃'],
+  [20, 'ケガ減り'],
+  [21, '将命削り'],
+  [22, '兵命削り'],
+  [23, '一撃失心'],
+  [24, '速必殺'],
+  [25, '毒がまん'],
+  [26, 'ちび癒し'],
+  [27, 'ハート'],
+  [28, '学び'],
+  [29, '荒稼ぎ'],
+  [30, 'スピクリ'],
+  [31, 'Sランク'],
+  [32, 'スコア稼ぎ'],
+]);
+
+/**
  * アイテムIDからアイテム名を取得
+ * CSV出力時は ITEM_ID_TO_DISPLAY_NAME のマッピングを優先する
  */
 const getItemName = (
   itemId: number | string,
   itemMastersMap?: Map<number, string>
 ): string => {
+  const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+  // CSV出力用のマッピングがあればそれを使用
+  const displayName = ITEM_ID_TO_DISPLAY_NAME.get(numericId);
+  if (displayName) {
+    return displayName;
+  }
+
+  // マッピングがない場合はitemMastersMapの値を使用
   if (!itemMastersMap) {
     return `アイテム${itemId}`;
   }
 
-  const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
   return itemMastersMap.get(numericId) || `アイテム${itemId}`;
 };
 
