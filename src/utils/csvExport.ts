@@ -36,6 +36,17 @@ const escapeCSVValue = (value: string | number): string => {
 };
 
 /**
+ * 名前欄専用のエスケープ関数
+ * 常にダブルクォートで囲み、内部のダブルクォートは2つ連続で表現する
+ */
+const escapeNameField = (value: string): string => {
+  // ダブルクォートをエスケープ
+  const escaped = value.replace(/"/g, '""');
+  // 常にダブルクォートで囲む
+  return `"${escaped}"`;
+};
+
+/**
  * アイテムIDからアイテム名を取得
  */
 const getItemName = (
@@ -97,7 +108,7 @@ export const generateCSV = (exportData: ExportData): string => {
     // CSVの1行を構築
     const row = [
       master.indexNumber !== undefined ? master.indexNumber : '', // 図鑑No
-      escapeCSVValue(master.monsterName || master.name), // モンスター名（monsterNameを優先、なければnameを使用）
+      escapeNameField(master.monsterName || master.name), // モンスター名（常にダブルクォートで囲む）
       master.element || '', // 属性
       master.type || '', // 種類
       escapeCSVValue(charAccountName),

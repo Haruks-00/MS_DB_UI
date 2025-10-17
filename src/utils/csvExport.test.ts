@@ -47,7 +47,7 @@ describe('csvExport', () => {
       // ヘッダー行 + データ行1つ
       expect(lines.length).toBeGreaterThanOrEqual(2);
       expect(lines[1]).toContain('191'); // 図鑑番号
-      expect(lines[1]).toContain('アグナムート');
+      expect(lines[1]).toContain('"アグナムート"'); // 名前は常にダブルクォートで囲む
       expect(lines[1]).toContain('火'); // 属性
       expect(lines[1]).toContain('限定'); // 種類
       expect(lines[1]).toContain('テストアカウント');
@@ -163,8 +163,8 @@ describe('csvExport', () => {
 
       // ヘッダー行 + データ行2つ
       expect(lines.length).toBeGreaterThanOrEqual(3);
-      expect(result).toContain('キャラ1');
-      expect(result).toContain('キャラ2');
+      expect(result).toContain('"キャラ1"');
+      expect(result).toContain('"キャラ2"');
     });
 
     it('BOM付きUTF-8でエンコードされていること', () => {
@@ -233,7 +233,7 @@ describe('csvExport', () => {
 
       // ヘッダー行 + データ行1つのみ（存在しないキャラはスキップ）
       expect(lines.length).toBe(2);
-      expect(result).toContain('キャラ1');
+      expect(result).toContain('"キャラ1"');
     });
   });
 });
