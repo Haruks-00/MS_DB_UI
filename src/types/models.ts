@@ -7,7 +7,11 @@
  */
 export interface CharacterMaster {
   id: string;
-  name: string;
+  name: string; // 互換性のために残すが、実際のDBではmonsterNameを使用
+  monsterName?: string; // 実際のDBフィールド名
+  indexNumber?: number; // 図鑑番号
+  element?: string; // 属性（火・水・木・光・闇）
+  type?: string; // 種類（恒常・限定・コラボ・α）
   rarity: number;
   gachaId: string;
   createdAt?: Date;

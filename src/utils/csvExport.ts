@@ -96,10 +96,10 @@ export const generateCSV = (exportData: ExportData): string => {
 
     // CSVの1行を構築
     const row = [
-      '', // 図鑑No（現在は空）
-      escapeCSVValue(master.name),
-      '', // 属性（現在は空）
-      '', // 種類（現在は空）
+      master.indexNumber !== undefined ? master.indexNumber : '', // 図鑑No
+      escapeCSVValue(master.monsterName || master.name), // モンスター名（monsterNameを優先、なければnameを使用）
+      master.element || '', // 属性
+      master.type || '', // 種類
       escapeCSVValue(charAccountName),
       escapeCSVValue(itemNames[0]),
       escapeCSVValue(itemNames[1]),

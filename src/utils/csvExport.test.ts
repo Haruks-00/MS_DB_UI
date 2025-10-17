@@ -20,6 +20,10 @@ describe('csvExport', () => {
       const characterMaster: CharacterMaster = {
         id: 'char1',
         name: 'アグナムート',
+        monsterName: 'アグナムート',
+        indexNumber: 191,
+        element: '火',
+        type: '限定',
         rarity: 6,
         gachaId: 'gacha1',
       };
@@ -42,7 +46,10 @@ describe('csvExport', () => {
 
       // ヘッダー行 + データ行1つ
       expect(lines.length).toBeGreaterThanOrEqual(2);
+      expect(lines[1]).toContain('191'); // 図鑑番号
       expect(lines[1]).toContain('アグナムート');
+      expect(lines[1]).toContain('火'); // 属性
+      expect(lines[1]).toContain('限定'); // 種類
       expect(lines[1]).toContain('テストアカウント');
     });
 
@@ -50,6 +57,10 @@ describe('csvExport', () => {
       const characterMaster: CharacterMaster = {
         id: 'char1',
         name: 'スサノオ',
+        monsterName: 'スサノオ',
+        indexNumber: 193,
+        element: '水',
+        type: '恒常',
         rarity: 6,
         gachaId: 'gacha1',
       };
@@ -90,6 +101,10 @@ describe('csvExport', () => {
       const characterMaster: CharacterMaster = {
         id: 'char1',
         name: 'ハンターキング',
+        monsterName: 'ハンターキング',
+        indexNumber: 195,
+        element: '木',
+        type: '恒常',
         rarity: 6,
         gachaId: 'gacha1',
       };
@@ -128,8 +143,8 @@ describe('csvExport', () => {
 
     it('複数のキャラクターを正しくCSV形式に変換すること', () => {
       const characterMasters: CharacterMaster[] = [
-        { id: 'char1', name: 'キャラ1', rarity: 6, gachaId: 'gacha1' },
-        { id: 'char2', name: 'キャラ2', rarity: 5, gachaId: 'gacha2' },
+        { id: 'char1', name: 'キャラ1', monsterName: 'キャラ1', indexNumber: 100, element: '火', type: '恒常', rarity: 6, gachaId: 'gacha1' },
+        { id: 'char2', name: 'キャラ2', monsterName: 'キャラ2', indexNumber: 200, element: '水', type: '限定', rarity: 5, gachaId: 'gacha2' },
       ];
 
       const ownedCharacters: OwnedCharacterWithAccount[] = [
@@ -169,6 +184,10 @@ describe('csvExport', () => {
       const characterMaster: CharacterMaster = {
         id: 'char1',
         name: 'テスト"キャラ"、カンマあり',
+        monsterName: 'テスト"キャラ"、カンマあり',
+        indexNumber: 999,
+        element: '光',
+        type: 'コラボ',
         rarity: 6,
         gachaId: 'gacha1',
       };
@@ -195,7 +214,7 @@ describe('csvExport', () => {
 
     it('存在しないcharacterMasterIdを持つキャラクターはスキップすること', () => {
       const characterMasters: CharacterMaster[] = [
-        { id: 'char1', name: 'キャラ1', rarity: 6, gachaId: 'gacha1' },
+        { id: 'char1', name: 'キャラ1', monsterName: 'キャラ1', indexNumber: 100, element: '火', type: '恒常', rarity: 6, gachaId: 'gacha1' },
       ];
 
       const ownedCharacters: OwnedCharacterWithAccount[] = [
