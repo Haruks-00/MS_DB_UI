@@ -48,4 +48,5 @@ export interface UIState {
     message: string;
     color: string;
   };
+  pinnedCharacterIds: number[];
 }
