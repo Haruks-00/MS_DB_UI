@@ -96,6 +96,24 @@ selectedAccountId: ref(null)           // 選択中のアカウントID
 - キャラクターのフィルタリング（レアリティ、ガチャ、所持状況）
 - キャラクター詳細の表示
 - アイテム装備状況の表示・編集
+- **ピン留め機能** (新機能)
+
+**ピン留め機能の詳細**:
+- **UIストア連携**: `uiStore.isPinned()`, `uiStore.togglePinnedCharacter()`を使用
+- **Computed Properties**:
+  - `pinnedItems`: ピン留めされたキャラクターのみを抽出
+  - `unpinnedItems`: ピン留めされていないキャラクターを抽出
+  - `displayItems`: ピン留め行を先頭に配置した統合リスト
+- **getItemClass**: 行にクラスを付与する関数（ピン留め行に`pinned-row`クラス）
+- **UI**:
+  - キャラ名の横にピンアイコンボタン表示
+  - ピン留め時: `mdi-pin` (amber色)
+  - 非ピン留め時: `mdi-pin-outline` (grey色)
+- **スタイル**:
+  - ピン留め行は`position: sticky`でヘッダー直下に固定
+  - 薄い黄色背景(`#fffbea`)で視覚的に区別
+  - 黄色の境界線で明確に分離
+  - 複数行のピン留めに対応(最大5行まで動的にtop位置を計算)
 
 ---
 
@@ -329,6 +347,47 @@ selectedAccountId: ref(null)           // 選択中のアカウントID
 
 ---
 
+## Pinia Stores
+
+### UIStore (`src/stores/ui.ts`)
+**役割**: アプリケーションのUI状態を管理
+
+**State**:
+```typescript
+{
+  activeTab: string;                   // アクティブなタブ
+  selectedAccountId: string | null;    // 選択中のアカウントID
+  loading: boolean;                    // ローディング状態
+  snackbar: {                          // スナックバー情報
+    show: boolean;
+    message: string;
+    color: string;
+  };
+  pinnedCharacterIds: number[];        // ピン留めされたキャラクターID配列
+}
+```
+
+**Getters**:
+- `isSnackbarVisible`: スナックバー表示状態
+- `isLoading`: ローディング状態
+- `hasSelectedAccount`: アカウント選択状態
+
+**Actions**:
+- `setActiveTab(tab)`: アクティブなタブを設定
+- `setSelectedAccountId(accountId)`: 選択されたアカウントIDを設定
+- `setLoading(loading)`: ローディング状態を設定
+- `showSnackbar(message, color)`: スナックバーを表示
+- `showSuccess/Error/Info/Warning(message)`: 各種メッセージを表示
+- `hideSnackbar()`: スナックバーを非表示
+- `resetUI()`: UI状態をリセット（ピン留めも含む）
+- **`togglePinnedCharacter(masterId)`**: キャラクターのピン留めをトグル
+- **`isPinned(masterId)`**: キャラクターがピン留めされているか確認
+- **`clearPinnedCharacters()`**: 全てのピン留めを解除
+
+**テスト**: `tests/stores/ui.spec.ts` (7つのテストケース完備)
+
+---
+
 ## コンポーネント間のデータフロー
 
 ```
@@ -344,6 +403,7 @@ App.vue (State Container)
         │
         ├─→ ViewAllCharactersTab.vue
         │     ├─→ props: all master data + owned data
+        │     ├─→ uses: uiStore (ピン留め機能)
         │     └─→ emit: items-updated
         │
         ├─→ AddOwnedCharacterTab.vue
@@ -372,3 +432,5 @@ App.vue (State Container)
 3. **再利用性**: 共通コンポーネントは汎用的に設計
 4. **パフォーマンス**: 不要な再レンダリングを避ける
 5. **型安全性**: propsとemitsを明示的に定義
+6. **状態管理**: グローバルな状態はPinia Storeで管理
+7. **テスト駆動**: 新機能はテストファーストで開発

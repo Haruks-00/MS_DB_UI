@@ -15,6 +15,7 @@ export const useUIStore = defineStore('ui', {
       message: '',
       color: 'success',
     },
+    pinnedCharacterIds: [],
   }),
 
   getters: {
@@ -123,8 +124,43 @@ export const useUIStore = defineStore('ui', {
         message: '',
         color: 'success',
       };
+      this.pinnedCharacterIds = [];
       if (import.meta.env.DEV) {
         console.log('UI Store: UI state reset');
+      }
+    },
+
+    /**
+     * キャラクターのピン留めをトグル
+     */
+    togglePinnedCharacter(masterId: number): void {
+      const index = this.pinnedCharacterIds.indexOf(masterId);
+      if (index > -1) {
+        // 既にピン留めされている場合は削除
+        this.pinnedCharacterIds.splice(index, 1);
+      } else {
+        // ピン留めされていない場合は追加
+        this.pinnedCharacterIds.push(masterId);
+      }
+      if (import.meta.env.DEV) {
+        console.log('UI Store: Pinned characters updated', this.pinnedCharacterIds);
+      }
+    },
+
+    /**
+     * キャラクターがピン留めされているか確認
+     */
+    isPinned(masterId: number): boolean {
+      return this.pinnedCharacterIds.includes(masterId);
+    },
+
+    /**
+     * 全てのピン留めを解除
+     */
+    clearPinnedCharacters(): void {
+      this.pinnedCharacterIds = [];
+      if (import.meta.env.DEV) {
+        console.log('UI Store: All pinned characters cleared');
       }
     },
   },

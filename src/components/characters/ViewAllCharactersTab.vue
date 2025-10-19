@@ -305,7 +305,7 @@
 
       <v-card-text class="pa-0">
         <v-data-table-virtual
-          :items="filteredMasters"
+          :items="displayItems"
           :headers="headers"
           :loading="!dataLoaded"
           height="70vh"
@@ -313,6 +313,7 @@
           fixed-header
           class="table-fixed"
           :fixed-columns="true"
+          :item-class="getItemClass"
         >
           <!-- キャラ名列のカスタムスロット -->
           <template v-slot:item.monsterName="{ item }">
@@ -330,6 +331,16 @@
                 <span class="character-name">{{
                   item.monsterName || "—"
                 }}</span>
+                <!-- ピン留めボタン -->
+                <v-btn
+                  @click.stop="uiStore.togglePinnedCharacter(item.id)"
+                  :icon="uiStore.isPinned(item.id) ? 'mdi-pin' : 'mdi-pin-outline'"
+                  :color="uiStore.isPinned(item.id) ? 'amber' : 'grey'"
+                  variant="text"
+                  size="x-small"
+                  density="compact"
+                  class="ml-1 pin-btn"
+                ></v-btn>
               </div>
               <!-- 行単位の表示切り替えボタン（仮想アイテムがある場合のみ表示） -->
               <v-btn
@@ -534,6 +545,9 @@ const headers = computed(() => {
   return basicHeaders;
 });
 
+/**
+ * フィルタリング後のキャラクターマスター
+ */
 const filteredMasters = computed(() => {
   if (!dataStore.dataLoaded) return [];
 
@@ -734,6 +748,38 @@ const filteredMasters = computed(() => {
     return true;
   });
 });
+
+/**
+ * ピン留めされたキャラクターマスター
+ */
+const pinnedItems = computed(() => {
+  return filteredMasters.value.filter((master) =>
+    uiStore.isPinned(master.id)
+  );
+});
+
+/**
+ * ピン留めされていないキャラクターマスター
+ */
+const unpinnedItems = computed(() => {
+  return filteredMasters.value.filter((master) =>
+    !uiStore.isPinned(master.id)
+  );
+});
+
+/**
+ * 表示用のアイテムリスト（ピン留め行を先頭に配置）
+ */
+const displayItems = computed(() => {
+  return [...pinnedItems.value, ...unpinnedItems.value];
+});
+
+/**
+ * 行にクラスを付与する関数（ピン留め行用）
+ */
+const getItemClass = (item) => {
+  return uiStore.isPinned(item.id) ? 'pinned-row' : '';
+};
 
 const getOwnedCount = (masterId, accountId) => {
   return dataStore.ownedCountMap.get(`${masterId}-${accountId}`) || 0;
@@ -1481,6 +1527,50 @@ defineExpose({
   white-space: nowrap;
   display: inline-block;
   font-size: 0.7rem;
+}
+
+/* ピン留めボタンのスタイル */
+.pin-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.pin-btn:hover {
+  opacity: 1;
+}
+
+/* ピン留め行のスタイル */
+:deep(.pinned-row) {
+  position: sticky !important;
+  background-color: #fffbea !important; /* 薄い黄色 */
+  border-bottom: 2px solid #fbbf24 !important; /* 黄色の境界線 */
+  z-index: 5 !important;
+}
+
+/* ピン留め行のトップ位置を動的に設定 */
+:deep(.pinned-row:nth-of-type(1)) {
+  top: 28px !important; /* ヘッダー高さ分 */
+}
+
+:deep(.pinned-row:nth-of-type(2)) {
+  top: calc(28px + 110px) !important; /* ヘッダー + 1行目の高さ */
+}
+
+:deep(.pinned-row:nth-of-type(3)) {
+  top: calc(28px + 220px) !important; /* ヘッダー + 2行分の高さ */
+}
+
+:deep(.pinned-row:nth-of-type(4)) {
+  top: calc(28px + 330px) !important; /* ヘッダー + 3行分の高さ */
+}
+
+:deep(.pinned-row:nth-of-type(5)) {
+  top: calc(28px + 440px) !important; /* ヘッダー + 4行分の高さ */
+}
+
+/* ピン留め行のホバー効果 */
+:deep(.pinned-row:hover) {
+  background-color: #fef3c7 !important; /* より濃い黄色 */
 }
 
 </style>
