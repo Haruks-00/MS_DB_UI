@@ -96,7 +96,6 @@ export const createLazyLoader = <T>(
   options: LazyLoaderOptions<T> = {}
 ): (() => Promise<T>) => {
   const {
-    timeout = 5000,
     retryCount = 3,
     onLoad = () => {},
     onError = () => {},

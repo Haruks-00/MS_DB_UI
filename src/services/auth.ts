@@ -1,5 +1,5 @@
 import firebase from "firebase/compat/app";
-import type { UserCredential, User } from "firebase/compat/auth";
+import "firebase/compat/auth";
 import { lazyLoadAuth } from "../utils/lazyLoader";
 
 /**
@@ -7,7 +7,7 @@ import { lazyLoadAuth } from "../utils/lazyLoader";
  * @returns ログイン成功時のユーザー情報
  * @throws ログイン失敗時にエラーをスローします
  */
-const loginWithGoogle = async (): Promise<UserCredential> => {
+const loginWithGoogle = async (): Promise<firebase.auth.UserCredential> => {
   const auth = await lazyLoadAuth();
   const provider = new firebase.auth.GoogleAuthProvider();
   return auth.signInWithPopup(provider).catch((error: Error) => {
@@ -35,7 +35,7 @@ const logout = async (): Promise<void> => {
  * @returns 監視を解除するための関数
  */
 const onAuthStateChanged = async (
-  onAuthStateChangedCallback: (user: User | null) => void
+  onAuthStateChangedCallback: (user: firebase.User | null) => void
 ): Promise<firebase.Unsubscribe> => {
   const auth = await lazyLoadAuth();
   return auth.onAuthStateChanged(onAuthStateChangedCallback);

@@ -44,7 +44,7 @@ export const migrateToNewFormat = (oldItems: LegacyItemData[]): ItemData[] => {
       return {
         itemId: numericId,
         isVirtual: false,
-      };
+      } as ItemData;
     })
     .filter((item): item is ItemData => item !== null); // 無効なアイテムを除外
 };

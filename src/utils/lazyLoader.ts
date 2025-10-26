@@ -3,7 +3,7 @@
  */
 
 import type firebase from "firebase/compat/app";
-import type { Firestore } from "firebase/compat/firestore";
+import "firebase/compat/firestore";
 
 /**
  * Firebaseインスタンス
@@ -11,7 +11,7 @@ import type { Firestore } from "firebase/compat/firestore";
 interface FirebaseInstances {
   app: firebase.app.App;
   auth: firebase.auth.Auth;
-  db: Firestore;
+  db: firebase.firestore.Firestore;
 }
 
 /**
@@ -34,7 +34,7 @@ export const lazyLoadFirebase = async (): Promise<FirebaseInstances> => {
 /**
  * データベースサービスの遅延読み込み
  */
-export const lazyLoadDatabase = async (): Promise<Firestore> => {
+export const lazyLoadDatabase = async (): Promise<firebase.firestore.Firestore> => {
   const { db } = await lazyLoadFirebase();
   return db;
 };
