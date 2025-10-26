@@ -304,6 +304,15 @@
         </v-card-text>
       </v-card>
     </v-form>
+
+    <!-- INFO: アイテム移動予定サマリー -->
+    <ItemSummaryCards
+      :selected-account-id="uiStore.selectedAccountId"
+      :owned-characters-data="dataStore.ownedCharactersData"
+      :character-masters-map="dataStore.characterMastersMap"
+      :item-masters="dataStore.itemMasters"
+      :item-masters-map="dataStore.itemMastersMap"
+    />
   </div>
 </template>
 
@@ -313,6 +322,7 @@ import { formatOwnedCharDisplayName } from "../../utils/formatters";
 import { databaseService } from "../../services/database";
 import { ensureNewFormat, getRealItems } from "../../utils/itemMigration";
 import CharacterSelector from "../shared/CharacterSelector.vue";
+import ItemSummaryCards from "./ItemSummaryCards.vue";
 import { useDataStore } from "@/stores/data";
 import { useUIStore } from "@/stores/ui";
 
