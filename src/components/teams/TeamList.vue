@@ -193,7 +193,10 @@ const getTeamSlotDetails = (team, slotIndex) => {
   // 新形式に変換して実アイテムのみを取得
   const realItems = getRealItems(ownedChar.items || []);
   const itemNames = realItems
-    .map((item) => props.itemMastersMap.get(item.itemId) || `不明ID:${item.itemId}`)
+    .map((item) => {
+      const itemName = props.itemMastersMap.get(item.itemId) || `不明ID:${item.itemId}`;
+      return item.isEL ? `${itemName}（EL）` : itemName;
+    })
     .filter(Boolean);
 
   return {

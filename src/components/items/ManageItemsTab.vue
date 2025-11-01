@@ -561,10 +561,15 @@ const formatCharForDisplay = (char, includeItems) => {
  * @param {Array<number|string>} itemIds - アイテムIDの配列
  * @returns {string} カンマ区切りのアイテム名、または'アイテムなし'
  */
-const formatItemNames = (itemIds) => {
-  if (!itemIds || itemIds.length === 0) return "アイテムなし";
-  return itemIds
-    .map((id) => dataStore.itemMastersMap.get(Number(id))?.name || `不明(ID:${id})`)
+const formatItemNames = (items) => {
+  if (!items || items.length === 0) return "アイテムなし";
+  return items
+    .map((item) => {
+      const itemId = typeof item === 'object' ? item.itemId : item;
+      const isEL = typeof item === 'object' ? item.isEL : false;
+      const itemName = dataStore.itemMastersMap.get(Number(itemId))?.name || `不明(ID:${itemId})`;
+      return isEL ? `${itemName}（EL）` : itemName;
+    })
     .join("、 ");
 };
 </script>

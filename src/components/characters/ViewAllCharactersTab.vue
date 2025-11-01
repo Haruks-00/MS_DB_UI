@@ -816,20 +816,24 @@ const getDisplayCellContent = (masterId, accountId, index) => {
       const itemId = typeof item === 'object' ? item.itemId : item;
       const isVirtual = typeof item === 'object' ? item.isVirtual : false;
       const willRemove = typeof item === 'object' ? item.willRemove : false;
+      const isEL = typeof item === 'object' ? item.isEL : false;
       const itemName = dataStore.itemMastersMap.get(Number(itemId));
 
       if (!itemName) return null;
 
+      // ELバッジを追加（isEL=trueの場合）
+      const elBadge = isEL ? ' <span class="el-badge">EL</span>' : '';
+
       // 外す予定のアイテムは赤色で表示（現在モードのみ）
       if (displayMode === 'current' && willRemove) {
-        return `<span class="will-remove-item item-name">${itemName}</span>`;
+        return `<span class="will-remove-item item-name">${itemName}${elBadge}</span>`;
       }
       // 仮想アイテムはオレンジ色で表示（予定適用後モードのみ）
       if (isVirtual) {
-        return `<span class="virtual-item item-name">${itemName}</span>`;
+        return `<span class="virtual-item item-name">${itemName}${elBadge}</span>`;
       }
       // 通常の実アイテム
-      return `<span class="item-name">${itemName}</span>`;
+      return `<span class="item-name">${itemName}${elBadge}</span>`;
     })
     .filter(Boolean)
     .join("<br>");
@@ -1571,6 +1575,19 @@ defineExpose({
 /* ピン留め行のホバー効果 */
 :deep(.pinned-row:hover) {
   background-color: #fef3c7 !important; /* より濃い黄色 */
+}
+
+/* ELバッジのスタイル */
+.el-badge {
+  display: inline-block;
+  background-color: #ff6b6b;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 3px;
+  vertical-align: middle;
 }
 
 </style>
