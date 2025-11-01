@@ -44,10 +44,11 @@ export const migrateToNewFormat = (oldItems: LegacyItemData[]): ItemData[] => {
       return {
         itemId: numericId,
         isVirtual: false,
+        isEL: false, // 旧形式からの移行時はデフォルトでL
       } as ItemData;
     })
     .filter((item): item is ItemData => item !== null); // 無効なアイテムを除外
-};
+};;
 
 /**
  * アイテムデータを自動的に新形式に変換する（旧形式の場合のみ）
@@ -63,8 +64,12 @@ export const ensureNewFormat = (items: ItemData[] | LegacyItemData[] | null | un
     return migrateToNewFormat(items);
   }
 
-  return items as ItemData[];
-};
+  // 新形式だがisELが未定義の場合、isEL=falseを追加
+  return (items as ItemData[]).map(item => ({
+    ...item,
+    isEL: item.isEL !== undefined ? item.isEL : false
+  }));
+};;
 
 /**
  * 実アイテムのみを抽出する

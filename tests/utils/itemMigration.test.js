@@ -101,14 +101,18 @@ describe('itemMigration', () => {
       expect(result[0]).toEqual({ itemId: 1, isVirtual: false, isEL: false })
     })
 
-    it('新形式はそのまま返す', () => {
+    it('新形式はそのまま返す（isEL未定義はfalseに補完）', () => {
       const newItems = [
         { itemId: 1, isVirtual: false },
         { itemId: 2, isVirtual: true }
       ]
       const result = ensureNewFormat(newItems)
 
-      expect(result).toEqual(newItems)
+      // isELが未定義の場合はfalseに補完される
+      expect(result).toEqual([
+        { itemId: 1, isVirtual: false, isEL: false },
+        { itemId: 2, isVirtual: true, isEL: false }
+      ])
     })
 
     it('nullを空配列に変換する', () => {
