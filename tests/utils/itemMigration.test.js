@@ -7,7 +7,7 @@ import {
   getVirtualItems,
   getRealItemCount,
   getVirtualItemCount
-} from '../../src/utils/itemMigration.js'
+} from '../../src/utils/itemMigration.ts'
 
 describe('itemMigration', () => {
   describe('isOldFormat', () => {
@@ -48,9 +48,9 @@ describe('itemMigration', () => {
       const newItems = migrateToNewFormat(oldItems)
 
       expect(newItems).toHaveLength(3)
-      expect(newItems[0]).toEqual({ itemId: 1, isVirtual: false })
-      expect(newItems[1]).toEqual({ itemId: 2, isVirtual: false })
-      expect(newItems[2]).toEqual({ itemId: 3, isVirtual: false })
+      expect(newItems[0]).toEqual({ itemId: 1, isVirtual: false, isEL: false })
+      expect(newItems[1]).toEqual({ itemId: 2, isVirtual: false, isEL: false })
+      expect(newItems[2]).toEqual({ itemId: 3, isVirtual: false, isEL: false })
     })
 
     it('空配列を空配列に変換する', () => {
@@ -78,8 +78,8 @@ describe('itemMigration', () => {
       const newItems = migrateToNewFormat(oldItems)
 
       expect(newItems).toHaveLength(2)
-      expect(newItems[0]).toEqual({ itemId: 5, isVirtual: false })
-      expect(newItems[1]).toEqual({ itemId: 10, isVirtual: false })
+      expect(newItems[0]).toEqual({ itemId: 5, isVirtual: false, isEL: false })
+      expect(newItems[1]).toEqual({ itemId: 10, isVirtual: false, isEL: false })
     })
 
     it('無効な値を含む配列をフィルタする', () => {
@@ -87,8 +87,8 @@ describe('itemMigration', () => {
       const newItems = migrateToNewFormat(oldItems)
 
       expect(newItems).toHaveLength(2)
-      expect(newItems[0]).toEqual({ itemId: 1, isVirtual: false })
-      expect(newItems[1]).toEqual({ itemId: 3, isVirtual: false })
+      expect(newItems[0]).toEqual({ itemId: 1, isVirtual: false, isEL: false })
+      expect(newItems[1]).toEqual({ itemId: 3, isVirtual: false, isEL: false })
     })
   })
 
@@ -98,7 +98,7 @@ describe('itemMigration', () => {
       const result = ensureNewFormat(oldItems)
 
       expect(result).toHaveLength(2)
-      expect(result[0]).toEqual({ itemId: 1, isVirtual: false })
+      expect(result[0]).toEqual({ itemId: 1, isVirtual: false, isEL: false })
     })
 
     it('新形式はそのまま返す', () => {
@@ -119,6 +119,30 @@ describe('itemMigration', () => {
     it('undefinedを空配列に変換する', () => {
       const result = ensureNewFormat(undefined)
       expect(result).toHaveLength(0)
+    })
+
+    it('isELが未定義の新形式データにisEL=falseを追加する', () => {
+      const itemsWithoutIsEL = [
+        { itemId: 1, isVirtual: false },
+        { itemId: 2, isVirtual: true }
+      ]
+      const result = ensureNewFormat(itemsWithoutIsEL)
+
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({ itemId: 1, isVirtual: false, isEL: false })
+      expect(result[1]).toEqual({ itemId: 2, isVirtual: true, isEL: false })
+    })
+
+    it('isELが既に定義されている場合はそのまま保持する', () => {
+      const itemsWithIsEL = [
+        { itemId: 1, isVirtual: false, isEL: true },
+        { itemId: 2, isVirtual: false, isEL: false }
+      ]
+      const result = ensureNewFormat(itemsWithIsEL)
+
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({ itemId: 1, isVirtual: false, isEL: true })
+      expect(result[1]).toEqual({ itemId: 2, isVirtual: false, isEL: false })
     })
   })
 
