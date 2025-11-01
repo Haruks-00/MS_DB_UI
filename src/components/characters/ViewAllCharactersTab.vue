@@ -1287,7 +1287,7 @@ defineExpose({
 
 .table-fixed tr {
   height: auto !important;
-  min-height: 110px;
+  min-height: 140px;
 }
 
 .table-fixed td {
@@ -1322,14 +1322,14 @@ defineExpose({
 
 /* セルの高さを統一（1列目以外） */
 .table-fixed tr {
-  height: 110px !important;
-  min-height: 110px;
+  height: 140px !important;
+  min-height: 140px;
 }
 
 .table-fixed td {
   vertical-align: top;
   padding: 16px 8px;
-  height: 110px;
+  height: 140px;
 }
 
 /* 1列目（図鑑No.）は他の列より低く */
@@ -1355,7 +1355,7 @@ defineExpose({
 /* 所持状況セルの統一スタイル */
 .table-fixed .status-owned,
 .table-fixed .status-unowned {
-  height: 110px;
+  height: 140px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -1363,7 +1363,7 @@ defineExpose({
 
 /* アカウント別セルの統一スタイル */
 .account-cell {
-  height: 110px !important;
+  height: 140px !important;
   width: 60px !important;
   min-width: 60px !important;
   max-width: 60px !important;
@@ -1557,19 +1557,19 @@ defineExpose({
 }
 
 :deep(.pinned-row:nth-of-type(2)) {
-  top: calc(28px + 110px) !important; /* ヘッダー + 1行目の高さ */
+  top: calc(28px + 140px) !important; /* ヘッダー + 1行目の高さ */
 }
 
 :deep(.pinned-row:nth-of-type(3)) {
-  top: calc(28px + 220px) !important; /* ヘッダー + 2行分の高さ */
+  top: calc(28px + 280px) !important; /* ヘッダー + 2行分の高さ */
 }
 
 :deep(.pinned-row:nth-of-type(4)) {
-  top: calc(28px + 330px) !important; /* ヘッダー + 3行分の高さ */
+  top: calc(28px + 420px) !important; /* ヘッダー + 3行分の高さ */
 }
 
 :deep(.pinned-row:nth-of-type(5)) {
-  top: calc(28px + 440px) !important; /* ヘッダー + 4行分の高さ */
+  top: calc(28px + 560px) !important; /* ヘッダー + 4行分の高さ */
 }
 
 /* ピン留め行のホバー効果 */

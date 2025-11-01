@@ -64,7 +64,7 @@
                     :items="dataStore.itemMasters"
                     item-title="name"
                     item-value="id"
-                    label="アイテム (最大3つまで)"
+                    label="アイテム (最大4つまで)"
                     multiple
                     chips
                     clearable
@@ -80,7 +80,7 @@
                     :disabled="
                       !updateForm.selectedOwnedId ||
                       isUpdating ||
-                      updateForm.items.length > 3
+                      updateForm.items.length > 4
                     "
                     @click="handleUpdateItems"
                     color="primary"
@@ -95,13 +95,13 @@
 
                   <!-- INFO: より美しいエラー表示 -->
                   <v-alert
-                    v-if="updateForm.items.length > 3"
+                    v-if="updateForm.items.length > 4"
                     type="error"
                     variant="tonal"
                     class="mt-3"
                     prepend-icon="mdi-alert-circle"
                   >
-                    アイテムは3つまでしか選択できません。
+                    アイテムは4つまでしか選択できません。
                   </v-alert>
                 </div>
               </v-col>
@@ -461,7 +461,7 @@ watch(
 
 const handleUpdateItems = async () => {
   if (!updateForm.selectedOwnedId) return;
-  if (updateForm.items.length > 3) return alert("アイテムは3つまでです。");
+  if (updateForm.items.length > 4) return alert("アイテムは4つまでです。");
   isUpdating.value = true;
   try {
     // 新形式に変換して保存
@@ -510,7 +510,7 @@ const handleMoveItems = async () => {
     const fromRealItems = getRealItems(fromChar.items || []);
     const toRealItems = getRealItems(toChar.items || []);
 
-    if (toRealItems.length + itemIdsToMove.length > 3)
+    if (toRealItems.length + itemIdsToMove.length > 4)
       throw new Error(`移動先のアイテム所持数が上限を超えます。`);
 
     // 移動後のアイテムを新形式で構築

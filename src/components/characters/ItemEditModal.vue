@@ -19,7 +19,7 @@
           :items="availableItems"
           item-title="name"
           item-value="id"
-          label="アイテムを選択（実最大3個+仮最大3個=最大6個）"
+          label="アイテムを選択（実最大4個+仮最大4個=最大8個）"
           multiple
           chips
           closable-chips
@@ -173,16 +173,16 @@ const availableItems = computed(() => {
   }))
 })
 
-// アイテム数チェックルール（実3個+仮3個=最大6個）
+// アイテム数チェックルール（実4個+仮4個=最大8個）
 const itemCountRule = (value) => {
   if (!value) return true
 
   const realCount = editingItems.value.filter(item => !item.isVirtual).length
   const virtualCount = editingItems.value.filter(item => item.isVirtual).length
 
-  if (realCount > 3) return '実アイテムは最大3個までです'
-  if (virtualCount > 3) return '仮アイテムは最大3個までです'
-  if (value.length > 6) return 'アイテムは最大6個までです'
+  if (realCount > 4) return '実アイテムは最大4個までです'
+  if (virtualCount > 4) return '仮アイテムは最大4個までです'
+  if (value.length > 8) return 'アイテムは最大8個までです'
 
   return true
 }
@@ -233,20 +233,20 @@ const closeModal = () => {
 
 // アイテムを保存
 const saveItems = async () => {
-  // バリデーション（実3個+仮3個=最大6個）
+  // バリデーション（実4個+仮4個=最大8個）
   const realCount = editingItems.value.filter(item => !item.isVirtual).length
   const virtualCount = editingItems.value.filter(item => item.isVirtual).length
 
-  if (realCount > 3) {
-    errorMessage.value = '実アイテムは最大3個までです'
+  if (realCount > 4) {
+    errorMessage.value = '実アイテムは最大4個までです'
     return
   }
-  if (virtualCount > 3) {
-    errorMessage.value = '仮アイテムは最大3個までです'
+  if (virtualCount > 4) {
+    errorMessage.value = '仮アイテムは最大4個までです'
     return
   }
-  if (editingItems.value.length > 6) {
-    errorMessage.value = 'アイテムは最大6個までです'
+  if (editingItems.value.length > 8) {
+    errorMessage.value = 'アイテムは最大8個までです'
     return
   }
 
