@@ -22,6 +22,7 @@
 
         <!-- 認証ステータス -->
         <auth-status
+          :user="authStore.user"
           @login="handleLogin"
           @logout="handleLogout"
           class="mr-4"

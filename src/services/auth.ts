@@ -1,5 +1,12 @@
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  type User,
+  type UserCredential,
+  type Unsubscribe,
+} from "firebase/auth";
 import { lazyLoadAuth } from "../utils/lazyLoader";
 
 /**
@@ -7,10 +14,10 @@ import { lazyLoadAuth } from "../utils/lazyLoader";
  * @returns ログイン成功時のユーザー情報
  * @throws ログイン失敗時にエラーをスローします
  */
-const loginWithGoogle = async (): Promise<firebase.auth.UserCredential> => {
+const loginWithGoogle = async (): Promise<UserCredential> => {
   const auth = await lazyLoadAuth();
-  const provider = new firebase.auth.GoogleAuthProvider();
-  return auth.signInWithPopup(provider).catch((error: Error) => {
+  const provider = new GoogleAuthProvider();
+  return signInWithPopup(auth, provider).catch((error: Error) => {
     // エラーはコンソールに出力し、呼び出し元で処理できるようにPromiseをrejectします
     if (import.meta.env.DEV) {
       console.error("ログインエラーの詳細:", error);
@@ -26,7 +33,7 @@ const loginWithGoogle = async (): Promise<firebase.auth.UserCredential> => {
  */
 const logout = async (): Promise<void> => {
   const auth = await lazyLoadAuth();
-  return auth.signOut();
+  return signOut(auth);
 };
 
 /**
@@ -35,10 +42,10 @@ const logout = async (): Promise<void> => {
  * @returns 監視を解除するための関数
  */
 const onAuthStateChanged = async (
-  onAuthStateChangedCallback: (user: firebase.User | null) => void
-): Promise<firebase.Unsubscribe> => {
+  onAuthStateChangedCallback: (user: User | null) => void
+): Promise<Unsubscribe> => {
   const auth = await lazyLoadAuth();
-  return auth.onAuthStateChanged(onAuthStateChangedCallback);
+  return firebaseOnAuthStateChanged(auth, onAuthStateChangedCallback);
 };
 
 /**

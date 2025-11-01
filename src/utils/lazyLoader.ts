@@ -2,16 +2,17 @@
  * 遅延読み込み用のユーティリティ
  */
 
-import type firebase from "firebase/compat/app";
-import "firebase/compat/firestore";
+import type { Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+import type { FirebaseApp } from "firebase/app";
 
 /**
  * Firebaseインスタンス
  */
 interface FirebaseInstances {
-  app: firebase.app.App;
-  auth: firebase.auth.Auth;
-  db: firebase.firestore.Firestore;
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
 }
 
 /**
@@ -34,7 +35,7 @@ export const lazyLoadFirebase = async (): Promise<FirebaseInstances> => {
 /**
  * データベースサービスの遅延読み込み
  */
-export const lazyLoadDatabase = async (): Promise<firebase.firestore.Firestore> => {
+export const lazyLoadDatabase = async (): Promise<Firestore> => {
   const { db } = await lazyLoadFirebase();
   return db;
 };
@@ -42,7 +43,7 @@ export const lazyLoadDatabase = async (): Promise<firebase.firestore.Firestore> 
 /**
  * 認証サービスの遅延読み込み
  */
-export const lazyLoadAuth = async (): Promise<firebase.auth.Auth> => {
+export const lazyLoadAuth = async (): Promise<Auth> => {
   const { auth } = await lazyLoadFirebase();
   return auth;
 };
