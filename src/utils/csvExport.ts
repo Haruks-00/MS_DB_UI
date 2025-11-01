@@ -139,7 +139,7 @@ export const generateCSV = (exportData: ExportData): string => {
   const rows: string[] = [];
 
   // ヘッダー行
-  rows.push('図鑑No,名前,属性,種類,アカウント,わくわく1,わくわく2,わくわく3');
+  rows.push('図鑑No,名前,属性,種類,アカウント,わくわく1,レベル1,わくわく2,レベル2,わくわく3,レベル3,わくわく4,レベル4');
 
   // 所持キャラクターを図鑑番号順にソート
   const sortedOwnedCharacters = [...ownedCharacters].sort((a, b) => {
@@ -169,14 +169,17 @@ export const generateCSV = (exportData: ExportData): string => {
     // 仮アイテムを除外したアイテムリストを作成
     const realItems = ownedChar.items.filter(item => !item.isVirtual);
 
-    // アイテム名を取得（最大3つまで）
-    const itemNames = realItems
-      .slice(0, 3)
-      .map(item => getItemName(item.itemId, itemMastersMap));
+    // アイテムデータを取得（最大4つまで）
+    const itemData = realItems
+      .slice(0, 4)
+      .map(item => ({
+        name: getItemName(item.itemId, itemMastersMap),
+        level: item.isEL ? 'EL' : 'L'
+      }));
 
-    // 3つに満たない場合は空文字で埋める
-    while (itemNames.length < 3) {
-      itemNames.push('');
+    // 4つに満たない場合は空文字で埋める
+    while (itemData.length < 4) {
+      itemData.push({ name: '', level: '' });
     }
 
     // アカウント名を取得（個別のaccountNameがあればそれを優先）し、短縮する
@@ -190,9 +193,14 @@ export const generateCSV = (exportData: ExportData): string => {
       master.element || '', // 属性
       master.type || '', // 種類
       escapeCSVValue(shortenedAccountName),
-      escapeCSVValue(itemNames[0]),
-      escapeCSVValue(itemNames[1]),
-      escapeCSVValue(itemNames[2]),
+      escapeCSVValue(itemData[0].name),
+      escapeCSVValue(itemData[0].level),
+      escapeCSVValue(itemData[1].name),
+      escapeCSVValue(itemData[1].level),
+      escapeCSVValue(itemData[2].name),
+      escapeCSVValue(itemData[2].level),
+      escapeCSVValue(itemData[3].name),
+      escapeCSVValue(itemData[3].level),
     ].join(',');
 
     rows.push(row);
