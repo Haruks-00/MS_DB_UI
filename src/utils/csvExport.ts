@@ -1,4 +1,4 @@
-import type { CharacterMaster, OwnedCharacter } from '@/types';
+import type { CharacterMaster, OwnedCharacter } from "@/types";
 
 /**
  * エクスポート用の所持キャラクターデータ（アカウント名付き）
@@ -26,7 +26,11 @@ const escapeCSVValue = (value: string | number): string => {
   const strValue = String(value);
 
   // カンマ、ダブルクォート、改行を含む場合
-  if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
+  if (
+    strValue.includes(",") ||
+    strValue.includes('"') ||
+    strValue.includes("\n")
+  ) {
     // ダブルクォートを2つに
     const escaped = strValue.replace(/"/g, '""');
     return `"${escaped}"`;
@@ -51,38 +55,38 @@ const escapeNameField = (value: string): string => {
  * CSV出力時に使用する
  */
 const ITEM_ID_TO_DISPLAY_NAME: Map<number, string> = new Map([
-  [1, '同族・加撃'],
-  [2, '同族・加撃速'],
-  [3, '同族・加命撃'],
-  [4, '同族・加速'],
-  [5, '同族・加命'],
-  [6, '同族・加速命'],
-  [7, '撃種・加撃'],
-  [8, '撃種・加撃速'],
-  [9, '撃種・加命撃'],
-  [10, '撃種・加速'],
-  [11, '撃種・加命'],
-  [12, '撃種・加速命'],
-  [13, '戦型・加撃'],
-  [14, '戦型・加撃速'],
-  [15, '戦型・加命撃'],
-  [16, '戦型・加速'],
-  [17, '戦型・加命'],
-  [18, '戦型・加速命'],
-  [19, '熱き友撃'],
-  [20, 'ケガ減り'],
-  [21, '将命削り'],
-  [22, '兵命削り'],
-  [23, '一撃失心'],
-  [24, '速必殺'],
-  [25, '毒がまん'],
-  [26, 'ちび癒し'],
-  [27, 'ハート'],
-  [28, '学び'],
-  [29, '荒稼ぎ'],
-  [30, 'スピクリ'],
-  [31, 'Sランク'],
-  [32, 'スコア稼ぎ'],
+  [1, "同族・加命撃"],
+  [2, "同族・加撃速"],
+  [3, "同族・加撃"],
+  [4, "戦型・加命撃"],
+  [5, "戦型・加撃速"],
+  [6, "戦型・加撃"],
+  [7, "撃種・加命撃"],
+  [8, "撃種・加撃速"],
+  [9, "撃種・加撃"],
+  [10, "同族・加速"],
+  [11, "同族・加命"],
+  [12, "同族・加速命"],
+  [13, "戦型・加速"],
+  [14, "戦型・加速命"],
+  [15, "戦型・加速命"],
+  [16, "撃種・加速"],
+  [17, "撃種・加命"],
+  [18, "撃種・加速命"],
+  [19, "熱き友撃"],
+  [20, "ケガ減り"],
+  [21, "将命削り"],
+  [22, "兵命削り"],
+  [23, "一撃失心"],
+  [24, "速必殺"],
+  [25, "毒がまん"],
+  [26, "ちび癒し"],
+  [27, "ハート"],
+  [28, "学び"],
+  [29, "荒稼ぎ"],
+  [30, "スピクリ"],
+  [31, "Sランク"],
+  [32, "スコア稼ぎ"],
 ]);
 
 /**
@@ -93,7 +97,7 @@ const getItemName = (
   itemId: number | string,
   itemMastersMap?: Map<number, string>
 ): string => {
-  const numericId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+  const numericId = typeof itemId === "string" ? parseInt(itemId, 10) : itemId;
 
   // CSV出力用のマッピングがあればそれを使用
   const displayName = ITEM_ID_TO_DISPLAY_NAME.get(numericId);
@@ -116,7 +120,7 @@ const getItemName = (
  */
 const shortenAccountName = (accountName: string): string => {
   // 「アカウント」で始まる場合は削除
-  if (accountName.startsWith('アカウント')) {
+  if (accountName.startsWith("アカウント")) {
     return accountName.substring(5); // 「アカウント」は5文字（ア・カ・ウ・ン・ト）
   }
   return accountName;
@@ -127,11 +131,12 @@ const shortenAccountName = (accountName: string): string => {
  * BOM付きUTF-8でエンコードされたCSVを返す
  */
 export const generateCSV = (exportData: ExportData): string => {
-  const { characterMasters, ownedCharacters, accountName, itemMastersMap } = exportData;
+  const { characterMasters, ownedCharacters, accountName, itemMastersMap } =
+    exportData;
 
   // マスターデータをMapに変換して高速検索
   const masterMap = new Map<string, CharacterMaster>();
-  characterMasters.forEach(master => {
+  characterMasters.forEach((master) => {
     masterMap.set(master.id, master);
   });
 
@@ -139,7 +144,9 @@ export const generateCSV = (exportData: ExportData): string => {
   const rows: string[] = [];
 
   // ヘッダー行
-  rows.push('図鑑No,名前,属性,種類,アカウント,わくわく1,レベル1,わくわく2,レベル2,わくわく3,レベル3,わくわく4,レベル4');
+  rows.push(
+    "図鑑No,名前,属性,種類,アカウント,わくわく1,レベル1,わくわく2,レベル2,わくわく3,レベル3,わくわく4,レベル4"
+  );
 
   // 所持キャラクターを図鑑番号順にソート
   const sortedOwnedCharacters = [...ownedCharacters].sort((a, b) => {
@@ -158,7 +165,7 @@ export const generateCSV = (exportData: ExportData): string => {
   });
 
   // データ行
-  sortedOwnedCharacters.forEach(ownedChar => {
+  sortedOwnedCharacters.forEach((ownedChar) => {
     const master = masterMap.get(ownedChar.characterMasterId);
 
     // マスターデータが存在しない場合はスキップ
@@ -167,19 +174,17 @@ export const generateCSV = (exportData: ExportData): string => {
     }
 
     // 仮アイテムを除外したアイテムリストを作成
-    const realItems = ownedChar.items.filter(item => !item.isVirtual);
+    const realItems = ownedChar.items.filter((item) => !item.isVirtual);
 
     // アイテムデータを取得（最大4つまで）
-    const itemData = realItems
-      .slice(0, 4)
-      .map(item => ({
-        name: getItemName(item.itemId, itemMastersMap),
-        level: item.isEL ? 'EL' : 'L'
-      }));
+    const itemData = realItems.slice(0, 4).map((item) => ({
+      name: getItemName(item.itemId, itemMastersMap),
+      level: item.isEL ? "EL" : "L",
+    }));
 
     // 4つに満たない場合は空文字で埋める
     while (itemData.length < 4) {
-      itemData.push({ name: '', level: '' });
+      itemData.push({ name: "", level: "" });
     }
 
     // アカウント名を取得（個別のaccountNameがあればそれを優先）し、短縮する
@@ -188,10 +193,10 @@ export const generateCSV = (exportData: ExportData): string => {
 
     // CSVの1行を構築
     const row = [
-      master.indexNumber !== undefined ? master.indexNumber : '', // 図鑑No
+      master.indexNumber !== undefined ? master.indexNumber : "", // 図鑑No
       escapeNameField(master.monsterName || master.name), // モンスター名（常にダブルクォートで囲む）
-      master.element || '', // 属性
-      master.type || '', // 種類
+      master.element || "", // 属性
+      master.type || "", // 種類
       escapeCSVValue(shortenedAccountName),
       escapeCSVValue(itemData[0].name),
       escapeCSVValue(itemData[0].level),
@@ -201,13 +206,13 @@ export const generateCSV = (exportData: ExportData): string => {
       escapeCSVValue(itemData[2].level),
       escapeCSVValue(itemData[3].name),
       escapeCSVValue(itemData[3].level),
-    ].join(',');
+    ].join(",");
 
     rows.push(row);
   });
 
   // BOM付きUTF-8として返す
-  return '\uFEFF' + rows.join('\n');
+  return "\uFEFF" + rows.join("\n");
 };
 
 /**
@@ -215,11 +220,11 @@ export const generateCSV = (exportData: ExportData): string => {
  */
 export const downloadCSV = (csvContent: string, filename: string): void => {
   // BlobオブジェクトとしてCSVを作成
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 
   // ダウンロードリンクを作成
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
 
