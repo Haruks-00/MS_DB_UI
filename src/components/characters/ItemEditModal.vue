@@ -75,7 +75,7 @@
               戦型3
             </v-btn>
             <v-btn
-              @click="applyTemplate([21, 21])"
+              @click="applyTemplate([21, 22])"
               color="primary"
               variant="outlined"
               size="default"
@@ -84,7 +84,7 @@
               削り
             </v-btn>
             <v-btn
-              @click="applyTemplate([19])"
+              @click="applyTemplate([20])"
               color="primary"
               variant="outlined"
               size="default"
