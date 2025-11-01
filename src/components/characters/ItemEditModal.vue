@@ -42,48 +42,57 @@
 
         <!-- アイテムテンプレートボタン -->
         <div class="mt-4">
-          <v-chip-group>
-            <v-chip
+          <div class="text-subtitle-2 mb-2 text-medium-emphasis">
+            <v-icon icon="mdi-flash" size="small" class="mr-1"></v-icon>
+            クイックテンプレート
+          </div>
+          <div class="d-flex flex-wrap ga-2">
+            <v-btn
               @click="applyTemplate([1, 2, 3])"
               color="primary"
               variant="outlined"
-              size="small"
+              size="default"
+              class="template-btn"
             >
               同族3
-            </v-chip>
-            <v-chip
+            </v-btn>
+            <v-btn
               @click="applyTemplate([7, 8, 9])"
               color="primary"
               variant="outlined"
-              size="small"
+              size="default"
+              class="template-btn"
             >
               撃種3
-            </v-chip>
-            <v-chip
+            </v-btn>
+            <v-btn
               @click="applyTemplate([13, 14, 15])"
               color="primary"
               variant="outlined"
-              size="small"
+              size="default"
+              class="template-btn"
             >
               戦型3
-            </v-chip>
-            <v-chip
+            </v-btn>
+            <v-btn
               @click="applyTemplate([21, 21])"
               color="primary"
               variant="outlined"
-              size="small"
+              size="default"
+              class="template-btn"
             >
               削り
-            </v-chip>
-            <v-chip
+            </v-btn>
+            <v-btn
               @click="applyTemplate([19])"
               color="primary"
               variant="outlined"
-              size="small"
+              size="default"
+              class="template-btn"
             >
               友撃
-            </v-chip>
-          </v-chip-group>
+            </v-btn>
+          </div>
         </div>
 
         <!-- 選択されたアイテムの実/仮想切り替え -->
@@ -290,6 +299,8 @@ const applyTemplate = (itemIds) => {
   // 既存の選択に追加
   const newIds = [...new Set([...selectedItemIds.value, ...itemIds])]
   selectedItemIds.value = newIds
+  // editingItemsを更新するためにonItemSelectionChangeを呼び出す
+  onItemSelectionChange(newIds)
 }
 
 // 未所持に戻す（既存キャラクターの削除）
@@ -363,5 +374,16 @@ watch(() => props.character, (newChar) => {
 
 .border {
   border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.template-btn {
+  min-width: 80px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.template-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
