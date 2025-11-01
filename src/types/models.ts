@@ -46,6 +46,7 @@ export interface GachaMaster {
 export interface ItemData {
   itemId: number | string;
   isVirtual: boolean;
+  isEL?: boolean; // アイテムのレベル。trueの場合EL、falseまたは未定義の場合L
 }
 
 /**
