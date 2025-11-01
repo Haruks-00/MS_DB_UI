@@ -74,6 +74,7 @@
             <v-window-item value="view-all" key="view-all">
               <view-all-characters-tab
                 @items-updated="handleItemsUpdated"
+                @character-deleted="handleCharacterDeleted"
               />
             </v-window-item>
 
@@ -327,6 +328,32 @@ const handleItemsUpdated = async ({
       console.error("アイテム更新エラー:", error);
     }
     uiStore.showError(`アイテム更新エラー: ${(error as Error).message}`);
+  }
+};
+
+// キャラクター削除ハンドラ
+const handleCharacterDeleted = async ({
+  accountId,
+  ownedCharacterId
+}: {
+  accountId: string;
+  ownedCharacterId: string;
+}): Promise<void> => {
+  try {
+    // データベースから削除
+    await databaseService.deleteOwnedCharacter(accountId, ownedCharacterId);
+
+    // ローカル状態を更新
+    const accountChars = dataStore.ownedCharactersData.get(accountId) || [];
+    const updatedChars = accountChars.filter((c) => c.id !== ownedCharacterId);
+    dataStore.updateOwnedCharactersForAccount(accountId, updatedChars);
+
+    uiStore.showSuccess("キャラクターを未所持に戻しました");
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("キャラクター削除エラー:", error);
+    }
+    uiStore.showError(`キャラクター削除エラー: ${(error as Error).message}`);
   }
 };
 

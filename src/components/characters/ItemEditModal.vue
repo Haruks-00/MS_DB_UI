@@ -160,7 +160,7 @@
 
       <v-card-actions class="pa-4">
         <v-btn
-          v-if="isNewCharacter"
+          v-if="!isNewCharacter"
           @click="removeCharacter"
           variant="text"
           color="error"
@@ -292,10 +292,10 @@ const applyTemplate = (itemIds) => {
   selectedItemIds.value = newIds
 }
 
-// 未所持に戻す
+// 未所持に戻す（既存キャラクターの削除）
 const removeCharacter = () => {
   if (confirm('このキャラクターを未所持に戻しますか？')) {
-    emit('remove-character')
+    emit('remove-character', props.character)
     closeModal()
   }
 }

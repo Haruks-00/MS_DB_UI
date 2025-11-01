@@ -219,6 +219,22 @@ const updateCharacterItems = async (
 };
 
 /**
+ * 所持キャラクターを削除します
+ * @param accountId - アカウントのID
+ * @param ownedCharacterId - 所持キャラクターのドキュメントID
+ * @returns Promise<void>
+ */
+const deleteOwnedCharacter = async (
+  accountId: string,
+  ownedCharacterId: string
+): Promise<void> => {
+  const db = await lazyLoadDatabase();
+  return deleteDoc(
+    doc(db, "accounts", accountId, "owned_characters", ownedCharacterId)
+  );
+};
+
+/**
  * 複数のアイテム更新をバッチ処理で実行します（アイテム移動用）
  * @param accountId - アカウントのID
  * @param from - 移動元の情報 { id: string, items: ItemData[] }
@@ -299,6 +315,7 @@ export const databaseService = {
   loadAndProcessInitialData,
   addOwnedCharacter,
   updateCharacterItems,
+  deleteOwnedCharacter,
   moveCharacterItems,
   addCharacterMaster,
   updateCharacterMaster,

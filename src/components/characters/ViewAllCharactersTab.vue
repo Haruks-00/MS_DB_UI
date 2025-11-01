@@ -461,7 +461,7 @@ import { generateCSV, downloadCSV } from "@/utils/csvExport";
 const dataStore = useDataStore();
 const uiStore = useUIStore();
 
-const emit = defineEmits(['items-updated']);
+const emit = defineEmits(['items-updated', 'character-deleted']);
 
 // CSVエクスポート状態
 const isExporting = ref(false);
@@ -1011,15 +1011,26 @@ const handleSaveItems = async ({ character, items, isNew }) => {
 };
 
 /**
- * キャラクターを未所持に戻す
+ * キャラクターを未所持に戻す（削除）
  */
-const handleRemoveCharacter = async () => {
-  if (!editingCharacter.value || !editingCharacter.value.isNew) {
+const handleRemoveCharacter = async (character) => {
+  if (!character) {
     return;
   }
 
-  // 新規追加モード時のみ動作（既存キャラの削除は処理しない）
-  // モーダルを閉じるだけで、実際には何もしない（まだ保存されていないため）
+  // 新規追加モードの場合はモーダルを閉じるだけ（まだ保存されていないため）
+  if (editingCharacter.value?.isNew) {
+    isModalOpen.value = false;
+    return;
+  }
+
+  // 既存キャラクターの削除処理
+  emit('character-deleted', {
+    accountId: editingAccountId.value,
+    ownedCharacterId: character.id,
+    characterMasterId: character.characterMasterId
+  });
+
   isModalOpen.value = false;
 };
 
