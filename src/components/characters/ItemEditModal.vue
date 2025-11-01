@@ -57,6 +57,15 @@
               同族3
             </v-btn>
             <v-btn
+              @click="applyTemplate([4, 5, 6])"
+              color="primary"
+              variant="outlined"
+              size="default"
+              class="template-btn"
+            >
+              戦型3
+            </v-btn>
+            <v-btn
               @click="applyTemplate([7, 8, 9])"
               color="primary"
               variant="outlined"
@@ -64,15 +73,6 @@
               class="template-btn"
             >
               撃種3
-            </v-btn>
-            <v-btn
-              @click="applyTemplate([13, 14, 15])"
-              color="primary"
-              variant="outlined"
-              size="default"
-              class="template-btn"
-            >
-              戦型3
             </v-btn>
             <v-btn
               @click="applyTemplate([21, 22])"
@@ -294,13 +294,12 @@ const closeModal = () => {
   errorMessage.value = ''
 }
 
-// アイテムテンプレートを適用（選択中のアイテムに追加）
+// アイテムテンプレートを適用（既存の選択を置換）
 const applyTemplate = (itemIds) => {
-  // 既存の選択に追加
-  const newIds = [...new Set([...selectedItemIds.value, ...itemIds])]
-  selectedItemIds.value = newIds
+  // 既存の選択を置換
+  selectedItemIds.value = itemIds
   // editingItemsを更新するためにonItemSelectionChangeを呼び出す
-  onItemSelectionChange(newIds)
+  onItemSelectionChange(itemIds)
 }
 
 // 未所持に戻す（既存キャラクターの削除）
