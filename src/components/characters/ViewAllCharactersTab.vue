@@ -444,6 +444,7 @@
       :character="editingCharacter"
       :is-new-character="editingCharacter?.isNew || false"
       @save="handleSaveItems"
+      @remove-character="handleRemoveCharacter"
     />
   </div>
 </template>
@@ -1007,6 +1008,19 @@ const handleSaveItems = async ({ character, items, isNew }) => {
       isNew: false
     });
   }
+};
+
+/**
+ * キャラクターを未所持に戻す
+ */
+const handleRemoveCharacter = async () => {
+  if (!editingCharacter.value || !editingCharacter.value.isNew) {
+    return;
+  }
+
+  // 新規追加モード時のみ動作（既存キャラの削除は処理しない）
+  // モーダルを閉じるだけで、実際には何もしない（まだ保存されていないため）
+  isModalOpen.value = false;
 };
 
 /**

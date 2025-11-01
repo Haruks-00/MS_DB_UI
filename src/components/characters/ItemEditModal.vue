@@ -40,6 +40,52 @@
           </template>
         </v-autocomplete>
 
+        <!-- アイテムテンプレートボタン -->
+        <div class="mt-4">
+          <v-chip-group>
+            <v-chip
+              @click="applyTemplate([1, 2, 3])"
+              color="primary"
+              variant="outlined"
+              size="small"
+            >
+              同族3
+            </v-chip>
+            <v-chip
+              @click="applyTemplate([7, 8, 9])"
+              color="primary"
+              variant="outlined"
+              size="small"
+            >
+              撃種3
+            </v-chip>
+            <v-chip
+              @click="applyTemplate([13, 14, 15])"
+              color="primary"
+              variant="outlined"
+              size="small"
+            >
+              戦型3
+            </v-chip>
+            <v-chip
+              @click="applyTemplate([21, 21])"
+              color="primary"
+              variant="outlined"
+              size="small"
+            >
+              削り
+            </v-chip>
+            <v-chip
+              @click="applyTemplate([19])"
+              color="primary"
+              variant="outlined"
+              size="small"
+            >
+              友撃
+            </v-chip>
+          </v-chip-group>
+        </div>
+
         <!-- 選択されたアイテムの実/仮想切り替え -->
         <div v-if="editingItems.length > 0" class="mt-6">
           <v-divider class="mb-4"></v-divider>
@@ -113,6 +159,14 @@
       </v-card-text>
 
       <v-card-actions class="pa-4">
+        <v-btn
+          v-if="isNewCharacter"
+          @click="removeCharacter"
+          variant="text"
+          color="error"
+        >
+          未所持に戻す
+        </v-btn>
         <v-spacer></v-spacer>
         <v-btn
           @click="closeModal"
@@ -229,6 +283,21 @@ const toggleItemType = (itemId, value) => {
 const closeModal = () => {
   isOpen.value = false
   errorMessage.value = ''
+}
+
+// アイテムテンプレートを適用（選択中のアイテムに追加）
+const applyTemplate = (itemIds) => {
+  // 既存の選択に追加
+  const newIds = [...new Set([...selectedItemIds.value, ...itemIds])]
+  selectedItemIds.value = newIds
+}
+
+// 未所持に戻す
+const removeCharacter = () => {
+  if (confirm('このキャラクターを未所持に戻しますか？')) {
+    emit('remove-character')
+    closeModal()
+  }
 }
 
 // アイテムを保存
